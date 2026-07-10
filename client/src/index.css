@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+
+/* Zoom lento tipo Ken Burns para fotos de fondo */
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+.animate-kenburns { animation: kenburns 20s ease-in-out infinite alternate; }
+
+/* Revelado al hacer scroll (se activa con IntersectionObserver) */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+.reveal.reveal-left { transform: translateX(-36px); }
+.reveal.reveal-right { transform: translateX(36px); }
+.reveal.is-visible { opacity: 1; transform: none; }
+
+/* Franja de sarape */
+.serape-line {
+  height: 4px;
+  background: repeating-linear-gradient(90deg,
+    #D6431F 0, #D6431F 48px,
+    #E2A33F 48px, #E2A33F 96px,
+    #2F7D4F 96px, #2F7D4F 144px,
+    #8C4A2F 144px, #8C4A2F 192px);
+}
+
+/* Ocultar barra de scroll del carrusel */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns { animation: none; }
+  .reveal, .reveal.reveal-left, .reveal.reveal-right { opacity: 1; transform: none; transition: none; }
+}
