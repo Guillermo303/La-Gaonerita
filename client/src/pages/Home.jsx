@@ -2,27 +2,26 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../lib/utils';
 import Reveal from '../components/Reveal';
-import PromoBanner from '../components/PromoBanner';
 
 const IMG = {
   hero: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1800&q=80',
   historia: 'https://images.unsplash.com/photo-1613514785940-daed07799d9b?auto=format&fit=crop&w=900&q=80',
-  asada: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=700&q=80',
-  gaonera: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=700&q=80',
+  pastor: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=700&q=80',
+  gringa: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=700&q=80',
+  aguas: 'https://images.unsplash.com/photo-1546173159-315724a31696?auto=format&fit=crop&w=700&q=80',
   volcan: 'https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?auto=format&fit=crop&w=700&q=80',
-  chux: 'https://images.unsplash.com/photo-1546173159-315724a31696?auto=format&fit=crop&w=700&q=80',
-  complementos: 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?auto=format&fit=crop&w=700&q=80',
-  totopos: 'https://images.unsplash.com/photo-1615937657715-bc7b4b7962c1?auto=format&fit=crop&w=700&q=80',
+  queso: 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?auto=format&fit=crop&w=700&q=80',
+  torta: 'https://images.unsplash.com/photo-1628191010210-a59de33e5941?auto=format&fit=crop&w=700&q=80',
   interior: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1800&q=80'
 };
 
 const favoritos = [
-  { img: IMG.asada, name: 'Taco de Asada', price: 40, desc: 'Res asada al carbón, cebolla y cilantro fresco.' },
-  { img: IMG.gaonera, name: 'Taco de Gaonera', price: 60, desc: 'Nuestro corte estrella, jugoso y lleno de sabor.' },
-  { img: IMG.volcan, name: 'Volcán de Gaonera', price: 70, desc: 'Tostada crujiente con queso gratinado y Gaonera.' },
-  { img: IMG.chux, name: 'Chux', price: 40, desc: 'Postre tradicional de la casa.' },
-  { img: IMG.complementos, name: 'Salsa Naranja Cremosa', price: 0, desc: 'Acompañamiento perfecto para tus tacos.' },
-  { img: IMG.totopos, name: 'Totopos', price: 0, desc: 'Totopos crujientes, perfectos para acompañar.' }
+  { img: IMG.pastor, name: 'Tacos al Pastor', price: 25, desc: 'Marinados en adobo de la casa, con piña, cebolla y cilantro fresco.' },
+  { img: IMG.gringa, name: 'Gringa', price: 50, desc: 'Tortilla de harina dorada con queso fundido y pastor al carbón.' },
+  { img: IMG.aguas, name: 'Aguas Frescas', price: 15, desc: 'Preparadas al día con fruta natural: horchata, jamaica y mango.' },
+  { img: IMG.volcan, name: 'Volcán de Pastor', price: 35, desc: 'Tostada crujiente con queso gratinado y pastor doradito.' },
+  { img: IMG.queso, name: 'Queso Fundido', price: 35, desc: 'Derretido al carbón, para taquear con tortillas recién hechas.' },
+  { img: IMG.torta, name: 'Torta de Pastor', price: 55, desc: 'Telera dorada con pastor, quesillo, aguacate y frijoles.' }
 ];
 
 const testimonios = [
@@ -256,9 +255,6 @@ export default function Home() {
         </div>
         <Zigzag fill="#FBF7EF" className="absolute bottom-0 left-0" />
       </section>
-
-      {/* Promociones */}
-      <div className="-mt-10 mb-10"><PromoBanner /></div>
 
       {/* Historia */}
       <section className="max-w-7xl mx-auto px-4 py-20 lg:py-28">

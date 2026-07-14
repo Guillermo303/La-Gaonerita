@@ -90,12 +90,9 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
                     </div>
                     <div className="space-y-1 text-sm mb-3">
                       {order.items?.map(item => (
-                        <div key={item.id}>
-                          <div className="flex justify-between">
-                            <span className="text-ink-700">{item.quantity}x {item.name}</span>
-                            <span className="text-ink-400">{formatPrice(item.price * item.quantity)}</span>
-                          </div>
-                          {item.notes && <div className="text-xs text-yellow-600 ml-2">📝 {item.notes}</div>}
+                        <div key={item.id} className="flex justify-between">
+                          <span className="text-ink-700">{item.quantity}x {item.name}</span>
+                          <span className="text-ink-400">{formatPrice(item.price * item.quantity)}</span>
                         </div>
                       ))}
                     </div>

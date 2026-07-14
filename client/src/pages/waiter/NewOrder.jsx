@@ -45,7 +45,7 @@ export default function NewOrder() {
         order_type: customer.type,
         notes: customer.notes || null,
         payment_method: 'efectivo',
-        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.notes || null }))
+        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: null }))
       });
       navigate('/waiter');
     } catch (err) {
@@ -108,12 +108,9 @@ export default function NewOrder() {
               <h3 className="font-bold text-brand-700 mb-2">{cat.name}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {cat.items.map(item => (
-                  <button key={item.id} onClick={() => addItem(item)} className="bg-white rounded-lg shadow text-left hover:bg-brand-50 transition overflow-hidden">
-                    {item.image && <img src={item.image} alt={item.name} className="w-full h-16 object-cover" loading="lazy" />}
-                    <div className="p-2">
-                      <div className="font-medium text-sm truncate">{item.name}</div>
-                      <div className="text-brand-600 text-xs font-bold">{item.price > 0 ? formatPrice(item.price) : 'Gratis'}</div>
-                    </div>
+                  <button key={item.id} onClick={() => addItem(item)} className="bg-white p-3 rounded-lg shadow text-left hover:bg-brand-50 transition">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-brand-600 text-sm">{formatPrice(item.price)}</div>
                   </button>
                 ))}
               </div>
@@ -130,20 +127,17 @@ export default function NewOrder() {
           ) : (
             <>
               {cart.map(item => (
-                <div key={item.menu_item_id} className="py-2 border-b">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-600">{formatPrice(item.price)} c/u</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-7 h-7 bg-gray-100 rounded-full">-</button>
-                      <span className="w-6 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-7 h-7 bg-gray-100 rounded-full">+</button>
-                      <span className="w-20 text-right font-bold">{formatPrice(item.price * item.quantity)}</span>
-                    </div>
+                <div key={item.menu_item_id} className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-sm text-gray-600">{formatPrice(item.price)} c/u</div>
                   </div>
-                  <input value={item.notes || ''} onChange={e => { const v = e.target.value; setCart(prev => prev.map(i => i.menu_item_id === item.menu_item_id ? { ...i, notes: v } : i)); }} placeholder="Nota (sin cebolla, etc.)" className="mt-1 w-full text-xs border border-gray-200 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-brand-400" />
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-7 h-7 bg-gray-100 rounded-full">-</button>
+                    <span className="w-6 text-center">{item.quantity}</span>
+                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-7 h-7 bg-gray-100 rounded-full">+</button>
+                    <span className="w-20 text-right font-bold">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
                 </div>
               ))}
               <div className="flex justify-between items-center py-3 text-lg font-bold">

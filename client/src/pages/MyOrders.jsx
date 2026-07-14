@@ -39,12 +39,9 @@ export default function MyOrders() {
               </div>
               <div className="border-t border-cream-200 pt-3 space-y-1">
                 {order.items?.map(item => (
-                  <div key={item.id}>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-ink-700">{item.quantity}x {item.name}</span>
-                      <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
-                    </div>
-                    {item.notes && <div className="text-xs text-yellow-600 ml-2">📝 {item.notes}</div>}
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="text-ink-700">{item.quantity}x {item.name}</span>
+                    <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>

@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { menu as menuApi, orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
 
 export default function OrderLocal() {
-  const [searchParams] = useSearchParams();
-  const tableMesa = searchParams.get('mesa');
   const [menuData, setMenuData] = useState([]);
   const [cart, setCart] = useState([]);
   const [name, setName] = useState('');
@@ -45,10 +43,9 @@ export default function OrderLocal() {
       const order = await ordersApi.create({
         customer_name: name.trim(),
         order_type: 'local',
-        mesa: tableMesa || null,
         notes: notes.trim() || null,
         payment_method: 'efectivo',
-        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.notes || null }))
+        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }))
       });
       setCart([]);
       setPlaced(order);
@@ -66,17 +63,14 @@ export default function OrderLocal() {
           <div className="text-7xl mb-4">🌮</div>
           <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-2">¡Pedido Recibido!</h1>
           <p className="text-ink-500 mb-1">Tu orden <span className="font-bold text-brand-600 text-2xl">#{placed.id}</span></p>
-          <p className="text-sm text-ink-400 mb-6">{tableMesa ? `Te llevamos el pedido a ${tableMesa}` : 'Prepárate para pasar a caja cuando te llamemos'}</p>
+          <p className="text-sm text-ink-400 mb-6">Prepárate para pasar a caja cuando te llamemos</p>
           <div className="bg-cream-50 rounded-xl p-4 mb-6 text-left space-y-1">
-              {placed.items?.map(item => (
-                <div key={item.id}>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink-700">{item.quantity}x {item.name}</span>
-                    <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
-                  </div>
-                  {item.notes && <div className="text-xs text-yellow-600 ml-4">📝 {item.notes}</div>}
-                </div>
-              ))}
+            {placed.items?.map(item => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-ink-700">{item.quantity}x {item.name}</span>
+                <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
+              </div>
+            ))}
             <div className="border-t border-cream-200 pt-2 flex justify-between font-bold text-ink-900">
               <span>Total</span>
               <span className="text-brand-600">{formatPrice(placed.total)}</span>
@@ -97,7 +91,6 @@ export default function OrderLocal() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🏠</div>
           <h1 className="font-display text-3xl font-extrabold text-ink-900">Pedir desde el Local</h1>
-          {tableMesa && <div className="mt-1 inline-block bg-brand-100 text-brand-700 text-sm font-bold px-3 py-1 rounded-full">{tableMesa}</div>}
           <p className="text-ink-400 mt-1">Elige tus tacos y te los preparamos al momento</p>
         </div>
 
@@ -131,16 +124,13 @@ export default function OrderLocal() {
                         <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
                       </div>
                       {inCart ? (
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <button type="button" onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold text-lg hover:bg-cream-200 transition">−</button>
-                              <span className="w-6 text-center font-bold text-ink-900">{inCart.quantity}</span>
-                              <button type="button" onClick={() => updateQty(item.id, 1)} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold text-lg hover:bg-brand-600 transition">+</button>
-                            </div>
-                            <span className="text-sm font-semibold text-ink-500">{formatPrice(item.price * inCart.quantity)}</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold text-lg hover:bg-cream-200 transition">−</button>
+                            <span className="w-6 text-center font-bold text-ink-900">{inCart.quantity}</span>
+                            <button type="button" onClick={() => updateQty(item.id, 1)} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold text-lg hover:bg-brand-600 transition">+</button>
                           </div>
-                          <input value={inCart.notes || ''} onChange={e => setCart(prev => prev.map(i => i.menu_item_id === item.id ? { ...i, notes: e.target.value } : i))} placeholder="Nota (sin cebolla, etc.)" className="mt-1.5 w-full text-xs border border-ink-200 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-brand-400" />
+                          <span className="text-sm font-semibold text-ink-500">{formatPrice(item.price * inCart.quantity)}</span>
                         </div>
                       ) : (
                         <button type="button" onClick={() => addItem(item)} className="w-full bg-cream-100 text-brand-700 py-2 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-brand-500 hover:text-white transition">Agregar +</button>

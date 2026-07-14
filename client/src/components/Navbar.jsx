@@ -19,22 +19,17 @@ export default function Navbar() {
           </Link>
           <div className="flex items-center gap-5">
             <Link to="/menu" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Menú</Link>
-            <Link to="/menu" className="hidden sm:inline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Promociones</Link>
             <Link to="/jobs" className="hidden sm:inline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Trabajo</Link>
             {user ? (
               <>
                 {user.role === 'admin' && <Link to="/admin" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Admin</Link>}
                 {(user.role === 'admin' || user.role === 'mesero') && <Link to="/waiter" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Mesero</Link>}
-                {(user.role === 'admin' || user.role === 'mesero') && <Link to="/pos" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">POS</Link>}
                 {(user.role === 'admin' || user.role === 'mesero') && <Link to="/pending-bills" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Cuentas</Link>}
-                {(user.role === 'admin' || user.role === 'mesero') && <Link to="/reports" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Reportes</Link>}
-                {(user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && <Link to="/inventory" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Inventario</Link>}
                 {(user.role === 'admin' || user.role === 'cocina') && <Link to="/kitchen" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Cocina</Link>}
                 {(user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && <Link to="/tv" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">TV</Link>}
-                {(user.role === 'admin' || user.role === 'mesero') && <Link to="/qr" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">QR</Link>}
                 {user.role === 'cliente' && <Link to="/dashboard" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Inicio</Link>}
                 {user.role !== 'cocina' && <Link to="/history" className="text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Historial</Link>}
-                <Link to="/profile" className="hidden sm:inline text-xs uppercase tracking-widest text-ink-300 hover:text-white transition">{user.name}</Link>
+                <span className="hidden sm:inline text-xs uppercase tracking-widest text-ink-300">{user.name}</span>
                 <button onClick={handleLogout} className="text-xs font-semibold uppercase tracking-widest border border-cream-100/30 px-3 py-1.5 rounded hover:bg-cream-100/10 transition">Salir</button>
               </>
             ) : (

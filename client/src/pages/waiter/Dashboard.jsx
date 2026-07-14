@@ -3,9 +3,6 @@ import { Link } from 'react-router-dom';
 import { orders as ordersApi, mesas as mesasApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { formatPrice, typeLabels } from '../../lib/utils';
-import { requestNotifyPermission, notify } from '../../lib/notifications';
-import { printTicket } from '../../lib/print';
-import { notifyNewOrder, notifyOrderReady } from '../../lib/whatsapp';
 import CobroModal from '../../components/CobroModal';
 import MesaPanel from '../../components/MesaPanel';
 
@@ -50,15 +47,7 @@ export default function WaiterDashboard() {
 
   useEffect(() => {
     if (!socket) return;
-    requestNotifyPermission();
-    socket.on('order:update', (order) => {
-      if (order && order.status === 'listo') {
-        notify(`Orden #${order.id} lista`, {
-          body: `${order.customer_name} - $${order.total}`
-        });
-      }
-      loadData();
-    });
+    socket.on('order:update', () => { loadData(); });
     return () => socket.off('order:update');
   }, [socket]);
 
@@ -169,7 +158,6 @@ export default function WaiterDashboard() {
                 <button onClick={() => setExpanded(isExpanded ? null : order.id)}
                   className="w-full flex items-center gap-3 p-3 text-left">
                   <span className="font-black text-base text-ink-900">#{order.id}</span>
-                  <button onClick={(e) => { e.stopPropagation(); printTicket({ type: 'comanda', order, items: order.items || [] }); }} className="text-xs text-ink-300 hover:text-ink-600" title="Imprimir comanda">🖨️</button>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
                   <span className="text-sm font-semibold text-ink-700 truncate">{order.customer_name}</span>
@@ -182,12 +170,9 @@ export default function WaiterDashboard() {
                   <div className="px-3 pb-3 space-y-2">
                     <div className="bg-white/70 rounded-lg p-2 space-y-0.5 text-sm">
                       {order.items?.map(item => (
-                        <div key={item.id}>
-                          <div className="flex justify-between">
-                            <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
-                            <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
-                          </div>
-                          {item.notes && <div className="text-xs text-yellow-600 ml-2">📝 {item.notes}</div>}
+                        <div key={item.id} className="flex justify-between">
+                          <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
+                          <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
                         </div>
                       ))}
                     </div>
@@ -199,12 +184,6 @@ export default function WaiterDashboard() {
                     </div>
                     {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-1.5 rounded">📝 {order.notes}</div>}
                     <div className="flex items-center justify-between gap-2">
-                      {order.customer_phone && (
-                        <div className="flex gap-1">
-                          {order.status === 'pendiente' && <a href={notifyNewOrder(order)} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded hover:bg-green-100 font-semibold">📱 Recibida</a>}
-                          {order.status === 'listo' && <a href={notifyOrderReady(order)} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded hover:bg-green-100 font-semibold">📱 Lista</a>}
-                        </div>
-                      )}
                       {order.status === 'pendiente' && (
                         <button onClick={() => updateStatus(order.id, 'cancelado')} className="text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded hover:bg-red-100 font-semibold">Cancelar</button>
                       )}
