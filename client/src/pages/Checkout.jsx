@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function Checkout() {
-  const { items, updateQty, clear, count, total } = useCart();
+  const { items, updateQty, updateNotes, clear, count, subtotal, discount, finalTotal, promotion, setPromotion } = useCart();
   const { user, loading } = useAuth();
   const [form, setForm] = useState({ phone: '', address: '', type: 'domicilio', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
@@ -31,7 +31,10 @@ export default function Checkout() {
         order_type: form.type,
         notes: form.notes.trim() || null,
         payment_method: form.payment,
-        items: items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }))
+        items: items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.notes || null })),
+        discount: discount > 0 ? discount : undefined,
+        promotion_id: promotion?.id || undefined,
+        promotion_name: promotion?.name || undefined
       });
       clear();
       setPlaced(order);
@@ -98,22 +101,35 @@ export default function Checkout() {
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h2 className="font-display text-xl font-bold text-ink-900 mb-4">Productos ({count})</h2>
             {items.map(item => (
-              <div key={item.menu_item_id} className="flex items-center justify-between py-3 border-b border-cream-200 last:border-0">
-                <div className="min-w-0">
-                  <div className="font-semibold text-ink-800 truncate">{item.name}</div>
-                  <div className="text-sm text-ink-400">{formatPrice(item.price)} c/u</div>
+              <div key={item.menu_item_id} className="py-3 border-b border-cream-200 last:border-0">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-ink-800 truncate">{item.name}</div>
+                    <div className="text-sm text-ink-400">{formatPrice(item.price)} c/u</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => updateQty(item.menu_item_id, -1)} aria-label={`Quitar un ${item.name}`} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold hover:bg-cream-200 transition">−</button>
+                    <span className="w-6 text-center font-bold">{item.quantity}</span>
+                    <button onClick={() => updateQty(item.menu_item_id, 1)} aria-label={`Agregar otro ${item.name}`} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition">+</button>
+                    <span className="w-20 text-right font-bold text-ink-900">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => updateQty(item.menu_item_id, -1)} aria-label={`Quitar un ${item.name}`} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold hover:bg-cream-200 transition">−</button>
-                  <span className="w-6 text-center font-bold">{item.quantity}</span>
-                  <button onClick={() => updateQty(item.menu_item_id, 1)} aria-label={`Agregar otro ${item.name}`} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition">+</button>
-                  <span className="w-20 text-right font-bold text-ink-900">{formatPrice(item.price * item.quantity)}</span>
-                </div>
+                <input value={item.notes || ''} onChange={e => updateNotes(item.menu_item_id, e.target.value)} placeholder="Nota para este producto (sin cebolla, etc.)" className="mt-1.5 w-full text-xs border border-ink-200 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-brand-400" />
               </div>
             ))}
             <div className="flex justify-between items-center pt-4 text-lg">
+              <span className="font-bold text-ink-900">Subtotal</span>
+              <span className="font-bold text-ink-600">{formatPrice(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between items-center text-green-600 text-sm">
+                <span>Descuento {promotion?.name ? `(${promotion.name})` : ''}</span>
+                <span className="font-bold">-{formatPrice(discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-1 text-lg">
               <span className="font-bold text-ink-900">Total</span>
-              <span className="font-extrabold text-brand-600 text-xl">{formatPrice(total)}</span>
+              <span className="font-extrabold text-brand-600 text-xl">{formatPrice(finalTotal)}</span>
             </div>
             <Link to="/menu" className="block text-center text-sm text-brand-600 font-semibold hover:underline mt-3">+ Agregar más productos</Link>
           </div>
@@ -172,7 +188,7 @@ export default function Checkout() {
 
             <button type="submit" disabled={placing}
               className="w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition disabled:opacity-50">
-              {placing ? 'Enviando pedido…' : `Confirmar Pedido · ${formatPrice(total)}`}
+              {placing ? 'Enviando pedido…' : `Confirmar Pedido · ${formatPrice(finalTotal)}`}
             </button>
             <p className="text-xs text-ink-400 text-center">Pedido a nombre de <span className="font-semibold">{user.name}</span></p>
           </div>

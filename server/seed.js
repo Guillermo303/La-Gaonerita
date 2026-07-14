@@ -1,39 +1,26 @@
 import { initDB, query, run } from './db.js';
 
 const menuData = [
-  { category: 'Tacos', description: 'Tacos tradicionales', items: [
-    { name: 'Taco de Pastor', price: 25 },
-    { name: 'Taco de Suadero', price: 28 },
-    { name: 'Taco de Carnitas', price: 25 },
-    { name: 'Taco de Chorizo', price: 22 },
-    { name: 'Taco de Barbacoa', price: 30 },
+  { category: 'Especialidades de Asada', description: 'Cortes de res asados al carbón', items: [
+    { name: 'Taco de asada', price: 40, image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Volcán de asada', price: 50, image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Taco de costra de asada', price: 50, image: 'https://images.unsplash.com/photo-1613514785940-daed07799d9b?auto=format&fit=crop&w=700&q=80' },
   ]},
-  { category: 'Especialidades', description: 'Platillos especiales', items: [
-    { name: 'Torta de Pastor', price: 55 },
-    { name: 'Torta de Suadero', price: 60 },
-    { name: 'Volcán de Pastor', price: 35 },
-    { name: 'Costra de Queso', price: 45 },
-    { name: 'Gringa', price: 50 },
+  { category: 'Especialidades de Gaonera', description: 'Nuestro corte estrella', items: [
+    { name: 'Taco de Gaonera', price: 60, image: 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Volcán de Gaonera', price: 70, image: 'https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Taco de costra de Gaonera', price: 70, image: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=700&q=80' },
   ]},
-  { category: 'Bebidas', description: 'Refrescos y aguas', items: [
-    { name: 'Coca-Cola 600ml', price: 20 },
-    { name: 'Coca-Cola 2L', price: 35 },
-    { name: 'Agua Fresca 500ml', price: 15 },
-    { name: 'Agua Fresca 1L', price: 25 },
-    { name: 'Boing de Mango', price: 18 },
+  { category: 'Postres', description: 'Dulce final', items: [
+    { name: 'Chux', price: 40, image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=700&q=80' },
   ]},
-  { category: 'Extras', description: 'Complementos', items: [
-    { name: 'Orden de Guacamole', price: 30 },
-    { name: 'Orden de Queso Fundido', price: 35 },
-    { name: 'Frijoles Charros', price: 25 },
-    { name: 'Arroz', price: 15 },
-    { name: 'Tortillas Extra (10)', price: 10 },
-  ]},
-  { category: 'Combos', description: 'Combos especiales', items: [
-    { name: 'Combo 3 Tacos + Bebida', price: 80 },
-    { name: 'Combo 5 Tacos + Bebida', price: 120 },
-    { name: 'Combo Familiar (10 Tacos + 2 Bebidas)', price: 220 },
-    { name: 'Combo Torta + Bebida', price: 75 },
+  { category: 'Complementa tu experiencia', description: 'Acompañamientos y salsas', items: [
+    { name: 'Salsa naranja cremosa', price: 0, image: 'https://images.unsplash.com/photo-1734772257288-d53770c7707f?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Salsa verde cremosa', price: 0, image: 'https://images.unsplash.com/photo-1722239312486-2675eac7cec3?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Cebolla asada', price: 0, image: 'https://images.unsplash.com/photo-1534352956036-cd81e27dd615?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Cebolla y Cilantro frescos', price: 0, image: 'https://images.unsplash.com/photo-1546393273-5ae641051e01?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Limones', price: 0, image: 'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=700&q=80' },
+    { name: 'Totopos', price: 0, image: 'https://images.unsplash.com/photo-1764025248642-6b0b403ac004?auto=format&fit=crop&w=700&q=80' },
   ]},
 ];
 
@@ -48,7 +35,7 @@ async function seed() {
     const result = run('INSERT INTO categories (name, description, sort_order) VALUES (?, ?, ?)', [cat.category, cat.description, i]);
     const catId = result.lastInsertRowid;
     cat.items.forEach((item, j) => {
-      run('INSERT INTO menu_items (category_id, name, price, sort_order) VALUES (?, ?, ?, ?)', [catId, item.name, item.price, j]);
+      run('INSERT INTO menu_items (category_id, name, price, image, sort_order) VALUES (?, ?, ?, ?, ?)', [catId, item.name, item.price, item.image, j]);
     });
   });
   console.log('Menú inicial creado exitosamente');

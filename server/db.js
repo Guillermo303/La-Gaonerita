@@ -6,13 +6,14 @@ import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const DB_PATH = join(__dirname, 'data.db');
+const DB_PATH = process.env.DB_FILE ? join(__dirname, process.env.DB_FILE) : join(__dirname, 'data.db');
+const PERSIST = process.env.DB_FILE !== ':memory:';
 
 let db;
 
 export async function initDB() {
   const SQL = await initSqlJs();
-  if (existsSync(DB_PATH)) {
+  if (PERSIST && existsSync(DB_PATH)) {
     const buffer = readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
   } else {
@@ -84,6 +85,20 @@ export async function initDB() {
   }
 
   try { db.run("ALTER TABLE orders ADD COLUMN mesa TEXT"); saveDB(); } catch {}
+  try { db.run("ALTER TABLE orders ADD COLUMN discount REAL DEFAULT 0"); saveDB(); } catch {}
+  try { db.run("ALTER TABLE orders ADD COLUMN promotion_id INTEGER"); saveDB(); } catch {}
+  try { db.run("ALTER TABLE orders ADD COLUMN promotion_name TEXT"); saveDB(); } catch {}
+
+  db.run(`CREATE TABLE IF NOT EXISTS inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    stock REAL NOT NULL DEFAULT 0,
+    unit TEXT DEFAULT 'pieza',
+    min_stock REAL DEFAULT 5,
+    cost_price REAL DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,6 +112,51 @@ export async function initDB() {
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    amount REAL NOT NULL,
+    method TEXT NOT NULL DEFAULT 'efectivo',
+    person_name TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS promotions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    discount_type TEXT NOT NULL CHECK(discount_type IN ('percentage', 'fixed')),
+    discount_value REAL NOT NULL,
+    min_purchase REAL DEFAULT 0,
+    applicable_items TEXT,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`);
+
+  const defaults = {
+    phone: '5512345678',
+    whatsapp: '525512345678',
+    email: 'contacto@laganerita.com',
+    address: 'Av. Principal 123, Col. Centro',
+    facebook: 'https://facebook.com/laganerita',
+    instagram: 'https://instagram.com/laganerita',
+    tiktok: 'https://tiktok.com/@laganerita',
+    business_hours: 'Lun-Sáb: 10:00-22:00, Dom: 11:00-21:00'
+  };
+  for (const [k, v] of Object.entries(defaults)) {
+    const existing = get('SELECT * FROM settings WHERE key = ?', [k]);
+    if (!existing) run('INSERT INTO settings (key, value) VALUES (?, ?)', [k, v]);
+  }
+  saveDB();
+
   const row = db.exec("SELECT COUNT(*) as count FROM users");
   const count = row.length ? row[0].values[0][0] : 0;
   if (count === 0) {
@@ -109,6 +169,7 @@ export async function initDB() {
 }
 
 function saveDB() {
+  if (!PERSIST) return;
   const data = db.export();
   const buffer = Buffer.from(data);
   writeFileSync(DB_PATH, buffer);

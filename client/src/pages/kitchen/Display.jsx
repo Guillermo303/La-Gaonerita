@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { orders as ordersApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
+import { requestNotifyPermission, notify } from '../../lib/notifications';
+import { printTicket } from '../../lib/print';
+import { notifyOrderReady } from '../../lib/whatsapp';
 
 function ElapsedTimer({ created, status }) {
   const [elapsed, setElapsed] = useState(() => Date.now() - new Date(created + 'Z').getTime());
@@ -91,6 +94,7 @@ export default function KitchenDisplay() {
   };
 
   useEffect(() => {
+    requestNotifyPermission();
     ordersApi.getKitchen().then(setOrders).catch(console.error);
     if (socket) {
       socket.emit('join:kitchen');
@@ -104,6 +108,9 @@ export default function KitchenDisplay() {
               return updated;
             }
             playNotification();
+            notify(`Nueva orden #${order.id}`, {
+              body: `${order.customer_name} - $${order.total}${order.notes ? ` (${order.notes})` : ''}`
+            });
             return [...prev, order];
           });
         } else {
@@ -136,15 +143,22 @@ export default function KitchenDisplay() {
       )}
       <div className="space-y-1 mb-3">
         {order.items?.map(item => (
-          <div key={item.id} className="flex justify-between text-lg">
-            <span>{item.quantity}x {item.name}</span>
-            <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+          <div key={item.id}>
+            <div className="flex justify-between text-lg">
+              <span>{item.quantity}x {item.name}</span>
+              <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+            </div>
+            {item.notes && <div className="text-xs text-yellow-600 ml-2">📝 {item.notes}</div>}
           </div>
         ))}
       </div>
       {order.notes && <div className="text-sm text-yellow-700 bg-yellow-50 p-2 rounded mb-2">📝 {order.notes}</div>}
       {!compact && (
         <div className="flex gap-2 mt-2">
+          <button onClick={() => printTicket({ type: 'comanda', order, items: order.items || [] })} className="bg-ink-100 text-ink-600 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-ink-200">🖨️ Imprimir</button>
+          {order.status === 'listo' && order.customer_phone && (
+            <a href={notifyOrderReady(order)} target="_blank" rel="noopener noreferrer" className="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-green-200">📱 WhatsApp</a>
+          )}
           {order.status === 'pendiente' && <button onClick={() => updateStatus(order.id, 'preparando')} className="flex-1 bg-blue-500 text-white py-2 rounded-lg text-lg font-semibold hover:bg-blue-600">Preparar</button>}
           {order.status === 'preparando' && <button onClick={() => updateStatus(order.id, 'listo')} className="flex-1 bg-green-500 text-white py-2 rounded-lg text-lg font-semibold hover:bg-green-600">Listo</button>}
           {order.status === 'pendiente' && <button onClick={() => updateStatus(order.id, 'cancelado')} className="bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200">Cancelar</button>}

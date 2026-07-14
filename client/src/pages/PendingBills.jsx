@@ -63,9 +63,12 @@ export default function PendingBills() {
                 </div>
                 <div className="text-sm text-ink-500 space-y-0.5 mb-2">
                   {order.items?.map(item => (
-                    <div key={item.id} className="flex justify-between">
-                      <span>{item.quantity}x {item.name}</span>
-                      <span>{formatPrice(item.price * item.quantity)}</span>
+                    <div key={item.id}>
+                      <div className="flex justify-between">
+                        <span>{item.quantity}x {item.name}</span>
+                        <span>{formatPrice(item.price * item.quantity)}</span>
+                      </div>
+                      {item.notes && <div className="text-xs text-yellow-600 ml-2">📝 {item.notes}</div>}
                     </div>
                   ))}
                 </div>

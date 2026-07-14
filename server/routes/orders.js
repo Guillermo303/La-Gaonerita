@@ -46,7 +46,7 @@ router.get('/:id', authenticate, (req, res) => {
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method } = req.body;
+  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, discount, promotion_id, promotion_name } = req.body;
   if (!customer_name || !order_type || !items || !items.length) return res.status(400).json({ error: 'Nombre, tipo de orden y al menos un producto requeridos' });
 
   let total = 0;
@@ -61,8 +61,9 @@ router.post('/', authenticate, (req, res) => {
     return { name: item.name, menu_item_id: null, quantity: item.quantity, price: item.price, notes: item.notes || null };
   });
 
-  const result = run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [req.user.id, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo']);
+  const finalTotal = Math.max(0, total - (parseFloat(discount) || 0));
+  const result = run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method, discount, promotion_id, promotion_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [req.user.id, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, finalTotal, notes || null, payment_method || 'efectivo', parseFloat(discount) || 0, promotion_id || null, promotion_name || null]);
   const orderId = result.lastInsertRowid;
 
   for (const item of orderItems) {
@@ -109,10 +110,41 @@ router.put('/:id/payment', authenticate, authorize('admin', 'mesero'), (req, res
   const { payment_status } = req.body;
   if (!['pendiente', 'pagado', 'reembolsado'].includes(payment_status)) return res.status(400).json({ error: 'Estado inválido' });
   run('UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [payment_status, req.params.id]);
+  const order = get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  const io = req.app.get('io');
+  notifyOrderUpdate(io, order);
   res.json({ success: true });
 });
 
-router.get('/kitchen/active', (req, res) => {
+// --- Split payments ---
+
+router.post('/:id/payments', authenticate, authorize('admin', 'mesero'), (req, res) => {
+  const { amount, method, person_name } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ error: 'Monto inválido' });
+  const order = get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
+  const paid = query('SELECT COALESCE(SUM(amount),0) as paid FROM payments WHERE order_id = ?', [req.params.id])[0].paid;
+  const newPaid = paid + amount;
+  run('INSERT INTO payments (order_id, amount, method, person_name) VALUES (?, ?, ?, ?)', [req.params.id, amount, method || 'efectivo', person_name || null]);
+  if (newPaid >= order.total && order.payment_status !== 'pagado') {
+    run('UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', ['pagado', req.params.id]);
+  }
+  const updatedOrder = get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  updatedOrder.items = query('SELECT * FROM order_items WHERE order_id = ?', [updatedOrder.id]);
+  const io = req.app.get('io');
+  notifyOrderUpdate(io, updatedOrder);
+  res.status(201).json({ success: true, payments: query('SELECT * FROM payments WHERE order_id = ? ORDER BY created_at ASC', [req.params.id]), order: updatedOrder });
+});
+
+router.get('/:id/payments', authenticate, (req, res) => {
+  const order = get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
+  const payments = query('SELECT * FROM payments WHERE order_id = ? ORDER BY created_at ASC', [req.params.id]);
+  const paid = payments.reduce((s, p) => s + p.amount, 0);
+  res.json({ payments, paid, remaining: Math.max(0, order.total - paid), total: order.total });
+});
+
+router.get('/kitchen/active', authenticate, authorize('admin', 'cocina', 'mesero'), (req, res) => {
   const orders = query("SELECT * FROM orders WHERE status IN ('pendiente', 'preparando', 'listo') ORDER BY CASE order_type WHEN 'local' THEN 0 ELSE 1 END, created_at ASC");
   res.json(orders.map(order => ({ ...order, items: query('SELECT * FROM order_items WHERE order_id = ?', [order.id]) })));
 });

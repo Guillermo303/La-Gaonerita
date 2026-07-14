@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -19,10 +20,18 @@ import ClientDashboard from './pages/ClientDashboard';
 import TVDisplay from './pages/TVDisplay';
 import PendingBills from './pages/PendingBills';
 import AdminPanel from './pages/AdminPanel';
+import QRPage from './pages/QRPage';
+import Profile from './pages/Profile';
+import POS from './pages/POS';
+import Inventory from './pages/Inventory';
+import Reports from './pages/Reports';
+import { settings as settingsApi } from './api';
 
 function WhatsAppBtn() {
+  const [wa, setWa] = useState('525512345678');
+  useEffect(() => { settingsApi.get().then(s => { if (s.whatsapp) setWa(s.whatsapp); }).catch(() => {}); }, []);
   return (
-    <a href="https://wa.me/525512345678?text=¡Hola! Quiero ordenar unos tacos 🍃"
+    <a href={`https://wa.me/${wa}?text=${encodeURIComponent('¡Hola! Quiero ordenar unos tacos 🍃')}`}
       target="_blank" rel="noopener noreferrer"
       className="fixed bottom-5 right-5 z-50 w-14 h-14 bg-green-500 rounded-full shadow-lg hover:bg-green-600 hover:scale-110 transition flex items-center justify-center text-white text-3xl"
       aria-label="Pedir por WhatsApp">
@@ -68,12 +77,17 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/profile" element={<ProtectedRoute roles={['admin', 'mesero', 'cocina', 'cliente']}><Profile /></ProtectedRoute>} />
+          <Route path="/pos" element={<ProtectedRoute roles={['admin', 'mesero']}><POS /></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute roles={['admin', 'mesero', 'cocina']}><Inventory /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute roles={['admin', 'mesero']}><Reports /></ProtectedRoute>} />
           <Route path="/pending-bills" element={<ProtectedRoute roles={['admin', 'mesero']}><PendingBills /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute roles={['admin', 'cliente']}><ClientDashboard /></ProtectedRoute>} />
           <Route path="/my-orders" element={<ProtectedRoute roles={['admin', 'mesero', 'cliente']}><MyOrders /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute roles={['admin', 'mesero', 'cocina', 'cliente']}><History /></ProtectedRoute>} />
           <Route path="/local-dashboard" element={<ClientDashboard />} />
           <Route path="/local-order" element={<OrderLocal />} />
+          <Route path="/qr" element={<QRPage />} />
           <Route path="/about" element={<Navigate to="/" replace />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/join" element={<Join />} />
