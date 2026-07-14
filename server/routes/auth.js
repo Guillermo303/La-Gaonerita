@@ -8,6 +8,7 @@ const router = Router();
 router.post('/register', (req, res) => {
   const { name, email, password, phone, role } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
+  if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
   const allowedRole = ['cliente', 'mesero'].includes(role) ? role : 'cliente';
   try {
     const existing = get('SELECT id FROM users WHERE email = ?', [email]);

@@ -6,13 +6,14 @@ import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const DB_PATH = join(__dirname, 'data.db');
+const DB_PATH = process.env.DB_FILE ? join(__dirname, process.env.DB_FILE) : join(__dirname, 'data.db');
+const PERSIST = process.env.DB_FILE !== ':memory:';
 
 let db;
 
 export async function initDB() {
   const SQL = await initSqlJs();
-  if (existsSync(DB_PATH)) {
+  if (PERSIST && existsSync(DB_PATH)) {
     const buffer = readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
   } else {
@@ -109,6 +110,7 @@ export async function initDB() {
 }
 
 function saveDB() {
+  if (!PERSIST) return;
   const data = db.export();
   const buffer = Buffer.from(data);
   writeFileSync(DB_PATH, buffer);

@@ -112,7 +112,7 @@ router.put('/:id/payment', authenticate, authorize('admin', 'mesero'), (req, res
   res.json({ success: true });
 });
 
-router.get('/kitchen/active', (req, res) => {
+router.get('/kitchen/active', authenticate, authorize('admin', 'cocina', 'mesero'), (req, res) => {
   const orders = query("SELECT * FROM orders WHERE status IN ('pendiente', 'preparando', 'listo') ORDER BY CASE order_type WHEN 'local' THEN 0 ELSE 1 END, created_at ASC");
   res.json(orders.map(order => ({ ...order, items: query('SELECT * FROM order_items WHERE order_id = ?', [order.id]) })));
 });
