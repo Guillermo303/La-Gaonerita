@@ -6,9 +6,6 @@ import Home from './pages/Home';
 import Menu from './pages/Menu';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import WaiterDashboard from './pages/waiter/Dashboard';
-import NewOrder from './pages/waiter/NewOrder';
-import KitchenDisplay from './pages/kitchen/Display';
 import Checkout from './pages/Checkout';
 import MyOrders from './pages/MyOrders';
 import OrderLocal from './pages/OrderLocal';
@@ -16,9 +13,6 @@ import Join from './pages/Join';
 import History from './pages/History';
 import Jobs from './pages/Jobs';
 import ClientDashboard from './pages/ClientDashboard';
-import TVDisplay from './pages/TVDisplay';
-import PendingBills from './pages/PendingBills';
-import AdminPanel from './pages/AdminPanel';
 
 function WhatsAppBtn() {
   return (
@@ -44,43 +38,23 @@ function PublicLayout() {
   );
 }
 
-function StaffLayout() {
-  return (
-    <>
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <Outlet />
-      </main>
-    </>
-  );
-}
-
 export default function App() {
   return (
     <div className="min-h-screen bg-cream-50">
       <Routes>
-        <Route path="/kitchen" element={<KitchenDisplay />} />
-        <Route path="/tv" element={<TVDisplay />} />
-        <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>} />
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/pending-bills" element={<ProtectedRoute roles={['admin', 'mesero']}><PendingBills /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute roles={['admin', 'cliente']}><ClientDashboard /></ProtectedRoute>} />
-          <Route path="/my-orders" element={<ProtectedRoute roles={['admin', 'mesero', 'cliente']}><MyOrders /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute roles={['admin', 'mesero', 'cocina', 'cliente']}><History /></ProtectedRoute>} />
-          <Route path="/local-dashboard" element={<ClientDashboard />} />
+          <Route path="/my-orders" element={<ProtectedRoute roles={['admin', 'cliente']}><MyOrders /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute roles={['admin', 'cliente']}><History /></ProtectedRoute>} />
           <Route path="/local-order" element={<OrderLocal />} />
           <Route path="/about" element={<Navigate to="/" replace />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/join" element={<Join />} />
-        </Route>
-        <Route element={<StaffLayout />}>
-          <Route path="/waiter" element={<ProtectedRoute roles={['admin', 'mesero']}><WaiterDashboard /></ProtectedRoute>} />
-          <Route path="/waiter/new-order" element={<ProtectedRoute roles={['admin', 'mesero']}><NewOrder /></ProtectedRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

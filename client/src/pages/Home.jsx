@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../lib/utils';
 import Reveal from '../components/Reveal';
+import ReservationModal from '../components/ReservationModal';
 
 const IMG = {
   hero: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1800&q=80',
@@ -224,6 +225,8 @@ function SectionLabel({ children, light }) {
 }
 
 export default function Home() {
+  const [reserving, setReserving] = useState(false);
+
   return (
     <div className="bg-cream-50">
       {/* Hero */}
@@ -249,7 +252,7 @@ export default function Home() {
               <Link to="/menu" className="bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600 hover:scale-105 transition">Ver Menú</Link>
               <Link to="/local-order" className="bg-white/10 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition">Pedir desde el Local 🏠</Link>
               <Link to="/register" className="border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-cream-100/10 transition">Ordenar a Domicilio</Link>
-              <Link to="/local-dashboard" className="bg-white/10 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition">Pantalla de Cliente 📱</Link>
+              <button onClick={() => setReserving(true)} className="border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-cream-100/10 transition">Reservar Mesa 🍽️</button>
             </div>
           </Reveal>
         </div>
@@ -398,9 +401,12 @@ export default function Home() {
                 </div>
               </div>
               <Link to="/local-order" className="mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Pedir desde tu Mesa 🏠</Link>
+              <button onClick={() => setReserving(true)} className="mt-3 inline-block w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 hover:bg-brand-50 transition">Reservar Mesa 🍽️</button>
             </Reveal>
           </div>
         </section>
+
+      {reserving && <ReservationModal onClose={() => setReserving(false)} />}
     </div>
   );
 }

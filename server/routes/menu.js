@@ -37,15 +37,23 @@ router.delete('/categories/:id', authenticate, authorize('admin'), (req, res) =>
 });
 
 router.post('/items', authenticate, authorize('admin'), (req, res) => {
-  const { category_id, name, description, price, image } = req.body;
+  const { category_id, name, description, price, image, max_stock } = req.body;
   if (!category_id || !name || !price) return res.status(400).json({ error: 'Categoría, nombre y precio requeridos' });
-  const result = run('INSERT INTO menu_items (category_id, name, description, price, image) VALUES (?, ?, ?, ?, ?)', [category_id, name, description || null, price, image || null]);
-  res.status(201).json({ id: result.lastInsertRowid, category_id, name, price });
+  const capacity = Number.isFinite(Number(max_stock)) && max_stock !== undefined ? Math.max(0, Math.round(max_stock)) : 20;
+  const result = run('INSERT INTO menu_items (category_id, name, description, price, image, stock, max_stock) VALUES (?, ?, ?, ?, ?, ?, ?)', [category_id, name, description || null, price, image || null, capacity, capacity]);
+  res.status(201).json({ id: result.lastInsertRowid, category_id, name, price, stock: capacity, max_stock: capacity });
 });
 
 router.put('/items/:id', authenticate, authorize('admin'), (req, res) => {
-  const { category_id, name, description, price, image, available } = req.body;
-  run('UPDATE menu_items SET category_id = COALESCE(?, category_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), image = COALESCE(?, image), available = COALESCE(?, available) WHERE id = ?', [category_id, name, description, price, image, available, req.params.id]);
+  const { category_id, name, description, price, image, available, max_stock } = req.body;
+  run('UPDATE menu_items SET category_id = COALESCE(?, category_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), image = COALESCE(?, image), available = COALESCE(?, available), max_stock = COALESCE(?, max_stock) WHERE id = ?', [category_id, name, description, price, image, available, max_stock, req.params.id]);
+  res.json({ success: true });
+});
+
+router.put('/items/:id/stock', authenticate, authorize('admin'), (req, res) => {
+  const { stock } = req.body;
+  if (!Number.isFinite(Number(stock)) || stock < 0) return res.status(400).json({ error: 'Cantidad inválida' });
+  run('UPDATE menu_items SET stock = ? WHERE id = ?', [Math.round(stock), req.params.id]);
   res.json({ success: true });
 });
 

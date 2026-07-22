@@ -7,14 +7,23 @@ const router = Router();
 router.get('/', (req, res) => {
   const mesas = query('SELECT * FROM mesas ORDER BY sort_order');
   const orders = query("SELECT id, mesa, status, total, payment_status, customer_name FROM orders WHERE order_type = 'local' AND status IN ('pendiente','preparando','listo','completado') ORDER BY created_at DESC");
+  const today = new Date().toLocaleDateString('en-CA');
+  const reservations = query("SELECT * FROM reservations WHERE date = ? AND status IN ('confirmada','ocupada') ORDER BY time", [today]);
 
   const result = mesas.map(m => {
     const activeOrders = orders.filter(o => o.mesa === m.name && o.status !== 'completado');
     const pendingPayment = orders.filter(o => o.mesa === m.name && o.status === 'completado' && o.payment_status !== 'pagado');
     const lastOrder = orders.find(o => o.mesa === m.name);
+    const mesaReservations = reservations.filter(r => r.mesa_id === m.id);
+    const activeReservation = mesaReservations.find(r => r.status === 'ocupada');
+    const nextReservation = mesaReservations.find(r => r.status === 'confirmada');
+    const shownReservation = activeReservation || nextReservation;
+
     let state = 'libre';
     if (pendingPayment.length) state = 'pendiente-pago';
     else if (activeOrders.length) state = 'ocupada';
+    else if (activeReservation) state = 'ocupada';
+    else if (nextReservation) state = 'reservada';
 
     return {
       ...m,
@@ -22,7 +31,14 @@ router.get('/', (req, res) => {
       activeOrders: activeOrders.length,
       pendingPayment: pendingPayment.length,
       lastCustomer: lastOrder?.customer_name || null,
-      lastOrderId: lastOrder?.id || null
+      lastOrderId: lastOrder?.id || null,
+      reservation: shownReservation ? {
+        id: shownReservation.id,
+        customer_name: shownReservation.customer_name,
+        time: shownReservation.time,
+        party_size: shownReservation.party_size,
+        status: shownReservation.status
+      } : null
     };
   });
 

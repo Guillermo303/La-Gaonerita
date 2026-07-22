@@ -2,6 +2,8 @@ import Stripe from 'stripe';
 import { Router } from 'express';
 import { query, get, run } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { decrementStock } from '../inventory.js';
+import { decrementSuppliesForOrder } from '../supplies.js';
 
 const router = Router();
 
@@ -67,7 +69,9 @@ router.post('/', authenticate, (req, res) => {
 
   for (const item of orderItems) {
     run('INSERT INTO order_items (order_id, menu_item_id, name, quantity, price, notes) VALUES (?, ?, ?, ?, ?, ?)', [orderId, item.menu_item_id, item.name, item.quantity, item.price, item.notes]);
+    if (item.menu_item_id) decrementStock(item.menu_item_id, item.quantity);
   }
+  decrementSuppliesForOrder(orderItems);
 
   const order = get('SELECT * FROM orders WHERE id = ?', [orderId]);
   order.items = query('SELECT * FROM order_items WHERE order_id = ?', [orderId]);

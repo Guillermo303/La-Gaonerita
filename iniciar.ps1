@@ -1,5 +1,5 @@
-# La Gaonerita - Lanzador
-# Inicia backend y frontend (si no estan corriendo) y abre la pagina en el navegador.
+# La Gaonerita - Lanzador (clientes)
+# Inicia backend, app de clientes y app de personal (si no estan corriendo) y abre la pagina de clientes en el navegador.
 
 $root = $PSScriptRoot
 
@@ -18,14 +18,25 @@ if (-not (Test-Port 3001)) {
 }
 
 if (-not (Test-Port 5173)) {
-    Write-Host "Iniciando frontend (puerto 5173)..." -ForegroundColor Cyan
-    Start-Process powershell -ArgumentList '-NoExit', '-Command', "`$host.UI.RawUI.WindowTitle = 'La Gaonerita - Frontend'; Set-Location -LiteralPath '$root\client'; npx vite --host" -WindowStyle Minimized
+    Write-Host "Iniciando app de clientes (puerto 5173)..." -ForegroundColor Cyan
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', "`$host.UI.RawUI.WindowTitle = 'La Gaonerita - Clientes'; Set-Location -LiteralPath '$root\client'; npx vite --host" -WindowStyle Minimized
 }
 
-# Esperar a que el frontend responda (max 20 segundos)
+if (-not (Test-Port 5174)) {
+    Write-Host "Iniciando app de personal (puerto 5174)..." -ForegroundColor Cyan
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', "`$host.UI.RawUI.WindowTitle = 'La Gaonerita - Personal'; Set-Location -LiteralPath '$root\staff'; npx vite --host" -WindowStyle Minimized
+}
+
+if (-not (Test-Port 5175)) {
+    Write-Host "Iniciando app de socios (puerto 5175)..." -ForegroundColor Cyan
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', "`$host.UI.RawUI.WindowTitle = 'La Gaonerita - Socios'; Set-Location -LiteralPath '$root\socios'; npx vite --host" -WindowStyle Minimized
+}
+
+# Esperar a que la app de clientes responda (max 20 segundos)
 for ($i = 0; $i -lt 40; $i++) {
     if (Test-Port 5173) { break }
     Start-Sleep -Milliseconds 500
 }
 
+Write-Host "App de personal disponible en http://localhost:5174" -ForegroundColor Yellow
 Start-Process "http://localhost:5173"

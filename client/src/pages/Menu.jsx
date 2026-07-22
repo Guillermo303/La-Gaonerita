@@ -40,26 +40,32 @@ export default function Menu() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cat.items.map(item => {
               const cartItem = inCart(item.id);
+              const stock = item.stock ?? 20;
+              const agotado = stock <= 0;
+              const pocasUnidades = !agotado && stock <= 5;
+              const alTope = cartItem && cartItem.quantity >= stock;
               return (
-                <div key={item.id} className={`bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
+                <div key={item.id} className={`bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
                     <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
                   </div>
                   {item.description && <p className="text-ink-400 text-sm mt-2 leading-relaxed">{item.description}</p>}
+                  {agotado && <p className="text-red-500 text-xs font-bold uppercase tracking-wider mt-2">Agotado por hoy</p>}
+                  {pocasUnidades && <p className="text-yellow-600 text-xs font-bold uppercase tracking-wider mt-2">¡Últimas {stock}!</p>}
                   <div className="mt-4">
                     {cartItem ? (
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <button onClick={() => updateQty(item.id, -1)} aria-label={`Quitar un ${item.name}`} className="w-9 h-9 rounded-full bg-cream-100 text-ink-700 font-bold text-lg hover:bg-cream-200 transition">−</button>
                           <span className="w-6 text-center font-bold text-ink-900">{cartItem.quantity}</span>
-                          <button onClick={() => updateQty(item.id, 1)} aria-label={`Agregar otro ${item.name}`} className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold text-lg hover:bg-brand-600 transition">+</button>
+                          <button onClick={() => updateQty(item.id, 1)} disabled={alTope} aria-label={`Agregar otro ${item.name}`} className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold text-lg hover:bg-brand-600 transition disabled:opacity-40 disabled:cursor-not-allowed">+</button>
                         </div>
                         <span className="text-sm font-semibold text-ink-500">{formatPrice(item.price * cartItem.quantity)}</span>
                       </div>
                     ) : (
-                      <button onClick={() => add(item)} className="w-full bg-cream-100 text-brand-700 py-2 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-brand-500 hover:text-white transition">
-                        Agregar +
+                      <button onClick={() => add(item)} disabled={agotado} className="w-full bg-cream-100 text-brand-700 py-2 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-brand-500 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-cream-100 disabled:hover:text-brand-700">
+                        {agotado ? 'Agotado' : 'Agregar +'}
                       </button>
                     )}
                   </div>

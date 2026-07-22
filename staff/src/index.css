@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+
+/* Franja de sarape */
+.serape-line {
+  height: 4px;
+  background: repeating-linear-gradient(90deg,
+    #D6431F 0, #D6431F 48px,
+    #E2A33F 48px, #E2A33F 96px,
+    #2F7D4F 96px, #2F7D4F 144px,
+    #8C4A2F 144px, #8C4A2F 192px);
+}
+
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

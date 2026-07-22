@@ -7,7 +7,8 @@ import CobroModal from './CobroModal';
 const mesaStyles = {
   libre: { bg: 'bg-white', border: 'border-ink-200', text: 'text-ink-400', dot: '○', label: 'Libre' },
   ocupada: { bg: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-700', dot: '🟡', label: 'Ocupada' },
-  'pendiente-pago': { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700', dot: '💰', label: 'Cuenta' }
+  'pendiente-pago': { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700', dot: '💰', label: 'Cuenta' },
+  reservada: { bg: 'bg-blue-50', border: 'border-blue-400', text: 'text-blue-700', dot: '📅', label: 'Reservada' }
 };
 
 const statusColors = {
@@ -61,11 +62,16 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
           </div>
 
           <div className="p-5 space-y-4">
-            {/* Empty / Actions for libre */}
-            {mesa.state === 'libre' && (
+            {/* Empty / Actions for libre or reservada */}
+            {(mesa.state === 'libre' || mesa.state === 'reservada') && (
               <div className="text-center py-10">
-                <div className="text-4xl mb-3">🍽️</div>
-                <p className="text-ink-400 mb-4">Mesa libre</p>
+                <div className="text-4xl mb-3">{mesa.state === 'reservada' ? '📅' : '🍽️'}</div>
+                <p className="text-ink-400 mb-1">{mesa.state === 'reservada' ? 'Mesa libre, con reservación próxima' : 'Mesa libre'}</p>
+                {mesa.reservation && (
+                  <p className="text-sm text-blue-700 font-semibold mb-4">
+                    {mesa.reservation.time} · {mesa.reservation.customer_name} · 👥 {mesa.reservation.party_size}
+                  </p>
+                )}
                 <button onClick={goToNewOrder}
                   className="bg-brand-500 text-white px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-600 transition">
                   + Nueva Orden en {mesa.name}

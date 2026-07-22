@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
+import { openReceiptWindow, writeReceipt, printReceipt } from '../lib/print';
 
 export default function CobroModal({ order, onClose, onPaid }) {
   const [metodo, setMetodo] = useState(null);
@@ -17,13 +18,19 @@ export default function CobroModal({ order, onClose, onPaid }) {
       const r = parseFloat(recibido);
       if (!r || r < total) { setError('La cantidad no cubre el total'); return; }
     }
+    // La ventana del recibo se abre aquí mismo, en el mismo tick del clic,
+    // para que el navegador no la trate como un popup no solicitado.
+    const printWin = metodo === 'tarjeta' ? openReceiptWindow() : null;
+
     setLoading(true);
     setError('');
     try {
       await ordersApi.updatePayment(order.id, 'pagado');
+      if (printWin) writeReceipt(printWin, order, metodo);
       onPaid(order.id);
       onClose();
     } catch (err) {
+      if (printWin && !printWin.closed) printWin.close();
       setError(err.message);
     } finally {
       setLoading(false);
@@ -123,16 +130,22 @@ export default function CobroModal({ order, onClose, onPaid }) {
           {/* Tarjeta panel */}
           {metodo === 'tarjeta' && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              💳 Cobra <strong>{formatPrice(total)}</strong> en la terminal y confirma aquí.
+              💳 Cobra <strong>{formatPrice(total)}</strong> en la terminal y confirma aquí. Al confirmar se imprime el ticket automáticamente.
             </div>
           )}
 
           {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm">{error}</div>}
 
-          <button onClick={handlePago} disabled={!puedePagar || loading}
-            className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 transition disabled:opacity-40">
-            {loading ? 'Procesando…' : `Cobrar ${formatPrice(total)}`}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handlePago} disabled={!puedePagar || loading}
+              className="flex-1 bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 transition disabled:opacity-40">
+              {loading ? 'Procesando…' : `Cobrar ${formatPrice(total)}`}
+            </button>
+            <button type="button" onClick={() => printReceipt(order, metodo || order.payment_method)} title="Imprimir recibo"
+              className="px-4 py-3.5 rounded-xl border-2 border-ink-200 text-ink-500 hover:border-ink-300 hover:text-ink-700 transition text-lg">
+              🖨️
+            </button>
+          </div>
         </div>
       </div>
     </div>

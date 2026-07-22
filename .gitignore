@@ -1,4 +1,7 @@
 node_modules/
 dist/
 data.db
+server/backups/
+server/google-service-account.json
+server/tests/tmp/
 .env

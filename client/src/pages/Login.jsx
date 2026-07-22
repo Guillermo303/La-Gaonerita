@@ -6,7 +6,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -14,9 +14,12 @@ export default function Login() {
     setError('');
     try {
       const user = await login(email, password);
-      if (user.role === 'cocina') navigate('/kitchen');
-      else if (user.role === 'mesero') navigate('/waiter');
-      else navigate('/dashboard');
+      if (user.role === 'cocina' || user.role === 'mesero') {
+        logout();
+        setError('Esta cuenta es de personal. Usa el panel de trabajadores para iniciar sesión.');
+        return;
+      }
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     }

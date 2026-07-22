@@ -78,9 +78,94 @@ function BigButton({ orders, onAdvance }) {
   );
 }
 
+const activeStatusBadge = {
+  pendiente: 'bg-yellow-100 text-yellow-800',
+  preparando: 'bg-blue-100 text-blue-800',
+  listo: 'bg-green-100 text-green-800'
+};
+
+function HistorialActivas({ orders, onDeliver }) {
+  const [delivering, setDelivering] = useState(null);
+  const [entregadosHoy, setEntregadosHoy] = useState([]);
+
+  useEffect(() => {
+    ordersApi.getHistory().then(all => {
+      const hoy = new Date().toDateString();
+      setEntregadosHoy(all.filter(o => o.status === 'completado' && new Date(o.created_at + 'Z').toDateString() === hoy));
+    }).catch(() => {});
+  }, [orders]);
+
+  const sorted = [...orders].sort((a, b) => new Date(a.created_at + 'Z') - new Date(b.created_at + 'Z'));
+
+  const handleDeliver = async (id) => {
+    setDelivering(id);
+    await onDeliver(id);
+    setDelivering(null);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Órdenes Activas ({sorted.length})</h2>
+      {sorted.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <div className="text-6xl mb-4">🍃</div>
+          <p className="text-lg">No hay órdenes activas en este momento</p>
+        </div>
+      ) : (
+        <div className="space-y-2 mb-10">
+          {sorted.map(order => (
+            <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="font-black text-lg">#{order.id}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${activeStatusBadge[order.status]}`}>{statusLabels[order.status]}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{typeLabels[order.order_type]}</span>
+                  <span className="font-semibold text-gray-800">{order.customer_name}</span>
+                </div>
+                <div className="text-sm text-gray-400 truncate">
+                  {order.items?.map(i => `${i.quantity}x ${i.name}`).join(' · ')}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="font-bold text-gray-800">{formatPrice(order.total)}</span>
+                <button
+                  onClick={() => handleDeliver(order.id)}
+                  disabled={delivering === order.id}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-purple-700 transition disabled:opacity-50"
+                >
+                  {delivering === order.id ? 'Marcando…' : '✅ Marcar Entregado'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {entregadosHoy.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">Entregados hoy ({entregadosHoy.length})</h3>
+          <div className="space-y-1.5">
+            {entregadosHoy.map(order => (
+              <div key={order.id} className="bg-gray-50 rounded-lg border border-gray-100 p-3 flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold">#{order.id}</span>
+                  <span className="text-gray-500">{order.customer_name}</span>
+                  <span className="text-xs text-gray-400">{typeLabels[order.order_type]}</span>
+                </div>
+                <span className="font-semibold text-gray-600">{formatPrice(order.total)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function KitchenDisplay() {
   const [orders, setOrders] = useState([]);
   const [bigMode, setBigMode] = useState(false);
+  const [view, setView] = useState('tablero');
   const socket = useSocket();
   const audioRef = useRef(null);
 
@@ -154,6 +239,7 @@ export default function KitchenDisplay() {
   );
 
   const handleAdvance = (id, status) => updateStatus(id, status);
+  const handleDeliver = (id) => ordersApi.updateStatus(id, 'completado').catch(console.error);
 
   if (bigMode) {
     return (
@@ -167,12 +253,21 @@ export default function KitchenDisplay() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+Af39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+Af39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f38=" preload="auto"></audio>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-3xl font-bold text-gray-800">👨‍🍳 Cocina - La Gaonerita</h1>
-        <button onClick={() => setBigMode(true)} className="bg-ink-900 text-white px-5 py-3 rounded-xl text-lg font-bold hover:bg-ink-800 transition shadow-lg flex items-center gap-2">
-          <span className="text-2xl">🔘</span> Botón Físico
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-white rounded-xl shadow-sm border border-gray-200 p-1">
+            <button onClick={() => setView('tablero')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'tablero' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Tablero</button>
+            <button onClick={() => setView('historial')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'historial' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Historial</button>
+          </div>
+          <button onClick={() => setBigMode(true)} className="bg-ink-900 text-white px-5 py-3 rounded-xl text-lg font-bold hover:bg-ink-800 transition shadow-lg flex items-center gap-2">
+            <span className="text-2xl">🔘</span> Botón Físico
+          </button>
+        </div>
       </div>
+      {view === 'historial' ? (
+        <HistorialActivas orders={orders} onDeliver={handleDeliver} />
+      ) : (
       <div className="grid grid-cols-3 gap-4">
         <div>
           <h2 className="text-xl font-bold text-yellow-700 bg-yellow-100 p-3 rounded-t-lg text-center">Pendientes ({pendingOrders.length})</h2>
@@ -193,6 +288,7 @@ export default function KitchenDisplay() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

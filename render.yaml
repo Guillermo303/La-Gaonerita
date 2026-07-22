@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: gaonerita-server
+    runtime: node
+    plan: starter
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_FILE
+        value: /var/data/data.db
+      - key: BACKUP_DIR
+        value: /var/data/backups
+      - key: FRONTEND_URL
+        value: https://gaonerita-client.onrender.com,https://gaonerita-staff.onrender.com,https://gaonerita-socios.onrender.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+    disk:
+      name: gaonerita-data
+      mountPath: /var/data
+      sizeGB: 1
+
+  - type: static
+    name: gaonerita-client
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://gaonerita-server.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: static
+    name: gaonerita-staff
+    rootDir: staff
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://gaonerita-server.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: static
+    name: gaonerita-socios
+    rootDir: socios
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://gaonerita-server.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
