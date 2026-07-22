@@ -1729,9 +1729,9 @@ export default function AdminPanel() {
         </div>
       </div>
       <div className="bg-white border-b border-ink-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto flex flex-wrap">
           {tabs.map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`px-5 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
+            <button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
           ))}
         </div>
       </div>
