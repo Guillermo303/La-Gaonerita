@@ -1732,16 +1732,18 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-cream-50">
-      <div className="bg-ink-900 text-cream-50 py-4 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-black font-display">⚙️ Admin</h1>
+      <div className="sticky top-0 z-30">
+        <div className="bg-ink-900 text-cream-50 py-4 px-6">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-2xl font-black font-display">⚙️ Admin</h1>
+          </div>
         </div>
-      </div>
-      <div className="bg-white border-b border-ink-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto flex flex-wrap">
-          {tabs.map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
-          ))}
+        <div className="bg-white border-b border-ink-200">
+          <div className="max-w-7xl mx-auto flex flex-wrap">
+            {tabs.map(t => (
+              <button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-6 py-6">
