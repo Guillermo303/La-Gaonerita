@@ -1,8 +1,12 @@
 services:
+  # Plan gratuito para pruebas: sin disco persistente, así que la base de
+  # datos se reinicia con cada redeploy y el servicio se duerme tras 15 min
+  # sin tráfico. Antes de usarlo con clientes reales, agregar de vuelta
+  # `plan: starter` + el bloque `disk` (ver historial de este archivo) y las
+  # variables DB_FILE/BACKUP_DIR apuntando al disco montado.
   - type: web
     name: gaonerita-server
     runtime: node
-    plan: starter
     rootDir: server
     buildCommand: npm install
     startCommand: npm start
@@ -11,18 +15,10 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: DB_FILE
-        value: /var/data/data.db
-      - key: BACKUP_DIR
-        value: /var/data/backups
       - key: FRONTEND_URL
         value: https://gaonerita-client.onrender.com,https://gaonerita-staff.onrender.com,https://gaonerita-socios.onrender.com
       - key: STRIPE_SECRET_KEY
         sync: false
-    disk:
-      name: gaonerita-data
-      mountPath: /var/data
-      sizeGB: 1
 
   - type: web
     runtime: static
