@@ -84,6 +84,53 @@ function Resumen({ allOrders, menuData, mesas }) {
   );
 }
 
+function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ name: item.name, price: item.price, description: item.description || '' });
+
+  const startEdit = () => {
+    setForm({ name: item.name, price: item.price, description: item.description || '' });
+    setEditing(true);
+  };
+
+  const save = async () => {
+    await onSaveItem({ name: form.name, price: parseFloat(form.price) || 0, description: form.description || null });
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap bg-cream-50/50">
+        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem]" autoFocus />
+          <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm w-20" />
+          <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descripción..." className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem] hidden sm:block" />
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={save} className="text-xs bg-brand-500 text-white px-2 py-1 rounded font-bold hover:bg-brand-600">✓</button>
+          <button onClick={() => setEditing(false)} className="text-xs text-ink-400 px-1">✕</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
+      <div className="flex items-center gap-3">
+        <span className="font-medium text-sm text-ink-900">{item.name}</span>
+        <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
+        {item.description && <span className="text-ink-400 text-xs hidden sm:inline">{item.description}</span>}
+      </div>
+      <div className="flex items-center gap-2">
+        <StockBadge item={item} onSave={onSaveStock} />
+        <button onClick={startEdit} className="text-xs text-brand-600 hover:underline">✏️</button>
+        <button onClick={onToggle} className={`text-xs px-2 py-1 rounded font-semibold ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.available ? 'Disponible' : 'Oculto'}</button>
+        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600">✕</button>
+      </div>
+    </div>
+  );
+}
+
 function StockBadge({ item, onSave }) {
   const [open, setOpen] = useState(false);
   const [stock, setStock] = useState(item.stock);
@@ -126,6 +173,7 @@ function MenuAdmin({ menuData, setMenuData }) {
   const delCat = async (id) => { await menuApi.deleteCategory(id); menuApi.getAllAdmin().then(setMenuData); };
   const toggleItem = async (item) => { await menuApi.updateItem(item.id, { available: item.available ? 0 : 1 }); menuApi.getAllAdmin().then(setMenuData); };
   const delItem = async (id) => { await menuApi.deleteItem(id); menuApi.getAllAdmin().then(setMenuData); };
+  const saveItem = async (id, data) => { await menuApi.updateItem(id, data); menuApi.getAllAdmin().then(setMenuData); };
   const saveStock = async (item, stock, maxStock) => {
     if (maxStock !== item.max_stock) await menuApi.updateItem(item.id, { max_stock: maxStock });
     if (stock !== item.stock) await menuApi.updateStock(item.id, stock);
@@ -160,18 +208,14 @@ function MenuAdmin({ menuData, setMenuData }) {
             </div>
             <div className="p-2">
               {cat.items.map(item => (
-                <div key={item.id} className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-sm text-ink-900">{item.name}</span>
-                    <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
-                    {item.description && <span className="text-ink-400 text-xs hidden sm:inline">{item.description}</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StockBadge item={item} onSave={(stock, maxStock) => saveStock(item, stock, maxStock)} />
-                    <button onClick={() => toggleItem(item)} className={`text-xs px-2 py-1 rounded font-semibold ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.available ? 'Disponible' : 'Oculto'}</button>
-                    <button onClick={() => delItem(item.id)} className="text-xs text-red-400 hover:text-red-600">✕</button>
-                  </div>
-                </div>
+                <MenuItemRow
+                  key={item.id}
+                  item={item}
+                  onToggle={() => toggleItem(item)}
+                  onDelete={() => delItem(item.id)}
+                  onSaveStock={(stock, maxStock) => saveStock(item, stock, maxStock)}
+                  onSaveItem={(data) => saveItem(item.id, data)}
+                />
               ))}
             </div>
             <div className="px-4 py-3 border-t border-ink-100 bg-cream-50/50">
