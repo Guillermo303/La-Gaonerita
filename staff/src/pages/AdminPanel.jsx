@@ -176,7 +176,7 @@ function MenuAdmin({ menuData, setMenuData }) {
             </div>
             <div className="px-4 py-3 border-t border-ink-100 bg-cream-50/50">
               <div className="flex gap-2">
-                <input value={editing === `item-cat-${cat.id}` ? newItem.name : ''} placeholder="Item..." onChange={e => setNewItem({ ...newItem, catId: cat.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1" />
+                <input value={newItem.name} placeholder="Item..." onChange={e => setNewItem({ ...newItem, catId: cat.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1" />
                 <input value={newItem.price} placeholder="$0" onChange={e => setNewItem({ ...newItem, catId: cat.id, price: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" />
                 <input value={newItem.maxStock} placeholder="Cap. 20" onChange={e => setNewItem({ ...newItem, catId: cat.id, maxStock: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" title="Capacidad diaria" />
                 <input value={newItem.description} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 hidden sm:block" />
