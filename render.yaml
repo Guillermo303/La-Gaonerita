@@ -24,7 +24,8 @@ services:
       mountPath: /var/data
       sizeGB: 1
 
-  - type: static
+  - type: web
+    runtime: static
     name: gaonerita-client
     rootDir: client
     buildCommand: npm install && npm run build
@@ -37,7 +38,8 @@ services:
         source: /*
         destination: /index.html
 
-  - type: static
+  - type: web
+    runtime: static
     name: gaonerita-staff
     rootDir: staff
     buildCommand: npm install && npm run build
@@ -50,7 +52,8 @@ services:
         source: /*
         destination: /index.html
 
-  - type: static
+  - type: web
+    runtime: static
     name: gaonerita-socios
     rootDir: socios
     buildCommand: npm install && npm run build
