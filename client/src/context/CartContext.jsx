@@ -19,7 +19,7 @@ export function CartProvider({ children }) {
     setItems(prev => {
       const existing = prev.find(i => i.menu_item_id === item.id);
       if (existing) return prev.map(i => i.menu_item_id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { menu_item_id: item.id, name: item.name, price: item.price, quantity: 1 }];
+      return [...prev, { menu_item_id: item.id, name: item.name, price: item.price, quantity: 1, ready_to_serve: !!item.ready_to_serve }];
     });
   };
 

@@ -48,8 +48,17 @@ router.get('/:id', authenticate, (req, res) => {
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method } = req.body;
+  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, quick_sale, payment_status } = req.body;
   if (!customer_name || !order_type || !items || !items.length) return res.status(400).json({ error: 'Nombre, tipo de orden y al menos un producto requeridos' });
+
+  if (quick_sale) {
+    for (const item of items) {
+      if (!item.menu_item_id) return res.status(400).json({ error: 'La compra rápida solo admite productos del menú' });
+      const menuItem = get('SELECT ready_to_serve FROM menu_items WHERE id = ?', [item.menu_item_id]);
+      if (!menuItem) return res.status(400).json({ error: `Producto ${item.menu_item_id} no encontrado` });
+      if (!menuItem.ready_to_serve) return res.status(400).json({ error: 'Uno o más productos requieren preparación y no pueden venderse como compra rápida' });
+    }
+  }
 
   let total = 0;
   const orderItems = items.map(item => {
@@ -63,8 +72,11 @@ router.post('/', authenticate, (req, res) => {
     return { name: item.name, menu_item_id: null, quantity: item.quantity, price: item.price, notes: item.notes || null };
   });
 
-  const result = run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [req.user.id, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo']);
+  const initialStatus = quick_sale ? 'completado' : 'pendiente';
+  const initialPaymentStatus = ['pendiente', 'pagado', 'reembolsado'].includes(payment_status) ? payment_status : 'pendiente';
+
+  const result = run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method, status, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [req.user.id, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo', initialStatus, initialPaymentStatus]);
   const orderId = result.lastInsertRowid;
 
   for (const item of orderItems) {

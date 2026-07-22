@@ -86,15 +86,15 @@ function Resumen({ allOrders, menuData, mesas }) {
 
 function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: item.name, price: item.price, description: item.description || '' });
+  const [form, setForm] = useState({ name: item.name, price: item.price, description: item.description || '', readyToServe: !!item.ready_to_serve });
 
   const startEdit = () => {
-    setForm({ name: item.name, price: item.price, description: item.description || '' });
+    setForm({ name: item.name, price: item.price, description: item.description || '', readyToServe: !!item.ready_to_serve });
     setEditing(true);
   };
 
   const save = async () => {
-    await onSaveItem({ name: form.name, price: parseFloat(form.price) || 0, description: form.description || null });
+    await onSaveItem({ name: form.name, price: parseFloat(form.price) || 0, description: form.description || null, ready_to_serve: form.readyToServe });
     setEditing(false);
   };
 
@@ -105,6 +105,10 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
           <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem]" autoFocus />
           <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm w-20" />
           <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descripción..." className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem] hidden sm:block" />
+          <label className="flex items-center gap-1 text-xs text-ink-500 whitespace-nowrap" title="No requiere preparación (ej. bebidas embotelladas)">
+            <input type="checkbox" checked={form.readyToServe} onChange={e => setForm({ ...form, readyToServe: e.target.checked })} />
+            ⚡
+          </label>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={save} className="text-xs bg-brand-500 text-white px-2 py-1 rounded font-bold hover:bg-brand-600">✓</button>
@@ -117,6 +121,7 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
   return (
     <div className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
       <div className="flex items-center gap-3">
+        {item.ready_to_serve ? <span title="Venta rápida: no requiere preparación">⚡</span> : null}
         <span className="font-medium text-sm text-ink-900">{item.name}</span>
         <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
         {item.description && <span className="text-ink-400 text-xs hidden sm:inline">{item.description}</span>}
@@ -162,7 +167,7 @@ function StockBadge({ item, onSave }) {
 function MenuAdmin({ menuData, setMenuData }) {
   const [editing, setEditing] = useState(null);
   const [newCat, setNewCat] = useState('');
-  const [newItem, setNewItem] = useState({ catId: '', name: '', price: '', description: '', maxStock: '' });
+  const [newItem, setNewItem] = useState({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
 
   const addCat = async () => {
     if (!newCat) return;
@@ -181,8 +186,8 @@ function MenuAdmin({ menuData, setMenuData }) {
   };
   const addItem = async () => {
     if (!newItem.catId || !newItem.name || !newItem.price) return;
-    await menuApi.createItem({ category_id: parseInt(newItem.catId), name: newItem.name, price: parseFloat(newItem.price), description: newItem.description || null, max_stock: newItem.maxStock ? parseInt(newItem.maxStock) : 20 });
-    setNewItem({ catId: '', name: '', price: '', description: '', maxStock: '' });
+    await menuApi.createItem({ category_id: parseInt(newItem.catId), name: newItem.name, price: parseFloat(newItem.price), description: newItem.description || null, max_stock: newItem.maxStock ? parseInt(newItem.maxStock) : 20, ready_to_serve: newItem.readyToServe });
+    setNewItem({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
     menuApi.getAllAdmin().then(setMenuData);
   };
 
@@ -224,6 +229,10 @@ function MenuAdmin({ menuData, setMenuData }) {
                 <input value={newItem.catId === cat.id ? newItem.price : ''} placeholder="$0" onChange={e => setNewItem({ ...newItem, catId: cat.id, price: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" />
                 <input value={newItem.catId === cat.id ? newItem.maxStock : ''} placeholder="Cap. 20" onChange={e => setNewItem({ ...newItem, catId: cat.id, maxStock: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" title="Capacidad diaria" />
                 <input value={newItem.catId === cat.id ? newItem.description : ''} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 hidden sm:block" />
+                <label className="flex items-center gap-1 text-xs text-ink-500 whitespace-nowrap" title="No requiere preparación (ej. bebidas embotelladas)">
+                  <input type="checkbox" checked={newItem.catId === cat.id ? newItem.readyToServe : false} onChange={e => setNewItem({ ...newItem, catId: cat.id, readyToServe: e.target.checked })} />
+                  ⚡
+                </label>
                 <button onClick={() => { setNewItem({ ...newItem, catId: cat.id }); addItem(); }} className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm font-bold hover:bg-brand-600">+</button>
               </div>
             </div>

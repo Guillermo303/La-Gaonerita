@@ -5,6 +5,7 @@ import { useSocket } from '../../context/SocketContext';
 import { formatPrice, typeLabels } from '../../lib/utils';
 import CobroModal from '../../components/CobroModal';
 import MesaPanel from '../../components/MesaPanel';
+import QuickSaleModal from '../../components/QuickSaleModal';
 
 const mesaStyles = {
   libre: { bg: 'bg-white', border: 'border-ink-200', text: 'text-ink-400', dot: '○', label: 'Libre' },
@@ -40,6 +41,7 @@ export default function WaiterDashboard() {
   const [expanded, setExpanded] = useState(null);
   const [cobrando, setCobrando] = useState(null);
   const [mesaPanel, setMesaPanel] = useState(null);
+  const [quickSale, setQuickSale] = useState(false);
   const socket = useSocket();
 
   const loadData = () => { ordersApi.getAll().then(setOrders).catch(console.error); mesasApi.getAll().then(setMesas).catch(console.error); };
@@ -139,6 +141,7 @@ export default function WaiterDashboard() {
             <option value="pendiente">Pendientes</option>
             <option value="domicilio">Domicilio</option>
           </select>
+          <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
           <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>
         </div>
       </div>
@@ -207,6 +210,9 @@ export default function WaiterDashboard() {
       )}
       {cobrando && (
         <CobroModal order={cobrando} onClose={() => setCobrando(null)} onPaid={handlePaid} />
+      )}
+      {quickSale && (
+        <QuickSaleModal onClose={() => setQuickSale(false)} onCreated={(order) => { setQuickSale(false); loadData(); setCobrando(order); }} />
       )}
     </div>
   );

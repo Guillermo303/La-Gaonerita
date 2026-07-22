@@ -102,3 +102,68 @@ describe('PUT /api/orders/:id/status', () => {
     expect(res.status).toBe(400);
   });
 });
+
+function seedReadyToServeItem(name = 'Coca-Cola') {
+  const cat = run('INSERT INTO categories (name) VALUES (?)', ['Bebidas']);
+  const item = run('INSERT INTO menu_items (category_id, name, price, ready_to_serve) VALUES (?, ?, ?, 1)', [cat.lastInsertRowid, name, 20]);
+  return item.lastInsertRowid;
+}
+
+describe('Compra rápida (quick_sale)', () => {
+  let app, token, readyItemId, prepItemId;
+  beforeEach(async () => {
+    app = await freshApp();
+    token = await registerAndLogin(app);
+    readyItemId = seedReadyToServeItem();
+    prepItemId = seedMenuItem();
+  });
+
+  it('crea la orden directamente como completada cuando todos los productos están listos para servir', async () => {
+    const res = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', quick_sale: true, items: [{ menu_item_id: readyItemId, quantity: 2 }]
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('completado');
+    expect(res.body.payment_status).toBe('pendiente');
+    expect(res.body.total).toBe(40);
+  });
+
+  it('permite marcar la compra rápida como ya pagada al crearla', async () => {
+    const res = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', quick_sale: true, payment_status: 'pagado', items: [{ menu_item_id: readyItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.payment_status).toBe('pagado');
+  });
+
+  it('rechaza la compra rápida si algún producto requiere preparación', async () => {
+    const res = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', quick_sale: true, items: [{ menu_item_id: prepItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rechaza la compra rápida con productos personalizados sin menu_item_id', async () => {
+    const res = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', quick_sale: true, items: [{ name: 'Extra', price: 10, quantity: 1 }]
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('no aparece en la cola de cocina (kitchen/active)', async () => {
+    const login = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+    const adminTok = login.body.token;
+    await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', quick_sale: true, items: [{ menu_item_id: readyItemId, quantity: 1 }]
+    });
+    const res = await request(app).get('/api/orders/kitchen/active').set('Authorization', `Bearer ${adminTok}`);
+    expect(res.body.length).toBe(0);
+  });
+
+  it('una orden normal (sin quick_sale) sigue empezando como pendiente', async () => {
+    const res = await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
+      customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: readyItemId, quantity: 1 }]
+    });
+    expect(res.body.status).toBe('pendiente');
+  });
+});

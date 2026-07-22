@@ -50,6 +50,7 @@ export default function Menu() {
                     <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
                     <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
                   </div>
+                  {item.ready_to_serve ? <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">⚡ Listo al instante</p> : null}
                   {item.description && <p className="text-ink-400 text-sm mt-2 leading-relaxed">{item.description}</p>}
                   {agotado && <p className="text-red-500 text-xs font-bold uppercase tracking-wider mt-2">Agotado por hoy</p>}
                   {pocasUnidades && <p className="text-yellow-600 text-xs font-bold uppercase tracking-wider mt-2">¡Últimas {stock}!</p>}

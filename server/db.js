@@ -103,10 +103,12 @@ export async function initDB() {
     sort_order INTEGER DEFAULT 0,
     stock INTEGER NOT NULL DEFAULT 20,
     max_stock INTEGER NOT NULL DEFAULT 20,
+    ready_to_serve INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES categories(id)
   )`);
   try { db.run("ALTER TABLE menu_items ADD COLUMN stock INTEGER NOT NULL DEFAULT 20"); saveDB(); } catch {}
   try { db.run("ALTER TABLE menu_items ADD COLUMN max_stock INTEGER NOT NULL DEFAULT 20"); saveDB(); } catch {}
+  try { db.run("ALTER TABLE menu_items ADD COLUMN ready_to_serve INTEGER NOT NULL DEFAULT 0"); saveDB(); } catch {}
 
   db.run(`CREATE TABLE IF NOT EXISTS inventory_state (
     id INTEGER PRIMARY KEY CHECK(id = 1),
