@@ -1,9 +1,7 @@
 services:
-  # Plan gratuito para pruebas: sin disco persistente, así que la base de
-  # datos se reinicia con cada redeploy y el servicio se duerme tras 15 min
-  # sin tráfico. Antes de usarlo con clientes reales, agregar de vuelta
-  # `plan: starter` + el bloque `disk` (ver historial de este archivo) y las
-  # variables DB_FILE/BACKUP_DIR apuntando al disco montado.
+  # Plan gratuito: el servicio se duerme tras 15 min sin tráfico (con ~50s de
+  # cold-start al despertar), pero eso ya no borra datos — la base de datos
+  # vive en Supabase (Postgres), no en el disco de este contenedor.
   - type: web
     name: gaonerita-server
     runtime: node
@@ -19,6 +17,8 @@ services:
       - key: FRONTEND_URL
         value: https://gaonerita-client.onrender.com,https://gaonerita-staff.onrender.com,https://gaonerita-socios.onrender.com
       - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
         sync: false
 
   - type: web

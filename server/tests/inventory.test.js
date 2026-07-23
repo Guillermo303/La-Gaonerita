@@ -17,7 +17,7 @@ describe('Creación de productos con inventario', () => {
   });
 
   it('usa 20 unidades por defecto si no se especifica capacidad', async () => {
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
     const res = await request(app).post('/api/menu/items').set('Authorization', `Bearer ${token}`).send({
       category_id: cat.lastInsertRowid, name: 'Taco de asada', price: 40
     });
@@ -27,7 +27,7 @@ describe('Creación de productos con inventario', () => {
   });
 
   it('respeta una capacidad personalizada al crear el producto', async () => {
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Bebidas']);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Bebidas']);
     const res = await request(app).post('/api/menu/items').set('Authorization', `Bearer ${token}`).send({
       category_id: cat.lastInsertRowid, name: 'Agua de Horchata', price: 25, max_stock: 40
     });
@@ -42,8 +42,8 @@ describe('Descuento automático de inventario al crear pedidos', () => {
   beforeEach(async () => {
     app = await freshApp();
     token = await adminToken(app);
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-    const item = run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 20, 20]);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const item = await run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 20, 20]);
     menuItemId = item.lastInsertRowid;
   });
 
@@ -51,7 +51,7 @@ describe('Descuento automático de inventario al crear pedidos', () => {
     await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
       customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 3 }]
     });
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(17);
   });
 
@@ -59,7 +59,7 @@ describe('Descuento automático de inventario al crear pedidos', () => {
     await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
       customer_name: 'Ana', order_type: 'domicilio', customer_address: 'Calle Falsa 123', items: [{ menu_item_id: menuItemId, quantity: 5 }]
     });
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(15);
   });
 
@@ -70,7 +70,7 @@ describe('Descuento automático de inventario al crear pedidos', () => {
     await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
       customer_name: 'Beto', order_type: 'domicilio', customer_address: 'X', items: [{ menu_item_id: menuItemId, quantity: 8 }]
     });
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(4);
   });
 
@@ -78,7 +78,7 @@ describe('Descuento automático de inventario al crear pedidos', () => {
     await request(app).post('/api/orders').set('Authorization', `Bearer ${token}`).send({
       customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 999 }]
     });
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(0);
   });
 });
@@ -88,22 +88,22 @@ describe('Administración manual del inventario', () => {
   beforeEach(async () => {
     app = await freshApp();
     token = await adminToken(app);
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-    const item = run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 20, 20]);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const item = await run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 20, 20]);
     menuItemId = item.lastInsertRowid;
   });
 
   it('permite al admin aumentar la capacidad máxima', async () => {
     const res = await request(app).put(`/api/menu/items/${menuItemId}`).set('Authorization', `Bearer ${token}`).send({ max_stock: 50 });
     expect(res.status).toBe(200);
-    const item = get('SELECT max_stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT max_stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.max_stock).toBe(50);
   });
 
   it('permite al admin ajustar el stock actual manualmente', async () => {
     const res = await request(app).put(`/api/menu/items/${menuItemId}/stock`).set('Authorization', `Bearer ${token}`).send({ stock: 7 });
     expect(res.status).toBe(200);
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(7);
   });
 
@@ -124,24 +124,24 @@ describe('Reinicio diario del inventario', () => {
   let app, menuItemId;
   beforeEach(async () => {
     app = await freshApp();
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-    const item = run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 3, 20]);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const item = await run('INSERT INTO menu_items (category_id, name, price, stock, max_stock) VALUES (?, ?, ?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40, 3, 20]);
     menuItemId = item.lastInsertRowid;
   });
 
-  it('repone el stock a la capacidad máxima la primera vez que corre en un día nuevo', () => {
-    const didReset = resetStockIfNewDay();
+  it('repone el stock a la capacidad máxima la primera vez que corre en un día nuevo', async () => {
+    const didReset = await resetStockIfNewDay();
     expect(didReset).toBe(true);
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(20);
   });
 
-  it('no vuelve a reponer si ya se ejecutó hoy', () => {
-    resetStockIfNewDay();
-    decrementStock(menuItemId, 5);
-    const second = resetStockIfNewDay();
+  it('no vuelve a reponer si ya se ejecutó hoy', async () => {
+    await resetStockIfNewDay();
+    await decrementStock(menuItemId, 5);
+    const second = await resetStockIfNewDay();
     expect(second).toBe(false);
-    const item = get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
+    const item = await get('SELECT stock FROM menu_items WHERE id = ?', [menuItemId]);
     expect(item.stock).toBe(15);
   });
 });

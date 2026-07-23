@@ -1,4 +1,5 @@
 import express from 'express';
+import 'express-async-errors';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -59,6 +60,15 @@ export function createApp() {
   app.use('/api/assets', assetRoutes);
   app.use('/api/users', userRoutes);
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+  // Red de seguridad: captura cualquier error no manejado explícitamente por
+  // una ruta (ej. una falla de conexión a la base de datos) y responde con un
+  // error en vez de dejar la petición colgada sin respuesta.
+  app.use((err, req, res, next) => {
+    console.error(err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  });
 
   return { app, httpServer, io };
 }

@@ -101,7 +101,7 @@ describe('Registro de gastos', () => {
     const created = await request(app).post('/api/expenses').set('Authorization', `Bearer ${token}`).send({ category: 'renta', amount: 8000, date: '2026-07-01' });
     const del = await request(app).delete(`/api/expenses/${created.body.id}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(200);
-    const row = get('SELECT id FROM expenses WHERE id = ?', [created.body.id]);
+    const row = await get('SELECT id FROM expenses WHERE id = ?', [created.body.id]);
     expect(row).toBeNull();
   });
 });

@@ -114,7 +114,7 @@ describe('Registro de activos', () => {
     const created = await request(app).post('/api/assets').set('Authorization', `Bearer ${token}`).send({ name: 'TV' });
     const del = await request(app).delete(`/api/assets/${created.body.id}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(200);
-    const row = get('SELECT id FROM assets WHERE id = ?', [created.body.id]);
+    const row = await get('SELECT id FROM assets WHERE id = ?', [created.body.id]);
     expect(row).toBeNull();
   });
 

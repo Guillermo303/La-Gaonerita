@@ -21,15 +21,15 @@ function todayStr() {
   return new Date().toLocaleDateString('en-CA');
 }
 
-router.get('/', authenticate, authorize('admin', 'mesero'), (req, res) => {
+router.get('/', authenticate, authorize('admin', 'mesero'), async (req, res) => {
   const { date } = req.query;
   const rows = date
-    ? query('SELECT r.*, m.name as mesa_name FROM reservations r JOIN mesas m ON m.id = r.mesa_id WHERE r.date = ? ORDER BY r.time', [date])
-    : query('SELECT r.*, m.name as mesa_name FROM reservations r JOIN mesas m ON m.id = r.mesa_id WHERE r.date >= ? ORDER BY r.date, r.time', [todayStr()]);
+    ? await query('SELECT r.*, m.name as mesa_name FROM reservations r JOIN mesas m ON m.id = r.mesa_id WHERE r.date = ? ORDER BY r.time', [date])
+    : await query('SELECT r.*, m.name as mesa_name FROM reservations r JOIN mesas m ON m.id = r.mesa_id WHERE r.date >= ? ORDER BY r.date, r.time', [todayStr()]);
   res.json(rows);
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { customer_name, customer_phone, party_size, date, time, notes } = req.body;
   if (!customer_name || !customer_phone || !date || !time) {
     return res.status(400).json({ error: 'Nombre, teléfono, fecha y hora son requeridos' });
@@ -54,8 +54,8 @@ router.post('/', (req, res) => {
     }
   }
 
-  const mesas = query('SELECT * FROM mesas WHERE capacity >= ? ORDER BY capacity, sort_order', [size]);
-  const existing = query("SELECT * FROM reservations WHERE date = ? AND status IN ('confirmada','ocupada')", [date]);
+  const mesas = await query('SELECT * FROM mesas WHERE capacity >= ? ORDER BY capacity, sort_order', [size]);
+  const existing = await query("SELECT * FROM reservations WHERE date = ? AND status IN ('confirmada','ocupada')", [date]);
 
   const mesa = mesas.find(m => {
     const conflicts = existing.filter(r => r.mesa_id === m.id);
@@ -66,7 +66,7 @@ router.post('/', (req, res) => {
     return res.status(409).json({ error: 'No hay mesas disponibles para esa fecha y hora, intenta con otro horario' });
   }
 
-  const { lastInsertRowid } = run(
+  const { lastInsertRowid } = await run(
     'INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [mesa.id, customer_name, customer_phone, size, date, time, notes || null]
   );
@@ -74,17 +74,17 @@ router.post('/', (req, res) => {
   res.status(201).json({ success: true, id: lastInsertRowid, mesa: mesa.name });
 });
 
-router.put('/:id/status', authenticate, authorize('admin', 'mesero'), (req, res) => {
+router.put('/:id/status', authenticate, authorize('admin', 'mesero'), async (req, res) => {
   const { status } = req.body;
   if (!['confirmada', 'ocupada', 'completada', 'cancelada'].includes(status)) {
     return res.status(400).json({ error: 'Estado inválido' });
   }
-  run('UPDATE reservations SET status = ? WHERE id = ?', [status, req.params.id]);
+  await run('UPDATE reservations SET status = ? WHERE id = ?', [status, req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, authorize('admin', 'mesero'), (req, res) => {
-  run('DELETE FROM reservations WHERE id = ?', [req.params.id]);
+router.delete('/:id', authenticate, authorize('admin', 'mesero'), async (req, res) => {
+  await run('DELETE FROM reservations WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
 

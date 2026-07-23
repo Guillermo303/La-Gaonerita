@@ -39,18 +39,20 @@ const menuData = [
 
 async function seed() {
   await initDB();
-  const existing = query("SELECT COUNT(*) as count FROM categories");
-  if (existing.length && existing[0].count > 0) {
+  const existing = await query("SELECT COUNT(*) as count FROM categories");
+  if (existing.length && Number(existing[0].count) > 0) {
     console.log('Ya hay datos en el menú, omitiendo seed');
     return;
   }
-  menuData.forEach((cat, i) => {
-    const result = run('INSERT INTO categories (name, description, sort_order) VALUES (?, ?, ?)', [cat.category, cat.description, i]);
+  for (let i = 0; i < menuData.length; i++) {
+    const cat = menuData[i];
+    const result = await run('INSERT INTO categories (name, description, sort_order) VALUES (?, ?, ?)', [cat.category, cat.description, i]);
     const catId = result.lastInsertRowid;
-    cat.items.forEach((item, j) => {
-      run('INSERT INTO menu_items (category_id, name, price, sort_order) VALUES (?, ?, ?, ?)', [catId, item.name, item.price, j]);
-    });
-  });
+    for (let j = 0; j < cat.items.length; j++) {
+      const item = cat.items[j];
+      await run('INSERT INTO menu_items (category_id, name, price, sort_order) VALUES (?, ?, ?, ?)', [catId, item.name, item.price, j]);
+    }
+  }
   console.log('Menú inicial creado exitosamente');
 }
 

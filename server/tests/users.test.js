@@ -42,8 +42,8 @@ describe('Búsqueda de cuentas por email', () => {
 
   it('indica que sí tiene historial si ya hizo un pedido', async () => {
     const register = await request(app).post('/api/auth/register').send({ name: 'Cliente Prueba', email: 'prueba@test.com', password: 'secreto123' });
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-    const item = run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco', 40]);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const item = await run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco', 40]);
     await request(app).post('/api/orders').set('Authorization', `Bearer ${register.body.token}`).send({
       customer_name: 'Cliente Prueba', order_type: 'local', items: [{ menu_item_id: item.lastInsertRowid, quantity: 1 }]
     });
@@ -87,7 +87,7 @@ describe('Eliminar cuenta permanentemente', () => {
 
     const del = await request(app).delete(`/api/users/${userId}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(200);
-    expect(get('SELECT id FROM users WHERE id = ?', [userId])).toBeNull();
+    expect(await get('SELECT id FROM users WHERE id = ?', [userId])).toBeNull();
 
     // El mismo email ahora se puede volver a registrar sin conflicto
     const reregister = await request(app).post('/api/auth/register').send({ name: 'Cliente Prueba 2', email: 'prueba@test.com', password: 'secreto123' });
@@ -97,15 +97,15 @@ describe('Eliminar cuenta permanentemente', () => {
   it('rechaza eliminar una cuenta con historial de pedidos', async () => {
     const register = await request(app).post('/api/auth/register').send({ name: 'Cliente Prueba', email: 'prueba@test.com', password: 'secreto123' });
     const userId = register.body.user.id;
-    const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-    const item = run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco', 40]);
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+    const item = await run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco', 40]);
     await request(app).post('/api/orders').set('Authorization', `Bearer ${register.body.token}`).send({
       customer_name: 'Cliente Prueba', order_type: 'local', items: [{ menu_item_id: item.lastInsertRowid, quantity: 1 }]
     });
 
     const del = await request(app).delete(`/api/users/${userId}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(400);
-    expect(get('SELECT id FROM users WHERE id = ?', [userId])).not.toBeNull();
+    expect(await get('SELECT id FROM users WHERE id = ?', [userId])).not.toBeNull();
   });
 
   it('un empleado desactivado sigue bloqueando su email aunque no se elimine', async () => {
@@ -124,6 +124,6 @@ describe('Eliminar cuenta permanentemente', () => {
     });
     const del = await request(app).delete(`/api/users/${hired.body.id}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(200);
-    expect(get('SELECT user_id FROM employee_details WHERE user_id = ?', [hired.body.id])).toBeNull();
+    expect(await get('SELECT user_id FROM employee_details WHERE user_id = ?', [hired.body.id])).toBeNull();
   });
 });

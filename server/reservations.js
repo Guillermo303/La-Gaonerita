@@ -12,26 +12,26 @@ function toMinutes(t) {
   return h * 60 + m;
 }
 
-export function processReservations() {
+export async function processReservations() {
   const today = todayStr();
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
-  const upcoming = query("SELECT * FROM reservations WHERE status = 'confirmada' AND date = ?", [today]);
+  const upcoming = await query("SELECT * FROM reservations WHERE status = 'confirmada' AND date = ?", [today]);
   for (const r of upcoming) {
     if (nowMin >= toMinutes(r.time) - CHECKIN_WINDOW_MINUTES) {
-      run("UPDATE reservations SET status = 'ocupada' WHERE id = ?", [r.id]);
+      await run("UPDATE reservations SET status = 'ocupada' WHERE id = ?", [r.id]);
     }
   }
 
-  const active = query("SELECT * FROM reservations WHERE status = 'ocupada' AND date = ?", [today]);
+  const active = await query("SELECT * FROM reservations WHERE status = 'ocupada' AND date = ?", [today]);
   for (const r of active) {
     if (nowMin >= toMinutes(r.time) + RESERVATION_DURATION_MINUTES) {
-      run("UPDATE reservations SET status = 'completada' WHERE id = ?", [r.id]);
+      await run("UPDATE reservations SET status = 'completada' WHERE id = ?", [r.id]);
     }
   }
 
-  run("UPDATE reservations SET status = 'completada' WHERE status = 'confirmada' AND date < ?", [today]);
+  await run("UPDATE reservations SET status = 'completada' WHERE status = 'confirmada' AND date < ?", [today]);
 }
 
 export function startReservationSchedule(checkIntervalMinutes = 5) {

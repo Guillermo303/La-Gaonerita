@@ -56,7 +56,7 @@ describe('Creación de reservaciones', () => {
 
   it('no permite reservar todas las mesas en el mismo horario más veces de las que existen', async () => {
     const restore = mockNow('2026-08-01', 10, 0);
-    const mesasCount = query('SELECT COUNT(*) as count FROM mesas')[0].count;
+    const mesasCount = (await query('SELECT COUNT(*) as count FROM mesas'))[0].count;
     for (let i = 0; i < mesasCount; i++) {
       const r = await request(app).post('/api/reservations').send({
         customer_name: `Cliente ${i}`, customer_phone: '5512345678', party_size: 2, date: '2026-08-01', time: '14:00'
@@ -72,7 +72,7 @@ describe('Creación de reservaciones', () => {
 
   it('permite reservar la misma mesa en un horario que no se traslapa', async () => {
     const restore = mockNow('2026-08-01', 10, 0);
-    const mesasCount = query('SELECT COUNT(*) as count FROM mesas')[0].count;
+    const mesasCount = (await query('SELECT COUNT(*) as count FROM mesas'))[0].count;
     for (let i = 0; i < mesasCount; i++) {
       await request(app).post('/api/reservations').send({
         customer_name: `Cliente ${i}`, customer_phone: '5512345678', party_size: 2, date: '2026-08-01', time: '14:00'
@@ -115,10 +115,10 @@ describe('Acceso a la lista de reservaciones', () => {
     const created = await request(app).post('/api/reservations').send({
       customer_name: 'Ana', customer_phone: '5512345678', date: '2026-08-01', time: '14:00'
     });
-    const id = query('SELECT id FROM reservations')[0].id;
+    const id = (await query('SELECT id FROM reservations'))[0].id;
     const res = await request(app).put(`/api/reservations/${id}/status`).set('Authorization', `Bearer ${token}`).send({ status: 'cancelada' });
     expect(res.status).toBe(200);
-    const row = get('SELECT status FROM reservations WHERE id = ?', [id]);
+    const row = await get('SELECT status FROM reservations WHERE id = ?', [id]);
     expect(row.status).toBe('cancelada');
     restore();
     void created;
@@ -129,42 +129,42 @@ describe('Asignación automática de mesas al llegar la hora', () => {
   let app, mesaId;
   beforeEach(async () => {
     app = await freshApp();
-    mesaId = query('SELECT id FROM mesas ORDER BY sort_order LIMIT 1')[0].id;
+    mesaId = (await query('SELECT id FROM mesas ORDER BY sort_order LIMIT 1'))[0].id;
   });
   afterEach(() => vi.useRealTimers());
 
-  it('marca la reservación como ocupada 1 hora antes de la hora reservada', () => {
-    run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
+  it('marca la reservación como ocupada 1 hora antes de la hora reservada', async () => {
+    await run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
       [mesaId, 'Ana', '5512345678', 2, '2026-08-01', '14:00']);
     const restore = mockNow('2026-08-01', 13, 0);
-    processReservations();
-    const row = get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
+    await processReservations();
+    const row = await get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
     expect(row.status).toBe('ocupada');
     restore();
   });
 
-  it('no marca ocupada la reservación si aún faltan más de 1h', () => {
-    run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
+  it('no marca ocupada la reservación si aún faltan más de 1h', async () => {
+    await run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
       [mesaId, 'Ana', '5512345678', 2, '2026-08-01', '14:00']);
     const restore = mockNow('2026-08-01', 12, 0);
-    processReservations();
-    const row = get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
+    await processReservations();
+    const row = await get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
     expect(row.status).toBe('confirmada');
     restore();
   });
 
-  it('libera la mesa (completada) al terminar la ventana de la reservación', () => {
-    run("INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'ocupada')",
+  it('libera la mesa (completada) al terminar la ventana de la reservación', async () => {
+    await run("INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'ocupada')",
       [mesaId, 'Ana', '5512345678', 2, '2026-08-01', '14:00']);
     const restore = mockNow('2026-08-01', 15, 45);
-    processReservations();
-    const row = get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
+    await processReservations();
+    const row = await get('SELECT status FROM reservations WHERE mesa_id = ?', [mesaId]);
     expect(row.status).toBe('completada');
     restore();
   });
 
   it('refleja el estado "reservada" en el listado de mesas antes de la ventana de check-in', async () => {
-    run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
+    await run('INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time) VALUES (?, ?, ?, ?, ?, ?)',
       [mesaId, 'Ana', '5512345678', 2, '2026-08-01', '14:00']);
     const restore = mockNow('2026-08-01', 10, 0);
     const res = await request(app).get('/api/mesas');
@@ -175,7 +175,7 @@ describe('Asignación automática de mesas al llegar la hora', () => {
   });
 
   it('refleja el estado "ocupada" en el listado de mesas dentro de la ventana de check-in', async () => {
-    run("INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'ocupada')",
+    await run("INSERT INTO reservations (mesa_id, customer_name, customer_phone, party_size, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'ocupada')",
       [mesaId, 'Ana', '5512345678', 2, '2026-08-01', '14:00']);
     const restore = mockNow('2026-08-01', 13, 30);
     const res = await request(app).get('/api/mesas');

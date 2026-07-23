@@ -4,22 +4,22 @@ function todayStr() {
   return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD en hora local
 }
 
-export function resetStockIfNewDay() {
-  const state = get('SELECT last_reset FROM inventory_state WHERE id = 1');
+export async function resetStockIfNewDay() {
+  const state = await get('SELECT last_reset FROM inventory_state WHERE id = 1');
   const today = todayStr();
   if (state && state.last_reset === today) return false;
 
-  run('UPDATE menu_items SET stock = max_stock');
+  await run('UPDATE menu_items SET stock = max_stock');
   if (state) {
-    run('UPDATE inventory_state SET last_reset = ? WHERE id = 1', [today]);
+    await run('UPDATE inventory_state SET last_reset = ? WHERE id = 1', [today]);
   } else {
-    run('INSERT INTO inventory_state (id, last_reset) VALUES (1, ?)', [today]);
+    await run('INSERT INTO inventory_state (id, last_reset) VALUES (1, ?)', [today]);
   }
   return true;
 }
 
-export function decrementStock(menuItemId, quantity) {
-  run('UPDATE menu_items SET stock = MAX(0, stock - ?) WHERE id = ?', [quantity, menuItemId]);
+export async function decrementStock(menuItemId, quantity) {
+  await run('UPDATE menu_items SET stock = GREATEST(0, stock - ?) WHERE id = ?', [quantity, menuItemId]);
 }
 
 export function startInventorySchedule(checkIntervalMinutes = 60) {

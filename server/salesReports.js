@@ -35,7 +35,7 @@ function toSql(d) {
   return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-export function buildSalesReport(period, anchor) {
+export async function buildSalesReport(period, anchor) {
   const rangeResult = computeRange(period, anchor);
   if (!rangeResult) return null;
   const [start, end] = rangeResult;
@@ -43,7 +43,7 @@ export function buildSalesReport(period, anchor) {
   const bufferStart = new Date(start.getTime() - 24 * 60 * 60 * 1000);
   const bufferEnd = new Date(end.getTime() + 24 * 60 * 60 * 1000);
 
-  const candidates = query(
+  const candidates = await query(
     "SELECT * FROM orders WHERE payment_status = 'pagado' AND created_at >= ? AND created_at <= ? ORDER BY created_at",
     [toSql(bufferStart), toSql(bufferEnd)]
   );
@@ -57,7 +57,7 @@ export function buildSalesReport(period, anchor) {
   let items = [];
   if (orderIds.length) {
     const placeholders = orderIds.map(() => '?').join(',');
-    items = query(`SELECT * FROM order_items WHERE order_id IN (${placeholders})`, orderIds);
+    items = await query(`SELECT * FROM order_items WHERE order_id IN (${placeholders})`, orderIds);
   }
 
   const totalRevenue = inRange.reduce((s, o) => s + o.total, 0);
@@ -117,11 +117,11 @@ export function buildSalesReport(period, anchor) {
 
 const DAILY_DIVISOR = { semanal: 7, quincenal: 15, mensual: 30 };
 
-export function buildBusinessHealth(period, anchor) {
-  const report = buildSalesReport(period, anchor);
+export async function buildBusinessHealth(period, anchor) {
+  const report = await buildSalesReport(period, anchor);
   if (!report) return null;
 
-  const employees = query(
+  const employees = await query(
     "SELECT d.salario, d.periodo_pago FROM employee_details d JOIN users u ON u.id = d.user_id WHERE u.active = 1 AND u.role NOT IN ('cliente', 'socio')"
   );
 
@@ -134,7 +134,7 @@ export function buildBusinessHealth(period, anchor) {
 
   const startStr = rangeStart.toLocaleDateString('en-CA');
   const endStr = rangeEnd.toLocaleDateString('en-CA');
-  const expenseRows = query('SELECT * FROM expenses WHERE date >= ? AND date <= ?', [startStr, endStr]);
+  const expenseRows = await query('SELECT * FROM expenses WHERE date >= ? AND date <= ?', [startStr, endStr]);
   const expensesTotal = expenseRows.reduce((s, e) => s + e.amount, 0);
 
   const expensesByCategoryMap = new Map();
@@ -164,15 +164,15 @@ function pctChange(curr, prev) {
   return ((curr - prev) / Math.abs(prev)) * 100;
 }
 
-export function buildFinancialOverview(period, anchor) {
-  const health = buildBusinessHealth(period, anchor);
+export async function buildFinancialOverview(period, anchor) {
+  const health = await buildBusinessHealth(period, anchor);
   if (!health) return null;
 
   const [start] = computeRange(period, anchor);
   const prevAnchor = new Date(start.getTime() - 1);
-  const prevHealth = buildBusinessHealth(period, prevAnchor);
+  const prevHealth = await buildBusinessHealth(period, prevAnchor);
 
-  const assetRows = query('SELECT * FROM assets');
+  const assetRows = await query('SELECT * FROM assets');
   const assetsTotalValue = assetRows.reduce((s, a) => s + a.purchase_price * a.quantity, 0);
   const assetsTotalItems = assetRows.reduce((s, a) => s + a.quantity, 0);
 
@@ -199,11 +199,11 @@ export function buildFinancialOverview(period, anchor) {
   };
 }
 
-export function saveReportSnapshot(period, anchor, { auto = false, generatedBy = null } = {}) {
-  const report = buildSalesReport(period, anchor);
+export async function saveReportSnapshot(period, anchor, { auto = false, generatedBy = null } = {}) {
+  const report = await buildSalesReport(period, anchor);
   if (!report) return null;
   const dateStr = anchor.toLocaleDateString('en-CA');
-  const { lastInsertRowid } = run(
+  const { lastInsertRowid } = await run(
     'INSERT INTO sales_reports (period, date, range_start, range_end, total_revenue, order_count, data, generated_by, auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [period, dateStr, report.range.start, report.range.end, report.totalRevenue, report.orderCount, JSON.stringify(report), generatedBy, auto ? 1 : 0]
   );
@@ -214,21 +214,21 @@ function todayStr() {
   return new Date().toLocaleDateString('en-CA');
 }
 
-export function autoArchiveDailyReport() {
-  const state = get('SELECT last_archive FROM sales_report_state WHERE id = 1');
+export async function autoArchiveDailyReport() {
+  const state = await get('SELECT last_archive FROM sales_report_state WHERE id = 1');
   const today = todayStr();
   if (state && state.last_archive === today) return false;
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yStr = yesterday.toLocaleDateString('en-CA');
-  const exists = get("SELECT id FROM sales_reports WHERE period = 'day' AND date = ? AND auto = 1", [yStr]);
+  const exists = await get("SELECT id FROM sales_reports WHERE period = 'day' AND date = ? AND auto = 1", [yStr]);
   if (!exists) {
-    saveReportSnapshot('day', yesterday, { auto: true });
+    await saveReportSnapshot('day', yesterday, { auto: true });
   }
 
-  if (state) run('UPDATE sales_report_state SET last_archive = ? WHERE id = 1', [today]);
-  else run('INSERT INTO sales_report_state (id, last_archive) VALUES (1, ?)', [today]);
+  if (state) await run('UPDATE sales_report_state SET last_archive = ? WHERE id = 1', [today]);
+  else await run('INSERT INTO sales_report_state (id, last_archive) VALUES (1, ?)', [today]);
   return true;
 }
 

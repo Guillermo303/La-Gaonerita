@@ -19,13 +19,13 @@ function toSqlUTC(dateStr, hh, mm) {
   return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-function createPaidOrder({ menuItemId, name, price, quantity, total, dateStr, hh, mm, payment_method = 'efectivo' }) {
+async function createPaidOrder({ menuItemId, name, price, quantity, total, dateStr, hh, mm, payment_method = 'efectivo' }) {
   const timestamp = toSqlUTC(dateStr, hh, mm);
-  const order = run(
+  const order = await run(
     "INSERT INTO orders (user_id, customer_name, order_type, total, payment_method, payment_status, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'pagado', 'completado', ?, ?)",
     [null, 'Cliente', 'local', total, payment_method, timestamp, timestamp]
   );
-  run('INSERT INTO order_items (order_id, menu_item_id, name, quantity, price) VALUES (?, ?, ?, ?, ?)', [order.lastInsertRowid, menuItemId || null, name, quantity, price]);
+  await run('INSERT INTO order_items (order_id, menu_item_id, name, quantity, price) VALUES (?, ?, ?, ?, ?)', [order.lastInsertRowid, menuItemId || null, name, quantity, price]);
   return order.lastInsertRowid;
 }
 
@@ -55,8 +55,8 @@ describe('Reporte de ventas', () => {
   });
 
   it('calcula el total de ventas e ingresos del día', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 2, total: 50, dateStr: '2026-08-05', hh: 14, mm: 0 });
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 4, total: 100, dateStr: '2026-08-05', hh: 20, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 2, total: 50, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 4, total: 100, dateStr: '2026-08-05', hh: 20, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/sales?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -68,9 +68,9 @@ describe('Reporte de ventas', () => {
   });
 
   it('no incluye órdenes no pagadas ni de otros días', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restoreOther = mockNow('2026-08-06', 14, 0);
-    run("INSERT INTO orders (customer_name, order_type, total, payment_status, status) VALUES (?, ?, ?, 'pendiente', 'completado')", ['Cliente', 'local', 999]);
+    await run("INSERT INTO orders (customer_name, order_type, total, payment_status, status) VALUES (?, ?, ?, 'pendiente', 'completado')", ['Cliente', 'local', 999]);
     restoreOther();
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
@@ -81,8 +81,8 @@ describe('Reporte de ventas', () => {
   });
 
   it('identifica el producto más vendido por cantidad', async () => {
-    createPaidOrder({ name: 'Taco al Pastor', price: 25, quantity: 10, total: 250, dateStr: '2026-08-05', hh: 14, mm: 0 });
-    createPaidOrder({ name: 'Gringa', price: 50, quantity: 2, total: 100, dateStr: '2026-08-05', hh: 15, mm: 0 });
+    await createPaidOrder({ name: 'Taco al Pastor', price: 25, quantity: 10, total: 250, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Gringa', price: 50, quantity: 2, total: 100, dateStr: '2026-08-05', hh: 15, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/sales?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -92,9 +92,9 @@ describe('Reporte de ventas', () => {
   });
 
   it('identifica la hora pico correctamente', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 20, mm: 0 });
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 20, mm: 30 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 20, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 20, mm: 30 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/sales?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -104,8 +104,8 @@ describe('Reporte de ventas', () => {
   });
 
   it('agrupa las ventas por día dentro de la semana', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-03', hh: 14, mm: 0 });
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-04', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-03', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-04', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-05', 10, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/sales?period=week&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -115,8 +115,8 @@ describe('Reporte de ventas', () => {
   });
 
   it('agrupa por método de pago', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0, payment_method: 'efectivo' });
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 15, mm: 0, payment_method: 'tarjeta' });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0, payment_method: 'efectivo' });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 15, mm: 0, payment_method: 'tarjeta' });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/sales?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -155,7 +155,7 @@ describe('Guardado de reportes en base de datos', () => {
   });
 
   it('guarda un reporte manualmente y aparece en la lista de guardados', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 2, total: 50, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 2, total: 50, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const save = await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${freshToken}`).send({ period: 'day', date: '2026-08-05' });
@@ -171,7 +171,7 @@ describe('Guardado de reportes en base de datos', () => {
   });
 
   it('recupera el detalle completo de un reporte guardado, incluyendo los datos', async () => {
-    createPaidOrder({ name: 'Taco al Pastor', price: 25, quantity: 3, total: 75, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco al Pastor', price: 25, quantity: 3, total: 75, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const save = await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${freshToken}`).send({ period: 'day', date: '2026-08-05' });
@@ -188,7 +188,7 @@ describe('Guardado de reportes en base de datos', () => {
   });
 
   it('permite eliminar un reporte guardado', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const save = await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${freshToken}`).send({ period: 'day', date: '2026-08-05' });
@@ -200,7 +200,7 @@ describe('Guardado de reportes en base de datos', () => {
   });
 
   it('filtra la lista de guardados por periodo', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${freshToken}`).send({ period: 'day', date: '2026-08-05' });
@@ -219,38 +219,38 @@ describe('Archivo automático diario de reportes', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('archiva el reporte del día anterior una vez que empieza un nuevo día', () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 4, total: 100, dateStr: '2026-08-05', hh: 14, mm: 0 });
+  it('archiva el reporte del día anterior una vez que empieza un nuevo día', async () => {
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 4, total: 100, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-06', 1, 0);
-    const didArchive = autoArchiveDailyReport();
+    const didArchive = await autoArchiveDailyReport();
     expect(didArchive).toBe(true);
-    const saved = query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05' AND auto = 1");
+    const saved = await query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05' AND auto = 1");
     expect(saved.length).toBe(1);
     expect(saved[0].total_revenue).toBe(100);
     restore();
   });
 
-  it('no vuelve a archivar si ya corrió hoy', () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+  it('no vuelve a archivar si ya corrió hoy', async () => {
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
     const restore = mockNow('2026-08-06', 1, 0);
-    autoArchiveDailyReport();
-    const second = autoArchiveDailyReport();
+    await autoArchiveDailyReport();
+    const second = await autoArchiveDailyReport();
     expect(second).toBe(false);
-    const saved = query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05' AND auto = 1");
+    const saved = await query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05' AND auto = 1");
     expect(saved.length).toBe(1);
     restore();
   });
 
   it('no duplica el archivo automático si ya se guardó manualmente ese día', async () => {
-    createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
+    await createPaidOrder({ name: 'Taco', price: 25, quantity: 1, total: 25, dateStr: '2026-08-05', hh: 14, mm: 0 });
     let restore = mockNow('2026-08-05', 22, 0);
     const token = await adminToken(app);
     await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${token}`).send({ period: 'day', date: '2026-08-05' });
     restore();
 
     restore = mockNow('2026-08-06', 1, 0);
-    autoArchiveDailyReport();
-    const saved = query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05'");
+    await autoArchiveDailyReport();
+    const saved = await query("SELECT * FROM sales_reports WHERE period = 'day' AND date = '2026-08-05'");
     expect(saved.length).toBe(2);
     const autoSaved = saved.filter(r => r.auto === 1);
     expect(autoSaved.length).toBe(1);

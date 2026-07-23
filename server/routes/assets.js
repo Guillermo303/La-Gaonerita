@@ -7,16 +7,16 @@ const router = Router();
 const CATEGORIES = ['cocina', 'mobiliario', 'electronica', 'punto_de_venta', 'otro'];
 const CONDITIONS = ['nuevo', 'bueno', 'regular', 'malo', 'fuera_de_servicio'];
 
-router.get('/', authenticate, authorize('admin', 'socio'), (req, res) => {
+router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
   const { category } = req.query;
   const rows = category
-    ? query('SELECT * FROM assets WHERE category = ? ORDER BY category, name', [category])
-    : query('SELECT * FROM assets ORDER BY category, name');
+    ? await query('SELECT * FROM assets WHERE category = ? ORDER BY category, name', [category])
+    : await query('SELECT * FROM assets ORDER BY category, name');
   res.json(rows);
 });
 
-router.get('/summary', authenticate, authorize('admin', 'socio'), (req, res) => {
-  const rows = query('SELECT * FROM assets');
+router.get('/summary', authenticate, authorize('admin', 'socio'), async (req, res) => {
+  const rows = await query('SELECT * FROM assets');
   const totalValue = rows.reduce((s, a) => s + a.purchase_price * a.quantity, 0);
   const totalItems = rows.reduce((s, a) => s + a.quantity, 0);
 
@@ -40,7 +40,7 @@ router.get('/summary', authenticate, authorize('admin', 'socio'), (req, res) => 
   res.json({ totalValue, totalItems, assetCount: rows.length, byCategory, byCondition });
 });
 
-router.post('/', authenticate, authorize('admin'), (req, res) => {
+router.post('/', authenticate, authorize('admin'), async (req, res) => {
   const { name, category, quantity, purchase_price, purchase_date, condition, location, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   if (category && !CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoría inválida' });
@@ -51,16 +51,16 @@ router.post('/', authenticate, authorize('admin'), (req, res) => {
   if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'El precio de compra no puede ser negativo' });
   if (purchase_date && !/^\d{4}-\d{2}-\d{2}$/.test(purchase_date)) return res.status(400).json({ error: 'Formato de fecha inválido' });
 
-  const result = run(
+  const result = await run(
     'INSERT INTO assets (name, category, quantity, purchase_price, purchase_date, condition, location, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     [name, category || 'otro', qty, price, purchase_date || null, condition || 'bueno', location || null, notes || null]
   );
-  const row = get('SELECT * FROM assets WHERE id = ?', [result.lastInsertRowid]);
+  const row = await get('SELECT * FROM assets WHERE id = ?', [result.lastInsertRowid]);
   res.status(201).json(row);
 });
 
-router.put('/:id', authenticate, authorize('admin'), (req, res) => {
-  const existing = get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
+router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+  const existing = await get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Activo no encontrado' });
 
   const { name, category, quantity, purchase_price, purchase_date, condition, location, notes } = req.body;
@@ -70,7 +70,7 @@ router.put('/:id', authenticate, authorize('admin'), (req, res) => {
   if (purchase_price !== undefined && (!Number.isFinite(Number(purchase_price)) || Number(purchase_price) < 0)) return res.status(400).json({ error: 'El precio de compra no puede ser negativo' });
   if (purchase_date && !/^\d{4}-\d{2}-\d{2}$/.test(purchase_date)) return res.status(400).json({ error: 'Formato de fecha inválido' });
 
-  run(
+  await run(
     `UPDATE assets SET
        name = COALESCE(?, name),
        category = COALESCE(?, category),
@@ -85,14 +85,14 @@ router.put('/:id', authenticate, authorize('admin'), (req, res) => {
     [name, category, quantity !== undefined ? Number(quantity) : undefined, purchase_price !== undefined ? Number(purchase_price) : undefined,
       purchase_date, condition, location, notes, req.params.id]
   );
-  const row = get('SELECT * FROM assets WHERE id = ?', [req.params.id]);
+  const row = await get('SELECT * FROM assets WHERE id = ?', [req.params.id]);
   res.json(row);
 });
 
-router.delete('/:id', authenticate, authorize('admin'), (req, res) => {
-  const existing = get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
+router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+  const existing = await get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Activo no encontrado' });
-  run('DELETE FROM assets WHERE id = ?', [req.params.id]);
+  await run('DELETE FROM assets WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
 

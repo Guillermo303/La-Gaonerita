@@ -31,7 +31,7 @@ describe('Gestión de socios', () => {
     const res = await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Doña Lupe', email: 'lupe@test.com', password: 'secreto123', phone: '5511112222' });
     expect(res.status).toBe(201);
     expect(res.body.email).toBe('lupe@test.com');
-    const row = get("SELECT role FROM users WHERE email = 'lupe@test.com'");
+    const row = await get("SELECT role FROM users WHERE email = 'lupe@test.com'");
     expect(row.role).toBe('socio');
   });
 

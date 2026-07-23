@@ -1,33 +1,75 @@
-import initSqlJs from 'sql.js';
-import { fileURLToPath } from 'url';
-import { dirname, join, isAbsolute } from 'path';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import pg from 'pg';
 import bcrypt from 'bcryptjs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-// DB_FILE puede ser un path absoluto (ej. un disco persistente montado en
-// Render) o uno relativo al directorio server/; ':memory:' desactiva la
-// persistencia a disco (usado en las pruebas automatizadas).
-const DB_PATH = process.env.DB_FILE
-  ? (isAbsolute(process.env.DB_FILE) ? process.env.DB_FILE : join(__dirname, process.env.DB_FILE))
-  : join(__dirname, 'data.db');
-const PERSIST = process.env.DB_FILE !== ':memory:';
+const { Pool } = pg;
 
-let db;
+// En pruebas (NODE_ENV=test) se usa un schema aparte del mismo proyecto de
+// Supabase, para que las pruebas automatizadas (que hacen TRUNCATE entre
+// cada test) nunca toquen los datos reales de desarrollo/producción.
+const SCHEMA = process.env.NODE_ENV === 'test' ? 'test' : 'public';
 
-export async function initDB() {
-  const SQL = await initSqlJs();
-  if (PERSIST && existsSync(DB_PATH)) {
-    const buffer = readFileSync(DB_PATH);
-    db = new SQL.Database(buffer);
-  } else {
-    db = new SQL.Database();
+let pool;
+
+function toPgQuery(sql) {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
+
+function sanitize(params) {
+  return params.map(p => p === undefined ? null : p);
+}
+
+async function execQuery(executor, sql, params = []) {
+  const res = await executor.query(toPgQuery(sql), sanitize(params));
+  return res.rows;
+}
+
+async function execRun(executor, sql, params = []) {
+  const isInsert = /^\s*insert/i.test(sql);
+  const text = isInsert ? `${sql} RETURNING *` : sql;
+  const res = await executor.query(toPgQuery(text), sanitize(params));
+  return { changes: res.rowCount, lastInsertRowid: res.rows[0]?.id };
+}
+
+export async function query(sql, params = []) {
+  return execQuery(pool, sql, params);
+}
+
+export async function get(sql, params = []) {
+  const rows = await query(sql, params);
+  return rows[0] || null;
+}
+
+export async function run(sql, params = []) {
+  return execRun(pool, sql, params);
+}
+
+// Para operaciones que deben ser atómicas (varias escrituras que dependen
+// entre sí, ej. crear una orden + sus items): fn recibe {query, get, run}
+// ligados a un único cliente/transacción en vez del pool compartido.
+export async function withTransaction(fn) {
+  const client = await pool.connect();
+  const scoped = {
+    query: (sql, params) => execQuery(client, sql, params),
+    get: async (sql, params) => (await execQuery(client, sql, params))[0] || null,
+    run: (sql, params) => execRun(client, sql, params)
+  };
+  try {
+    await client.query('BEGIN');
+    const result = await fn(scoped);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-  db.run('PRAGMA foreign_keys = ON');
+}
 
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+const SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
@@ -35,45 +77,10 @@ export async function initDB() {
     phone TEXT,
     active INTEGER NOT NULL DEFAULT 1,
     token_version INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-  try { db.run("ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1"); saveDB(); } catch {}
-  try { db.run("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"); saveDB(); } catch {}
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 
-  // Bases de datos creadas antes de agregar el rol 'socio' tienen un CHECK
-  // antiguo que lo rechaza; sqlite no permite alterar un CHECK existente,
-  // así que se reconstruye la tabla si el CHECK no incluye 'socio'.
-  const usersTableSql = db.exec("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'");
-  const usersSql = usersTableSql.length ? usersTableSql[0].values[0][0] : '';
-  if (usersSql && !usersSql.includes("'socio'")) {
-    // Renombrar/recrear la tabla padre con FKs activas provoca errores de
-    // integridad referencial a mitad del proceso; se desactivan mientras dura.
-    db.run('PRAGMA foreign_keys = OFF');
-    db.run('ALTER TABLE users RENAME TO users_old');
-    db.run(`CREATE TABLE users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'cliente' CHECK(role IN ('admin','cocina','mesero','cliente','socio')),
-      phone TEXT,
-      active INTEGER NOT NULL DEFAULT 1,
-      token_version INTEGER NOT NULL DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-    // Selección explícita por nombre de columna: 'active' y 'token_version'
-    // se agregaron con ALTER TABLE ADD COLUMN en versiones anteriores, así
-    // que quedaron al final de users_old y no coinciden en posición con el
-    // orden de columnas de la tabla nueva. Un `SELECT *` posicional aquí
-    // desordenaría los valores entre columnas.
-    db.run(`INSERT INTO users (id, name, email, password, role, phone, active, token_version, created_at)
-            SELECT id, name, email, password, role, phone, active, token_version, created_at FROM users_old`);
-    db.run('DROP TABLE users_old');
-    db.run('PRAGMA foreign_keys = ON');
-    saveDB();
-  }
-
-  db.run(`CREATE TABLE IF NOT EXISTS employee_details (
+  CREATE TABLE IF NOT EXISTS employee_details (
     user_id INTEGER PRIMARY KEY,
     puesto TEXT DEFAULT '',
     salario REAL DEFAULT 0,
@@ -83,17 +90,17 @@ export async function initDB() {
     fecha_contratacion TEXT,
     fecha_baja TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     sort_order INTEGER DEFAULT 0
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS menu_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS menu_items (
+    id SERIAL PRIMARY KEY,
     category_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -105,18 +112,15 @@ export async function initDB() {
     max_stock INTEGER NOT NULL DEFAULT 20,
     ready_to_serve INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES categories(id)
-  )`);
-  try { db.run("ALTER TABLE menu_items ADD COLUMN stock INTEGER NOT NULL DEFAULT 20"); saveDB(); } catch {}
-  try { db.run("ALTER TABLE menu_items ADD COLUMN max_stock INTEGER NOT NULL DEFAULT 20"); saveDB(); } catch {}
-  try { db.run("ALTER TABLE menu_items ADD COLUMN ready_to_serve INTEGER NOT NULL DEFAULT 0"); saveDB(); } catch {}
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS inventory_state (
+  CREATE TABLE IF NOT EXISTS inventory_state (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     last_reset TEXT
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS orders (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER,
     customer_name TEXT NOT NULL,
     customer_phone TEXT,
@@ -129,32 +133,20 @@ export async function initDB() {
     payment_method TEXT DEFAULT 'efectivo' CHECK(payment_method IN ('efectivo','transferencia','tarjeta')),
     payment_status TEXT DEFAULT 'pendiente' CHECK(payment_status IN ('pendiente','pagado','reembolsado')),
     stripe_payment_intent_id TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS mesas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS mesas (
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     sort_order INTEGER DEFAULT 0,
     capacity INTEGER NOT NULL DEFAULT 4
-  )`);
-  try { db.run("ALTER TABLE mesas ADD COLUMN capacity INTEGER NOT NULL DEFAULT 4"); saveDB(); } catch {}
+  );
 
-  const mesaCount = db.exec("SELECT COUNT(*) as count FROM mesas");
-  const mCount = mesaCount.length ? mesaCount[0].values[0][0] : 0;
-  if (mCount === 0) {
-    for (let i = 1; i <= 6; i++) {
-      db.run('INSERT INTO mesas (name, sort_order) VALUES (?, ?)', [`Mesa ${i}`, i]);
-    }
-    saveDB();
-  }
-
-  try { db.run("ALTER TABLE orders ADD COLUMN mesa TEXT"); saveDB(); } catch {}
-
-  db.run(`CREATE TABLE IF NOT EXISTS reservations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS reservations (
+    id SERIAL PRIMARY KEY,
     mesa_id INTEGER NOT NULL,
     customer_name TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
@@ -163,45 +155,45 @@ export async function initDB() {
     time TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'confirmada' CHECK(status IN ('confirmada','ocupada','completada','cancelada')),
     notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (mesa_id) REFERENCES mesas(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS expenses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS expenses (
+    id SERIAL PRIMARY KEY,
     category TEXT NOT NULL CHECK(category IN ('renta','servicios','insumos','mantenimiento','marketing','impuestos','otro')),
     description TEXT,
     amount REAL NOT NULL,
     date TEXT NOT NULL,
     payment_method TEXT DEFAULT 'efectivo' CHECK(payment_method IN ('efectivo','transferencia','tarjeta')),
     created_by INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS supply_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS supply_items (
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     unit TEXT NOT NULL DEFAULT 'pieza',
     purchased REAL NOT NULL DEFAULT 0,
     consumed REAL NOT NULL DEFAULT 0,
     week_start TEXT,
     sort_order INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS menu_item_supplies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS menu_item_supplies (
+    id SERIAL PRIMARY KEY,
     menu_item_id INTEGER NOT NULL,
     supply_item_id INTEGER NOT NULL,
     quantity_per_unit REAL NOT NULL DEFAULT 1,
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id),
     FOREIGN KEY (supply_item_id) REFERENCES supply_items(id),
     UNIQUE(menu_item_id, supply_item_id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS supply_week_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS supply_week_history (
+    id SERIAL PRIMARY KEY,
     supply_item_id INTEGER,
     supply_name TEXT NOT NULL,
     unit TEXT NOT NULL,
@@ -210,17 +202,17 @@ export async function initDB() {
     purchased REAL NOT NULL,
     consumed REAL NOT NULL,
     remaining REAL NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (supply_item_id) REFERENCES supply_items(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS supply_state (
+  CREATE TABLE IF NOT EXISTS supply_state (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     last_week_start TEXT
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS assets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS assets (
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     category TEXT NOT NULL DEFAULT 'otro' CHECK(category IN ('cocina','mobiliario','electronica','punto_de_venta','otro')),
     quantity INTEGER NOT NULL DEFAULT 1,
@@ -229,12 +221,12 @@ export async function initDB() {
     condition TEXT NOT NULL DEFAULT 'bueno' CHECK(condition IN ('nuevo','bueno','regular','malo','fuera_de_servicio')),
     location TEXT,
     notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS order_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS order_items (
+    id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
     menu_item_id INTEGER,
     name TEXT NOT NULL,
@@ -243,10 +235,10 @@ export async function initDB() {
     notes TEXT,
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS sales_reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS sales_reports (
+    id SERIAL PRIMARY KEY,
     period TEXT NOT NULL CHECK(period IN ('day','week','month')),
     date TEXT NOT NULL,
     range_start TEXT NOT NULL,
@@ -256,66 +248,61 @@ export async function initDB() {
     data TEXT NOT NULL,
     generated_by INTEGER,
     auto INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (generated_by) REFERENCES users(id)
-  )`);
+  );
 
-  db.run(`CREATE TABLE IF NOT EXISTS sales_report_state (
+  CREATE TABLE IF NOT EXISTS sales_report_state (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     last_archive TEXT
-  )`);
+  );
+`;
 
-  const row = db.exec("SELECT COUNT(*) as count FROM users");
-  const count = row.length ? row[0].values[0][0] : 0;
-  if (count === 0) {
+async function seedDefaults() {
+  const mesaCount = await get('SELECT COUNT(*) as count FROM mesas');
+  if (Number(mesaCount.count) === 0) {
+    for (let i = 1; i <= 6; i++) {
+      await run('INSERT INTO mesas (name, sort_order) VALUES (?, ?)', [`Mesa ${i}`, i]);
+    }
+  }
+
+  const userCount = await get('SELECT COUNT(*) as count FROM users');
+  if (Number(userCount.count) === 0) {
     const hash = bcrypt.hashSync('admin123', 10);
-    db.run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Admin', 'admin@laganerita.com', hash, 'admin']);
-    saveDB();
+    await run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Admin', 'admin@laganerita.com', hash, 'admin']);
+  }
+}
+
+export async function initDB() {
+  if (!pool) {
+    // search_path se fija vía las opciones de conexión (parte del paquete de
+    // arranque de cada conexión física) en vez de un `SET` posterior: bajo el
+    // "Transaction pooler" de Supabase (pgbouncer), un `SET` emitido después
+    // de abrir la conexión puede perderse o correr en carrera con la primera
+    // consulta real si el pool abre la conexión y la usa casi al mismo tiempo.
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      options: `-c search_path=${SCHEMA}`,
+      ssl: { rejectUnauthorized: false }
+    });
   }
 
-  return db;
+  await pool.query(`CREATE SCHEMA IF NOT EXISTS "${SCHEMA}"`);
+  await pool.query(SCHEMA_SQL);
+  await seedDefaults();
+
+  return pool;
 }
 
-function saveDB() {
-  if (!PERSIST) return;
-  const data = db.export();
-  const buffer = Buffer.from(data);
-  mkdirSync(dirname(DB_PATH), { recursive: true });
-  writeFileSync(DB_PATH, buffer);
-}
-
-function sanitize(params) {
-  return params.map(p => p === undefined ? null : p);
-}
-
-export function query(sql, params = []) {
-  const stmt = db.prepare(sql);
-  if (params.length) stmt.bind(sanitize(params));
-  const results = [];
-  while (stmt.step()) {
-    results.push(stmt.getAsObject());
+export async function resetTestSchema() {
+  const tables = await query(`
+    SELECT tablename FROM pg_tables WHERE schemaname = 'test'
+  `);
+  if (tables.length) {
+    const names = tables.map(t => `"test"."${t.tablename}"`).join(', ');
+    await pool.query(`TRUNCATE ${names} RESTART IDENTITY CASCADE`);
   }
-  stmt.free();
-  return results;
+  await seedDefaults();
 }
 
-export function get(sql, params = []) {
-  const stmt = db.prepare(sql);
-  if (params.length) stmt.bind(sanitize(params));
-  let result = null;
-  if (stmt.step()) {
-    result = stmt.getAsObject();
-  }
-  stmt.free();
-  return result;
-}
-
-export function run(sql, params = []) {
-  db.run(sql, sanitize(params));
-  const lastInsertRowid = db.exec("SELECT last_insert_rowid() as id")[0]?.values[0]?.[0] || 0;
-  const changes = db.getRowsModified();
-  saveDB();
-  return { changes, lastInsertRowid };
-}
-
-export default { initDB, query, get, run };
+export default { initDB, query, get, run, withTransaction, resetTestSchema };

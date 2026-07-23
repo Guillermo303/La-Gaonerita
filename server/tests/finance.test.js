@@ -18,9 +18,9 @@ function toSqlUTC(dateStr, hh, mm) {
   return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-function createPaidOrder({ total, dateStr, hh = 14, mm = 0 }) {
+async function createPaidOrder({ total, dateStr, hh = 14, mm = 0 }) {
   const timestamp = toSqlUTC(dateStr, hh, mm);
-  const order = run(
+  const order = await run(
     "INSERT INTO orders (user_id, customer_name, order_type, total, payment_method, payment_status, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'pagado', 'completado', ?, ?)",
     [null, 'Cliente', 'local', total, 'efectivo', timestamp, timestamp]
   );
@@ -66,7 +66,7 @@ describe('Panorama financiero consolidado', () => {
   it('calcula el margen de utilidad correctamente', async () => {
     const restore = mockNow('2026-08-05', 12, 0);
     const freshToken = await adminToken(app);
-    createPaidOrder({ total: 1000, dateStr: '2026-08-05' });
+    await createPaidOrder({ total: 1000, dateStr: '2026-08-05' });
     await request(app).post('/api/expenses').set('Authorization', `Bearer ${freshToken}`).send({ category: 'renta', amount: 200, date: '2026-08-05' });
     const res = await request(app).get('/api/reports/finance?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
     expect(res.body.totalRevenue).toBe(1000);
@@ -86,8 +86,8 @@ describe('Panorama financiero consolidado', () => {
   });
 
   it('compara contra el periodo anterior (día)', async () => {
-    createPaidOrder({ total: 500, dateStr: '2026-08-04' });
-    createPaidOrder({ total: 1000, dateStr: '2026-08-05' });
+    await createPaidOrder({ total: 500, dateStr: '2026-08-04' });
+    await createPaidOrder({ total: 1000, dateStr: '2026-08-05' });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/finance?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -98,8 +98,8 @@ describe('Panorama financiero consolidado', () => {
   });
 
   it('compara contra la semana anterior', async () => {
-    createPaidOrder({ total: 300, dateStr: '2026-07-28' }); // martes de la semana previa
-    createPaidOrder({ total: 900, dateStr: '2026-08-05' }); // miércoles de esta semana
+    await createPaidOrder({ total: 300, dateStr: '2026-07-28' }); // martes de la semana previa
+    await createPaidOrder({ total: 900, dateStr: '2026-08-05' }); // miércoles de esta semana
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/finance?period=week&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);
@@ -109,8 +109,8 @@ describe('Panorama financiero consolidado', () => {
   });
 
   it('compara contra el mes anterior', async () => {
-    createPaidOrder({ total: 1000, dateStr: '2026-07-15' });
-    createPaidOrder({ total: 2000, dateStr: '2026-08-15' });
+    await createPaidOrder({ total: 1000, dateStr: '2026-07-15' });
+    await createPaidOrder({ total: 2000, dateStr: '2026-08-15' });
     const restore = mockNow('2026-08-20', 12, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/finance?period=month&date=2026-08-15').set('Authorization', `Bearer ${freshToken}`);
@@ -129,7 +129,7 @@ describe('Panorama financiero consolidado', () => {
   });
 
   it('devuelve cambio nulo cuando el periodo anterior fue cero y el actual no', async () => {
-    createPaidOrder({ total: 500, dateStr: '2026-08-05' });
+    await createPaidOrder({ total: 500, dateStr: '2026-08-05' });
     const restore = mockNow('2026-08-05', 22, 0);
     const freshToken = await adminToken(app);
     const res = await request(app).get('/api/reports/finance?period=day&date=2026-08-05').set('Authorization', `Bearer ${freshToken}`);

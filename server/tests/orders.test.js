@@ -10,9 +10,9 @@ async function registerAndLogin(app, overrides = {}) {
   return res.body.token;
 }
 
-function seedMenuItem() {
-  const cat = run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
-  const item = run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40]);
+async function seedMenuItem() {
+  const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
+  const item = await run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Taco de asada', 40]);
   return item.lastInsertRowid;
 }
 
@@ -43,7 +43,7 @@ describe('POST /api/orders', () => {
   let app, token, menuItemId;
   beforeEach(async () => {
     app = await freshApp();
-    menuItemId = seedMenuItem();
+    menuItemId = await seedMenuItem();
     token = await registerAndLogin(app);
   });
 
@@ -76,7 +76,7 @@ describe('PUT /api/orders/:id/status', () => {
   let app, clienteToken, adminToken, orderId;
   beforeEach(async () => {
     app = await freshApp();
-    const menuItemId = seedMenuItem();
+    const menuItemId = await seedMenuItem();
     clienteToken = await registerAndLogin(app);
     const login = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
     adminToken = login.body.token;
@@ -103,9 +103,9 @@ describe('PUT /api/orders/:id/status', () => {
   });
 });
 
-function seedReadyToServeItem(name = 'Coca-Cola') {
-  const cat = run('INSERT INTO categories (name) VALUES (?)', ['Bebidas']);
-  const item = run('INSERT INTO menu_items (category_id, name, price, ready_to_serve) VALUES (?, ?, ?, 1)', [cat.lastInsertRowid, name, 20]);
+async function seedReadyToServeItem(name = 'Coca-Cola') {
+  const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Bebidas']);
+  const item = await run('INSERT INTO menu_items (category_id, name, price, ready_to_serve) VALUES (?, ?, ?, 1)', [cat.lastInsertRowid, name, 20]);
   return item.lastInsertRowid;
 }
 
@@ -114,8 +114,8 @@ describe('Compra rápida (quick_sale)', () => {
   beforeEach(async () => {
     app = await freshApp();
     token = await registerAndLogin(app);
-    readyItemId = seedReadyToServeItem();
-    prepItemId = seedMenuItem();
+    readyItemId = await seedReadyToServeItem();
+    prepItemId = await seedMenuItem();
   });
 
   it('crea la orden directamente como completada cuando todos los productos están listos para servir', async () => {
