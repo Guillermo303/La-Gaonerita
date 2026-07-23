@@ -255,11 +255,11 @@ function MenuAdmin({ menuData, setMenuData }) {
               ))}
             </div>
             <div className="px-4 py-3 border-t border-ink-100 bg-cream-50/50">
-              <div className="flex gap-2">
-                <input value={newItem.catId === cat.id ? newItem.name : ''} placeholder="Item..." onChange={e => setNewItem({ ...newItem, catId: cat.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1" />
-                <input value={newItem.catId === cat.id ? newItem.price : ''} placeholder="$0" onChange={e => setNewItem({ ...newItem, catId: cat.id, price: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" />
+              <div className="flex flex-wrap gap-2">
+                <input value={newItem.catId === cat.id ? newItem.name : ''} placeholder="Item..." onChange={e => setNewItem({ ...newItem, catId: cat.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 min-w-[7rem]" />
+                <input value={newItem.catId === cat.id ? newItem.price : ''} placeholder="$0" onChange={e => setNewItem({ ...newItem, catId: cat.id, price: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-16" />
                 <input value={newItem.catId === cat.id ? newItem.maxStock : ''} placeholder="Cap. 20" onChange={e => setNewItem({ ...newItem, catId: cat.id, maxStock: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" title="Capacidad diaria" />
-                <input value={newItem.catId === cat.id ? newItem.description : ''} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 hidden sm:block" />
+                <input value={newItem.catId === cat.id ? newItem.description : ''} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 min-w-[7rem] hidden sm:block" />
                 <label className="flex items-center gap-1 text-xs text-ink-500 whitespace-nowrap" title="No requiere preparación (ej. bebidas embotelladas)">
                   <input type="checkbox" checked={newItem.catId === cat.id ? newItem.readyToServe : false} onChange={e => setNewItem({ ...newItem, catId: cat.id, readyToServe: e.target.checked })} />
                   ⚡
