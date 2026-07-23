@@ -108,3 +108,8 @@ export const assets = {
   update: (id, data) => request(`/assets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => request(`/assets/${id}`, { method: 'DELETE' })
 };
+
+export const users = {
+  lookup: (email) => request(`/users/lookup?email=${encodeURIComponent(email)}`),
+  delete: (id) => request(`/users/${id}`, { method: 'DELETE' })
+};

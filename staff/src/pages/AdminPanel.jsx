@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { menu as menuApi, orders as ordersApi, mesas as mesasApi, employees as employeesApi, reservations as reservationsApi, reports as reportsApi, socios as sociosApi, expenses as expensesApi, supplies as suppliesApi, assets as assetsApi } from '../api';
+import { menu as menuApi, orders as ordersApi, mesas as mesasApi, employees as employeesApi, reservations as reservationsApi, reports as reportsApi, socios as sociosApi, expenses as expensesApi, supplies as suppliesApi, assets as assetsApi, users as usersApi } from '../api';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../lib/utils';
@@ -908,6 +908,79 @@ function EmpleadosAdmin() {
           ))
         )}
       </div>
+
+      <div className="mt-8">
+        <CuentasPruebaAdmin />
+      </div>
+    </div>
+  );
+}
+
+function CuentasPruebaAdmin() {
+  const [email, setEmail] = useState('');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  const buscar = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setError('');
+    setResult(null);
+    setConfirming(false);
+    setLoading(true);
+    try {
+      const user = await usersApi.lookup(email.trim());
+      setResult(user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminar = async () => {
+    setError('');
+    try {
+      await usersApi.delete(result.id);
+      setResult(null);
+      setEmail('');
+      setConfirming(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
+      <h3 className="font-bold text-ink-900 mb-1">Cuentas de Prueba</h3>
+      <p className="text-xs text-ink-400 mb-4">Busca una cuenta por email para eliminarla y poder reutilizar ese correo en pruebas. Un empleado desactivado (despedido) sigue bloqueando su email aunque no lo elimines aquí — así nadie puede volver a registrarse con ese correo.</p>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+      <form onSubmit={buscar} className="flex gap-2 mb-4">
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@ejemplo.com" className="flex-1 border border-ink-200 rounded-lg p-2 text-sm" />
+        <button type="submit" disabled={loading} className="bg-ink-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-ink-900 disabled:opacity-50">{loading ? 'Buscando…' : 'Buscar'}</button>
+      </form>
+      {result && (
+        <div className="bg-cream-50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-ink-900">{result.name}</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">{result.role}</span>
+            {!result.active && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Desactivado</span>}
+          </div>
+          <div className="text-sm text-ink-500">{result.email}</div>
+          {result.hasHistory ? (
+            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">Esta cuenta tiene historial (pedidos, reportes o gastos) y no se puede eliminar — usa "Desactivar" en Empleados/Socios si necesitas bloquearla.</p>
+          ) : confirming ? (
+            <div className="flex gap-2">
+              <button onClick={eliminar} className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Sí, eliminar permanentemente</button>
+              <button onClick={() => setConfirming(false)} className="text-ink-500 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-ink-100">Cancelar</button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirming(true)} className="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-200">🗑️ Eliminar Permanentemente</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

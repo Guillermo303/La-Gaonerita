@@ -15,6 +15,7 @@ import reportRoutes from './routes/reports.js';
 import expenseRoutes from './routes/expenses.js';
 import supplyRoutes from './routes/supplies.js';
 import assetRoutes from './routes/assets.js';
+import userRoutes from './routes/users.js';
 
 const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
 
@@ -56,6 +57,7 @@ export function createApp() {
   app.use('/api/expenses', expenseRoutes);
   app.use('/api/supplies', supplyRoutes);
   app.use('/api/assets', assetRoutes);
+  app.use('/api/users', userRoutes);
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
   return { app, httpServer, io };
