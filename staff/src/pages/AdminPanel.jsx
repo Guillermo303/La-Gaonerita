@@ -168,31 +168,62 @@ function MenuAdmin({ menuData, setMenuData }) {
   const [editing, setEditing] = useState(null);
   const [newCat, setNewCat] = useState('');
   const [newItem, setNewItem] = useState({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
+  const [error, setError] = useState('');
+
+  const reload = () => menuApi.getAllAdmin().then(setMenuData).catch(e => setError(e.message));
 
   const addCat = async () => {
     if (!newCat) return;
-    await menuApi.createCategory({ name: newCat });
-    setNewCat('');
-    menuApi.getAllAdmin().then(setMenuData);
+    setError('');
+    try {
+      await menuApi.createCategory({ name: newCat });
+      setNewCat('');
+      reload();
+    } catch (e) {
+      setError(e.message);
+    }
   };
-  const delCat = async (id) => { await menuApi.deleteCategory(id); menuApi.getAllAdmin().then(setMenuData); };
-  const toggleItem = async (item) => { await menuApi.updateItem(item.id, { available: item.available ? 0 : 1 }); menuApi.getAllAdmin().then(setMenuData); };
-  const delItem = async (id) => { await menuApi.deleteItem(id); menuApi.getAllAdmin().then(setMenuData); };
-  const saveItem = async (id, data) => { await menuApi.updateItem(id, data); menuApi.getAllAdmin().then(setMenuData); };
+  const delCat = async (id) => {
+    setError('');
+    try { await menuApi.deleteCategory(id); reload(); } catch (e) { setError(e.message); }
+  };
+  const toggleItem = async (item) => {
+    setError('');
+    try { await menuApi.updateItem(item.id, { available: item.available ? 0 : 1 }); reload(); } catch (e) { setError(e.message); }
+  };
+  const delItem = async (id) => {
+    setError('');
+    try { await menuApi.deleteItem(id); reload(); } catch (e) { setError(e.message); }
+  };
+  const saveItem = async (id, data) => {
+    setError('');
+    try { await menuApi.updateItem(id, data); reload(); } catch (e) { setError(e.message); }
+  };
   const saveStock = async (item, stock, maxStock) => {
-    if (maxStock !== item.max_stock) await menuApi.updateItem(item.id, { max_stock: maxStock });
-    if (stock !== item.stock) await menuApi.updateStock(item.id, stock);
-    menuApi.getAllAdmin().then(setMenuData);
+    setError('');
+    try {
+      if (maxStock !== item.max_stock) await menuApi.updateItem(item.id, { max_stock: maxStock });
+      if (stock !== item.stock) await menuApi.updateStock(item.id, stock);
+      reload();
+    } catch (e) {
+      setError(e.message);
+    }
   };
   const addItem = async () => {
     if (!newItem.catId || !newItem.name || !newItem.price) return;
-    await menuApi.createItem({ category_id: parseInt(newItem.catId), name: newItem.name, price: parseFloat(newItem.price), description: newItem.description || null, max_stock: newItem.maxStock ? parseInt(newItem.maxStock) : 20, ready_to_serve: newItem.readyToServe });
-    setNewItem({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
-    menuApi.getAllAdmin().then(setMenuData);
+    setError('');
+    try {
+      await menuApi.createItem({ category_id: parseInt(newItem.catId), name: newItem.name, price: parseFloat(newItem.price), description: newItem.description || null, max_stock: newItem.maxStock ? parseInt(newItem.maxStock) : 20, ready_to_serve: newItem.readyToServe });
+      setNewItem({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
+      reload();
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   return (
     <div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
       <div className="flex items-center gap-2 mb-6">
         <input value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="Nueva categoría..." className="border border-ink-200 rounded-lg p-2 text-sm flex-1" />
         <button onClick={addCat} className="bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-brand-600">Agregar</button>
