@@ -18,7 +18,7 @@ function LoDeSiempre({ items, add, inCart, updateQty }) {
           {items.map(item => {
             const cartItem = inCart(item.id);
             return (
-              <div key={item.id} className="bg-white rounded-xl border border-brand-100 p-4 flex flex-col">
+              <div key={item.id} className="card-glow bg-white rounded-xl border border-brand-100 p-4 flex flex-col">
                 <div className="flex items-baseline justify-between gap-2 mb-2">
                   <h3 className="font-display font-bold text-ink-900 text-sm">{item.name}</h3>
                   <span className="text-brand-600 font-extrabold text-sm whitespace-nowrap">{formatPrice(item.price)}</span>
@@ -143,7 +143,7 @@ export default function Menu() {
               const pocasUnidades = !agotado && stock <= 5;
               const alTope = cartItem && cartItem.quantity >= stock;
               return (
-                <div key={item.id} className={`bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
+                <div className={`card-glow bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
                     <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
@@ -163,7 +163,7 @@ export default function Menu() {
                         <span className="text-sm font-semibold text-ink-500">{formatPrice(item.price * cartItem.quantity)}</span>
                       </div>
                     ) : (
-                      <button onClick={() => add(item)} disabled={agotado} className="w-full bg-cream-100 text-brand-700 py-2 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-brand-500 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-cream-100 disabled:hover:text-brand-700">
+                      <button onClick={() => add(item)} disabled={agotado} className={`w-full py-2 rounded-lg font-bold text-sm uppercase tracking-wider transition disabled:opacity-40 disabled:cursor-not-allowed ${agotado ? 'bg-cream-100 text-brand-700' : 'btn-sweep bg-cream-100 text-brand-700'}`}>
                         {agotado ? 'Agotado' : 'Agregar +'}
                       </button>
                     )}
@@ -177,7 +177,7 @@ export default function Menu() {
 
       {count > 0 && (
         <div className="fixed bottom-4 inset-x-4 z-40 flex justify-center">
-          <Link to="/checkout" className="flex items-center justify-between gap-6 w-full max-w-xl bg-ink-900 text-cream-50 rounded-full shadow-2xl px-6 py-4 hover:bg-ink-800 transition">
+          <Link to="/checkout" className="btn-grow flex items-center justify-between gap-6 w-full max-w-xl bg-ink-900 text-cream-50 rounded-full shadow-2xl px-6 py-4 hover:bg-ink-800">
             <span className="flex items-center gap-3">
               <span className="bg-brand-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{count}</span>
               <span className="font-semibold">{count === 1 ? '1 producto' : `${count} productos`}</span>

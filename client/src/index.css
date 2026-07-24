@@ -35,3 +35,47 @@ body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; 
   .animate-kenburns { animation: none; }
   .reveal, .reveal.reveal-left, .reveal.reveal-right { opacity: 1; transform: none; transition: none; }
 }
+
+/* Animaciones de hover inspiradas en Hover.css, adaptadas a la paleta de marca */
+
+/* Botones sólidos: crecen y levantan una sombra cálida */
+.btn-grow { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.btn-grow:hover { transform: scale(1.06); box-shadow: 0 12px 28px -8px rgba(214, 67, 31, 0.5); }
+.btn-grow:active { transform: scale(0.97); }
+
+/* Botones de contorno: el color de marca entra deslizando de izquierda a derecha */
+.btn-sweep { position: relative; overflow: hidden; z-index: 0; transition: color 0.35s ease; }
+.btn-sweep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #D6431F;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+  z-index: -1;
+}
+.btn-sweep:hover { color: #fff !important; }
+.btn-sweep:hover::before { transform: scaleX(1); }
+
+/* Links de navegación: subrayado que se desliza desde el centro */
+.link-underline { position: relative; }
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+.link-underline:hover::after { transform: scaleX(1); }
+
+/* Tarjetas: resplandor cálido y ligero levantamiento */
+.card-glow { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card-glow:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(214, 67, 31, 0.35); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-grow, .btn-sweep, .btn-sweep::before, .link-underline::after, .card-glow { transition: none; }
+  .btn-grow:hover, .card-glow:hover { transform: none; }
+}

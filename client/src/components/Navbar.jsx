@@ -13,7 +13,7 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const linkCls = "text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition";
+  const linkCls = "link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition";
   const mobileLinkCls = "block py-2.5 text-sm font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition";
 
   return (
@@ -37,8 +37,8 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-xs font-bold uppercase tracking-widest border border-cream-100/30 px-4 py-2 rounded hover:bg-cream-100/10 transition">Iniciar Sesión</Link>
-                <Link to="/join" className="bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded hover:bg-brand-600 transition">Registrarse</Link>
+                <Link to="/login" className="btn-sweep text-xs font-bold uppercase tracking-widest border border-cream-100/30 px-4 py-2 rounded transition">Iniciar Sesión</Link>
+                <Link to="/join" className="btn-grow bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded hover:bg-brand-600">Registrarse</Link>
               </>
             )}
           </div>

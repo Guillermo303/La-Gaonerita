@@ -166,7 +166,7 @@ function FavoritosCarousel({ items }) {
       <div ref={trackRef} onScroll={handleScroll} className="relative flex overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-3 pb-2">
         {items.map(fav => (
           <div key={fav.name} className="snap-start shrink-0 basis-full sm:basis-1/2 lg:basis-1/3 px-3">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1.5 transition duration-300 group h-full">
+            <div className="card-glow bg-white rounded-2xl overflow-hidden shadow-md group h-full">
               <div className="h-48 overflow-hidden bg-ink-100">
                 <img src={fav.img} alt={fav.name} className="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-1 transition duration-700" />
               </div>
@@ -249,10 +249,10 @@ export default function Home() {
           </Reveal>
           <Reveal delay={450}>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link to="/menu" className="bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600 hover:scale-105 transition">Ver Menú</Link>
-              <Link to="/local-order" className="bg-white/10 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-white/20 transition">Pedir desde el Local 🏠</Link>
-              <Link to="/register" className="border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-cream-100/10 transition">Ordenar a Domicilio</Link>
-              <button onClick={() => setReserving(true)} className="border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-cream-100/10 transition">Reservar Mesa 🍽️</button>
+              <Link to="/menu" className="btn-grow bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
+              <Link to="/local-order" className="btn-sweep bg-white/10 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Pedir desde el Local 🏠</Link>
+              <Link to="/register" className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Ordenar a Domicilio</Link>
+              <button onClick={() => setReserving(true)} className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Reservar Mesa 🍽️</button>
             </div>
           </Reveal>
         </div>
@@ -347,7 +347,7 @@ export default function Home() {
           </Reveal>
           <Reveal delay={300}>
             <div className="text-center mt-10">
-              <Link to="/menu" className="inline-block bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600 hover:scale-105 transition">Ver Menú Completo</Link>
+              <Link to="/menu" className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú Completo</Link>
             </div>
           </Reveal>
         </div>
@@ -400,8 +400,8 @@ export default function Home() {
                 </div>
                 </div>
               </div>
-              <Link to="/local-order" className="mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Pedir desde tu Mesa 🏠</Link>
-              <button onClick={() => setReserving(true)} className="mt-3 inline-block w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 hover:bg-brand-50 transition">Reservar Mesa 🍽️</button>
+              <Link to="/local-order" className="btn-grow mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Pedir desde tu Mesa 🏠</Link>
+              <button onClick={() => setReserving(true)} className="btn-sweep mt-3 inline-block w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 transition">Reservar Mesa 🍽️</button>
             </Reveal>
           </div>
         </section>

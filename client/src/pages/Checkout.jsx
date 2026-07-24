@@ -105,7 +105,7 @@ export default function Checkout() {
         <div className="text-5xl mb-4">🛒</div>
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Tu carrito está vacío</h1>
         <p className="text-ink-500 mb-8">Ve al menú y elige tus platillos favoritos.</p>
-        <Link to="/menu" className="inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Ver Menú</Link>
+        <Link to="/menu" className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
       </div>
     );
   }
@@ -151,13 +151,13 @@ export default function Checkout() {
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-3">¿Cómo quieres tu pedido?</label>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => setForm({ ...form, type: 'domicilio' })}
-                  className={`rounded-xl border-2 p-4 text-center transition ${form.type === 'domicilio' ? 'border-brand-500 bg-brand-50' : 'border-ink-100 hover:border-ink-200'}`}>
+                  className={`card-glow rounded-xl border-2 p-4 text-center ${form.type === 'domicilio' ? 'border-brand-500 bg-brand-50' : 'border-ink-100 hover:border-ink-200'}`}>
                   <div className="text-3xl mb-1">🛵</div>
                   <div className="font-bold text-ink-900">A Domicilio</div>
                   <div className="text-xs text-ink-400">Te lo llevamos</div>
                 </button>
                 <button type="button" onClick={() => setForm({ ...form, type: 'local' })}
-                  className={`rounded-xl border-2 p-4 text-center transition ${form.type === 'local' ? 'border-brand-500 bg-brand-50' : 'border-ink-100 hover:border-ink-200'}`}>
+                  className={`card-glow rounded-xl border-2 p-4 text-center ${form.type === 'local' ? 'border-brand-500 bg-brand-50' : 'border-ink-100 hover:border-ink-200'}`}>
                   <div className="text-3xl mb-1">🏠</div>
                   <div className="font-bold text-ink-900">En Sucursal</div>
                   <div className="text-xs text-ink-400">Pasas por él</div>
@@ -196,7 +196,7 @@ export default function Checkout() {
             </div>
 
             <button type="submit" disabled={placing}
-              className="w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition disabled:opacity-50">
+              className="btn-grow w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 disabled:opacity-50 disabled:hover:transform-none">
               {placing ? 'Enviando pedido…' : `Confirmar Pedido · ${formatPrice(total)}`}
             </button>
             <p className="text-xs text-ink-400 text-center">Pedido a nombre de <span className="font-semibold">{user.name}</span></p>

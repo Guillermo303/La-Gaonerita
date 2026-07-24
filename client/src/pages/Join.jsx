@@ -38,7 +38,7 @@ export default function Join() {
             <Link
               key={role.id}
               to={role.to}
-              className={`group bg-white rounded-3xl border-2 ${role.border} shadow-lg p-8 text-center hover:shadow-2xl hover:-translate-y-1 transition-all duration-300`}
+              className={`card-glow group bg-white rounded-3xl border-2 ${role.border} shadow-lg p-8 text-center`}
             >
               <div className="text-6xl mb-5 group-hover:scale-110 transition-transform duration-300">{role.icon}</div>
               <h2 className="font-display text-2xl font-extrabold text-ink-900 mb-1">{role.title}</h2>
