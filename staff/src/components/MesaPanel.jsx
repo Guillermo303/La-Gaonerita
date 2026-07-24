@@ -73,7 +73,7 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
                   </p>
                 )}
                 <button onClick={goToNewOrder}
-                  className="bg-brand-500 text-white px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-600 transition">
+                  className="btn-grow bg-brand-500 text-white px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-600">
                   + Nueva Orden en {mesa.name}
                 </button>
               </div>
@@ -88,7 +88,7 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
             {!loading && orders.length > 0 && (
               <div className="space-y-3">
                 {orders.map(order => (
-                  <div key={order.id} className={`bg-white rounded-xl border-2 p-4 shadow-sm ${statusColors[order.status] ? 'border-transparent' : ''}`}
+                  <div key={order.id} className={`card-glow bg-white rounded-xl border-2 p-4 shadow-sm ${statusColors[order.status] ? 'border-transparent' : ''}`}
                     style={{ borderLeftColor: order.status === 'completado' ? '#a855f7' : order.status === 'listo' ? '#22c55e' : order.status === 'preparando' ? '#3b82f6' : '#eab308', borderLeftWidth: '4px' }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-black text-ink-900">#{order.id}</span>
@@ -105,16 +105,16 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
                     {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mb-2">📝 {order.notes}</div>}
                     <div className="flex gap-2">
                       {order.status === 'pendiente' && (
-                        <button onClick={() => updateStatus(order.id, 'preparando')} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-blue-600">En Proceso</button>
+                        <button onClick={() => updateStatus(order.id, 'preparando')} className="btn-grow flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-blue-600">En Proceso</button>
                       )}
                       {order.status === 'preparando' && (
-                        <button onClick={() => updateStatus(order.id, 'listo')} className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-600">Marcar Listo</button>
+                        <button onClick={() => updateStatus(order.id, 'listo')} className="btn-grow flex-1 bg-green-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-600">Marcar Listo</button>
                       )}
                       {order.status === 'listo' && (
-                        <button onClick={() => updateStatus(order.id, 'completado')} className="flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-brand-600">Entregado</button>
+                        <button onClick={() => updateStatus(order.id, 'completado')} className="btn-grow flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-brand-600">Entregado</button>
                       )}
                       {order.status === 'completado' && order.payment_status !== 'pagado' && (
-                        <button onClick={() => setCobrando(order)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-700">💰 Cobrar {formatPrice(order.total)}</button>
+                        <button onClick={() => setCobrando(order)} className="btn-grow flex-1 bg-green-600 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-700">💰 Cobrar {formatPrice(order.total)}</button>
                       )}
                     </div>
                   </div>

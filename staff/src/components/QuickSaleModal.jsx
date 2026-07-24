@@ -61,14 +61,14 @@ export default function QuickSaleModal({ onClose, onCreated }) {
         <div className="p-5 space-y-4">
           {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm">{error}</div>}
           <p className="text-xs text-ink-400">Solo productos marcados como venta rápida (⚡) — no pasan por cocina, se cobran de inmediato.</p>
-          <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Cliente / Mostrador" className="w-full p-2.5 border border-ink-200 rounded-lg text-sm" />
+          <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Cliente / Mostrador" className="w-full p-2.5 border border-ink-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" />
 
           {readyItems.length === 0 ? (
             <div className="text-center py-8 text-ink-400 text-sm">No hay productos marcados como venta rápida. Márcalos con ⚡ desde la pestaña Menú.</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {readyItems.map(item => (
-                <button key={item.id} onClick={() => addItem(item)} className="bg-white p-3 rounded-lg shadow-sm text-left hover:bg-brand-50 transition border border-ink-100">
+                <button key={item.id} onClick={() => addItem(item)} className="card-glow bg-white p-3 rounded-lg shadow-sm text-left hover:bg-brand-50 transition border border-ink-100">
                   <div className="font-semibold text-sm text-ink-900">{item.name}</div>
                   <div className="text-brand-600 text-sm font-bold">{formatPrice(item.price)}</div>
                 </button>
@@ -96,7 +96,7 @@ export default function QuickSaleModal({ onClose, onCreated }) {
             </div>
           )}
 
-          <button onClick={submit} disabled={!cart.length || loading} className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 transition disabled:opacity-40">
+          <button onClick={submit} disabled={!cart.length || loading} className="btn-grow w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 disabled:opacity-40">
             {loading ? 'Creando…' : `Continuar a cobro · ${formatPrice(total)}`}
           </button>
         </div>

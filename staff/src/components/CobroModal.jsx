@@ -65,7 +65,7 @@ export default function CobroModal({ order, onClose, onPaid }) {
 
         <div className="p-5 space-y-5">
           {/* Order info */}
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-xl p-4 shadow-sm card-glow">
             <div className="flex items-center justify-between mb-2">
               <span className="font-black text-ink-900">#{order.id}</span>
               {order.mesa && <span className="text-sm text-ink-500 font-medium">{order.mesa}</span>}
@@ -138,11 +138,11 @@ export default function CobroModal({ order, onClose, onPaid }) {
 
           <div className="flex gap-2">
             <button onClick={handlePago} disabled={!puedePagar || loading}
-              className="flex-1 bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 transition disabled:opacity-40">
+              className="btn-grow flex-1 bg-brand-600 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-brand-700 disabled:opacity-40">
               {loading ? 'Procesando…' : `Cobrar ${formatPrice(total)}`}
             </button>
             <button type="button" onClick={() => printReceipt(order, metodo || order.payment_method)} title="Imprimir recibo"
-              className="px-4 py-3.5 rounded-xl border-2 border-ink-200 text-ink-500 hover:border-ink-300 hover:text-ink-700 transition text-lg">
+              className="btn-grow px-4 py-3.5 rounded-xl border-2 border-ink-200 text-ink-500 hover:border-ink-300 hover:text-ink-700 text-lg">
               🖨️
             </button>
           </div>

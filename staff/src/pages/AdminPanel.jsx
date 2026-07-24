@@ -121,6 +121,9 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
   return (
     <div className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
       <div className="flex items-center gap-3">
+        {item.image && (
+          <img src={item.image} alt={item.name} className="w-10 h-10 rounded object-cover" />
+        )}
         {item.ready_to_serve ? <span title="Venta rápida: no requiere preparación">⚡</span> : null}
         <span className="font-medium text-sm text-ink-900">{item.name}</span>
         <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
@@ -167,7 +170,7 @@ function StockBadge({ item, onSave }) {
 function MenuAdmin({ menuData, setMenuData }) {
   const [editing, setEditing] = useState(null);
   const [newCat, setNewCat] = useState('');
-  const [newItem, setNewItem] = useState({ catId: '', name: '', price: '', description: '', maxStock: '', readyToServe: false });
+  const [newItem, setNewItem] = useState({ catId: '', name: '', price: '', description: '', image: '', maxStock: '', readyToServe: false });
   const [error, setError] = useState('');
 
   const reload = () => menuApi.getAllAdmin().then(setMenuData).catch(e => setError(e.message));

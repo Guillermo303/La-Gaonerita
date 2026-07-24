@@ -19,6 +19,16 @@ function LoDeSiempre({ items, add, inCart, updateQty }) {
             const cartItem = inCart(item.id);
             return (
               <div key={item.id} className="card-glow bg-white rounded-xl border border-brand-100 p-4 flex flex-col">
+                {item.image && (
+                  <div className="relative aspect-square rounded-lg overflow-hidden mb-3 bg-cream-100 group">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
                 <div className="flex items-baseline justify-between gap-2 mb-2">
                   <h3 className="font-display font-bold text-ink-900 text-sm">{item.name}</h3>
                   <span className="text-brand-600 font-extrabold text-sm whitespace-nowrap">{formatPrice(item.price)}</span>
@@ -136,20 +146,30 @@ export default function Menu() {
           </div>
           {cat.description && <p className="text-ink-400 -mt-3 mb-6">{cat.description}</p>}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cat.items.map(item => {
-              const cartItem = inCart(item.id);
-              const stock = item.stock ?? 20;
-              const agotado = stock <= 0;
-              const pocasUnidades = !agotado && stock <= 5;
-              const alTope = cartItem && cartItem.quantity >= stock;
-              return (
-                <div className={`card-glow bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
-                    <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
-                  </div>
-                  {item.ready_to_serve ? <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">⚡ Listo al instante</p> : null}
-                  {item.description && <p className="text-ink-400 text-sm mt-2 leading-relaxed">{item.description}</p>}
+{cat.items.map(item => {
+                const cartItem = inCart(item.id);
+                const stock = item.stock ?? 20;
+                const agotado = stock <= 0;
+                const pocasUnidades = !agotado && stock <= 5;
+                const alTope = cartItem && cartItem.quantity >= stock;
+                return (
+                  <div className={`card-glow bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
+                    {item.image && (
+                      <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-cream-100 group">
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
+                      <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
+                    </div>
+                    {item.ready_to_serve ? <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">⚡ Listo al instante</p> : null}
+                    {item.description && <p className="text-ink-400 text-sm mt-2 leading-relaxed">{item.description}</p>}
                   {agotado && <p className="text-red-500 text-xs font-bold uppercase tracking-wider mt-2">Agotado por hoy</p>}
                   {pocasUnidades && <p className="text-yellow-600 text-xs font-bold uppercase tracking-wider mt-2">¡Últimas {stock}!</p>}
                   <div className="mt-4">

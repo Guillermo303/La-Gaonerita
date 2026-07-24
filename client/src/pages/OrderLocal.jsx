@@ -115,15 +115,25 @@ export default function OrderLocal() {
               <h2 className="font-display text-2xl font-bold text-brand-600 mb-1">{cat.name}</h2>
               {cat.description && <p className="text-ink-400 text-sm mb-4">{cat.description}</p>}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {cat.items.map(item => {
-                  const inCart = cart.find(i => i.menu_item_id === item.id);
-                  return (
-                    <div key={item.id} className={`bg-white rounded-xl p-4 shadow-sm border transition ${inCart ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5 hover:shadow-md'}`}>
-                      <div className="flex items-baseline justify-between gap-2 mb-3">
-                        <h3 className="font-display font-bold text-ink-900">{item.name}</h3>
-                        <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
-                      </div>
-                      {inCart ? (
+{cat.items.map(item => {
+                    const inCart = cart.find(i => i.menu_item_id === item.id);
+                    return (
+                      <div key={item.id} className={`bg-white rounded-xl p-4 shadow-sm border transition ${inCart ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5 hover:shadow-md'}`}>
+                        {item.image && (
+                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-cream-100">
+                            <img 
+                              src={item.image} 
+                              alt={item.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-baseline justify-between gap-2 mb-3">
+                          <h3 className="font-display font-bold text-ink-900">{item.name}</h3>
+                          <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
+                        </div>
+                        {inCart ? (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <button type="button" onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold text-lg hover:bg-cream-200 transition">−</button>

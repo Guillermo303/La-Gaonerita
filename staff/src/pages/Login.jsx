@@ -46,7 +46,7 @@ export default function Login() {
             <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Contraseña</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" required />
           </div>
-          <button type="submit" className="w-full bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Entrar</button>
+          <button type="submit" className="btn-grow w-full bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Entrar</button>
         </form>
       </div>
     </div>

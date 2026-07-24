@@ -43,7 +43,7 @@ function SavedReports() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
       <div className="flex gap-1 bg-ink-100 rounded-lg p-1 mb-4 w-fit">
         {[['', 'Todos'], ['day', 'Día'], ['week', 'Semana'], ['month', 'Mes']].map(([key, label]) => (
-          <button key={key} onClick={() => setFilter(key)} className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${filter === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
+          <button key={key} onClick={() => setFilter(key)} className={`card-glow px-3 py-1.5 rounded-md text-xs font-bold transition ${filter === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
         ))}
       </div>
       <div className="space-y-2">
@@ -60,7 +60,7 @@ function SavedReports() {
                 </div>
                 <div className="text-sm text-ink-500 mt-0.5">{formatPrice(r.total_revenue)} · {r.order_count} órdenes</div>
               </div>
-              <button onClick={() => ver(r.id)} className="text-xs bg-ink-800 text-white px-3 py-2 rounded-lg font-bold hover:bg-ink-900">🖨️ Ver / Imprimir</button>
+              <button onClick={() => ver(r.id)} className="btn-grow text-xs bg-ink-800 text-white px-3 py-2 rounded-lg font-bold hover:bg-ink-900">🖨️ Ver / Imprimir</button>
             </div>
           ))
         )}
@@ -94,7 +94,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-black font-display">🌮 La Gaonerita · Socios</h1>
           <div className="flex items-center gap-3">
             <span className="text-sm text-cream-100/80">{user?.name}</span>
-            <button onClick={logout} className="text-xs bg-white/10 px-3 py-1.5 rounded-lg font-bold hover:bg-white/20">Salir</button>
+            <button onClick={logout} className="btn-grow text-xs bg-white/10 px-3 py-1.5 rounded-lg font-bold hover:bg-white/20">Salir</button>
           </div>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex gap-1 bg-ink-100 rounded-lg p-1 mb-6 w-fit">
           {[['actual', 'Salud del Negocio'], ['guardados', 'Reportes Guardados']].map(([key, label]) => (
-            <button key={key} onClick={() => setView(key)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${view === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
+            <button key={key} onClick={() => setView(key)} className={`card-glow px-4 py-1.5 rounded-md text-xs font-bold transition ${view === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
           ))}
         </div>
 
@@ -111,15 +111,15 @@ export default function Dashboard() {
             <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
               <div className="flex gap-1 bg-ink-100 rounded-lg p-1">
                 {[['day', 'Día'], ['week', 'Semana'], ['month', 'Mes']].map(([key, label]) => (
-                  <button key={key} onClick={() => setPeriod(key)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${period === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
+                  <button key={key} onClick={() => setPeriod(key)} className={`card-glow px-4 py-1.5 rounded-md text-xs font-bold transition ${period === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
                 ))}
               </div>
               <div className="flex items-center gap-2">
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} className="border border-ink-200 rounded-lg p-2 text-sm bg-white" />
                 {health && (
                   <>
-                    <button onClick={() => printSalesReport(health, period, date)} className="text-xs bg-ink-800 text-white px-3 py-2 rounded-lg font-bold hover:bg-ink-900">🖨️ PDF</button>
-                    <button onClick={() => downloadSalesCSV(health, period, date)} className="text-xs bg-cream-100 text-ink-700 px-3 py-2 rounded-lg font-bold hover:bg-cream-200">⬇️ CSV</button>
+                    <button onClick={() => printSalesReport(health, period, date)} className="btn-grow text-xs bg-ink-800 text-white px-3 py-2 rounded-lg font-bold hover:bg-ink-900">🖨️ PDF</button>
+                    <button onClick={() => downloadSalesCSV(health, period, date)} className="btn-grow text-xs bg-cream-100 text-ink-700 px-3 py-2 rounded-lg font-bold hover:bg-cream-200">⬇️ CSV</button>
                   </>
                 )}
               </div>

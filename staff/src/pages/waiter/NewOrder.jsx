@@ -107,12 +107,22 @@ export default function NewOrder() {
             <div key={cat.id} className="mb-4">
               <h3 className="font-bold text-brand-700 mb-2">{cat.name}</h3>
               <div className="grid grid-cols-2 gap-2">
-                {cat.items.map(item => (
-                  <button key={item.id} onClick={() => addItem(item)} className="bg-white p-3 rounded-lg shadow text-left hover:bg-brand-50 transition">
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-brand-600 text-sm">{formatPrice(item.price)}</div>
-                  </button>
-                ))}
+{cat.items.map(item => (
+                    <button key={item.id} onClick={() => addItem(item)} className="bg-white p-3 rounded-lg shadow text-left hover:bg-brand-50 transition card-glow">
+                      {item.image && (
+                        <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-cream-100">
+                          <img 
+                            src={item.image} 
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div className="font-medium">{item.name}</div>
+                      <div className="text-brand-600 text-sm">{formatPrice(item.price)}</div>
+                    </button>
+                  ))}
               </div>
             </div>
           ))}
