@@ -6,12 +6,12 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   const categories = await query('SELECT * FROM categories ORDER BY sort_order');
-  const items = await query('SELECT * FROM menu_items WHERE available = 1 ORDER BY sort_order');
+  const items = await query('SELECT * FROM menu_items WHERE available = 1 AND stock > 0 ORDER BY sort_order');
   const menu = categories.map(cat => ({ ...cat, items: items.filter(i => i.category_id === cat.id) }));
   res.json(menu);
 });
 
-router.get('/all', authenticate, authorize('admin'), async (req, res) => {
+router.get('/all', authenticate, authorize('admin', 'mesero', 'cocina'), async (req, res) => {
   const categories = await query('SELECT * FROM categories ORDER BY sort_order');
   const items = await query('SELECT * FROM menu_items ORDER BY sort_order');
   const menu = categories.map(cat => ({ ...cat, items: items.filter(i => i.category_id === cat.id) }));
@@ -51,7 +51,7 @@ router.put('/items/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json({ success: true });
 });
 
-router.put('/items/:id/stock', authenticate, authorize('admin'), async (req, res) => {
+router.put('/items/:id/stock', authenticate, authorize('admin', 'mesero', 'cocina'), async (req, res) => {
   const { stock } = req.body;
   if (!Number.isFinite(Number(stock)) || stock < 0) return res.status(400).json({ error: 'Cantidad inválida' });
   await run('UPDATE menu_items SET stock = ? WHERE id = ?', [Math.round(stock), req.params.id]);

@@ -128,7 +128,7 @@ export default function Menu() {
       </div>
       <LoDeSiempre items={recommendations} add={add} inCart={inCart} updateQty={updateQty} />
       <PersonalizaTuPedido groups={customizationGroups} customizations={customizations} setCustomizations={setCustomizations} />
-      {menuData.map(cat => (
+      {menuData.filter(cat => cat.items.length > 0).map(cat => (
         <Reveal key={cat.id} className="mb-14">
           <div className="flex items-baseline gap-4 mb-6">
             <h2 className="font-display text-2xl lg:text-3xl font-extrabold text-brand-600">{cat.name}</h2>
