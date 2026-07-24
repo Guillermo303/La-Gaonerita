@@ -5,8 +5,18 @@ import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+function customizationsSummary(customizations) {
+  const parts = Object.entries(customizations || {})
+    .map(([group, value]) => {
+      const text = Array.isArray(value) ? value.join(', ') : value;
+      return text ? `${group}: ${text}` : null;
+    })
+    .filter(Boolean);
+  return parts.join(' · ');
+}
+
 export default function Checkout() {
-  const { items, updateQty, clear, count, total } = useCart();
+  const { items, updateQty, clear, count, total, customizations } = useCart();
   const { user, loading } = useAuth();
   const [form, setForm] = useState({ phone: '', address: '', type: 'domicilio', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
@@ -26,12 +36,14 @@ export default function Checkout() {
     if (form.type === 'domicilio' && !form.phone.trim()) { setError('Escribe un teléfono para contactarte'); return; }
     setPlacing(true);
     try {
+      const summary = customizationsSummary(customizations);
+      const notes = [summary, form.notes.trim()].filter(Boolean).join(' — ') || null;
       const order = await ordersApi.create({
         customer_name: user.name,
         customer_phone: form.phone.trim() || null,
         customer_address: form.type === 'domicilio' ? form.address.trim() : null,
         order_type: form.type,
-        notes: form.notes.trim() || null,
+        notes,
         payment_method: form.payment,
         quick_sale: quickEligible,
         items: items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }))

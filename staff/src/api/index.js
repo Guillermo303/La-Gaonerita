@@ -113,3 +113,13 @@ export const users = {
   lookup: (email) => request(`/users/lookup?email=${encodeURIComponent(email)}`),
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' })
 };
+
+export const customizations = {
+  getAll: () => request('/customizations'),
+  createGroup: (data) => request('/customizations/groups', { method: 'POST', body: JSON.stringify(data) }),
+  updateGroup: (id, data) => request(`/customizations/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteGroup: (id) => request(`/customizations/groups/${id}`, { method: 'DELETE' }),
+  createOption: (groupId, data) => request(`/customizations/groups/${groupId}/options`, { method: 'POST', body: JSON.stringify(data) }),
+  updateOption: (id, data) => request(`/customizations/options/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteOption: (id) => request(`/customizations/options/${id}`, { method: 'DELETE' })
+};

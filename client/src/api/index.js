@@ -42,7 +42,8 @@ export const orders = {
   create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
   updateStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   updatePayment: (id, payment_status) => request(`/orders/${id}/payment`, { method: 'PUT', body: JSON.stringify({ payment_status }) }),
-  createPaymentIntent: (order_id) => request('/orders/create-payment-intent', { method: 'POST', body: JSON.stringify({ order_id }) })
+  createPaymentIntent: (order_id) => request('/orders/create-payment-intent', { method: 'POST', body: JSON.stringify({ order_id }) }),
+  getRecommendations: () => request('/orders/recommendations')
 };
 
 export const mesas = {
@@ -54,4 +55,8 @@ export const mesas = {
 
 export const reservations = {
   create: (data) => request('/reservations', { method: 'POST', body: JSON.stringify(data) })
+};
+
+export const customizations = {
+  getAll: () => request('/customizations')
 };

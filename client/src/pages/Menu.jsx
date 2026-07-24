@@ -1,18 +1,114 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { menu as menuApi } from '../api';
+import { menu as menuApi, customizations as customizationsApi, orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Reveal from '../components/Reveal';
+
+function LoDeSiempre({ items, add, inCart, updateQty }) {
+  if (!items.length) return null;
+
+  return (
+    <Reveal className="mb-10">
+      <div className="bg-brand-50 rounded-2xl shadow-sm border border-brand-200 p-6">
+        <h2 className="font-display text-lg font-bold text-brand-700 mb-1">¿Lo de siempre? 👋</h2>
+        <p className="text-sm text-brand-600/80 mb-4">Basado en lo que más pides</p>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {items.map(item => {
+            const cartItem = inCart(item.id);
+            return (
+              <div key={item.id} className="bg-white rounded-xl border border-brand-100 p-4 flex flex-col">
+                <div className="flex items-baseline justify-between gap-2 mb-2">
+                  <h3 className="font-display font-bold text-ink-900 text-sm">{item.name}</h3>
+                  <span className="text-brand-600 font-extrabold text-sm whitespace-nowrap">{formatPrice(item.price)}</span>
+                </div>
+                {cartItem ? (
+                  <div className="flex items-center justify-between mt-auto">
+                    <button onClick={() => updateQty(item.id, -1)} aria-label={`Quitar un ${item.name}`} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold hover:bg-cream-200 transition">−</button>
+                    <span className="font-bold text-ink-900">{cartItem.quantity}</span>
+                    <button onClick={() => updateQty(item.id, 1)} aria-label={`Agregar otro ${item.name}`} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition">+</button>
+                  </div>
+                ) : (
+                  <button onClick={() => add(item)} className="mt-auto w-full bg-brand-500 text-white py-2 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-brand-600 transition">Agregar +</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+function PersonalizaTuPedido({ groups, customizations, setCustomizations }) {
+  if (!groups.length) return null;
+
+  const selectSingle = (groupName, optionName) => {
+    setCustomizations(prev => ({ ...prev, [groupName]: optionName }));
+  };
+
+  const toggleMultiple = (groupName, optionName) => {
+    setCustomizations(prev => {
+      const current = prev[groupName] || [];
+      const next = current.includes(optionName) ? current.filter(o => o !== optionName) : [...current, optionName];
+      return { ...prev, [groupName]: next };
+    });
+  };
+
+  return (
+    <Reveal className="mb-10">
+      <div className="bg-white rounded-2xl shadow-sm border border-ink-900/5 p-6">
+        <h2 className="font-display text-lg font-bold text-ink-900 mb-4">Personaliza tu pedido</h2>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {groups.map(group => (
+            <div key={group.id}>
+              <p className="text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">{group.name}</p>
+              <div className="flex flex-wrap gap-2">
+                {group.options.map(option => {
+                  const isMultiple = group.selection_type === 'multiple';
+                  const selected = isMultiple
+                    ? (customizations[group.name] || []).includes(option.name)
+                    : customizations[group.name] === option.name;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => isMultiple ? toggleMultiple(group.name, option.name) : selectSingle(group.name, option.name)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${selected ? 'bg-brand-500 text-white border-brand-500' : 'bg-cream-50 text-ink-600 border-ink-200 hover:border-brand-300'}`}
+                    >
+                      {option.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
 
 export default function Menu() {
   const [menuData, setMenuData] = useState([]);
+  const [customizationGroups, setCustomizationGroups] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { items, add, updateQty, count, total } = useCart();
+  const { items, add, updateQty, count, total, customizations, setCustomizations } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     menuApi.getAll().then(setMenuData).catch(console.error).finally(() => setLoading(false));
+    customizationsApi.getAll().then(setCustomizationGroups).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!user) { setRecommendations([]); return; }
+    ordersApi.getRecommendations()
+      .then(res => setRecommendations(res.eligible ? res.items : []))
+      .catch(() => setRecommendations([]));
+  }, [user]);
 
   const inCart = (id) => items.find(i => i.menu_item_id === id);
 
@@ -30,6 +126,8 @@ export default function Menu() {
         </div>
         <p className="text-ink-400 mt-4">Elige tus platillos y haz tu pedido a domicilio o para recoger en sucursal.</p>
       </div>
+      <LoDeSiempre items={recommendations} add={add} inCart={inCart} updateQty={updateQty} />
+      <PersonalizaTuPedido groups={customizationGroups} customizations={customizations} setCustomizations={setCustomizations} />
       {menuData.map(cat => (
         <Reveal key={cat.id} className="mb-14">
           <div className="flex items-baseline gap-4 mb-6">

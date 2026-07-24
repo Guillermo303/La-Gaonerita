@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { menu as menuApi, orders as ordersApi, mesas as mesasApi, employees as employeesApi, reservations as reservationsApi, reports as reportsApi, socios as sociosApi, expenses as expensesApi, supplies as suppliesApi, assets as assetsApi, users as usersApi } from '../api';
+import { menu as menuApi, orders as ordersApi, mesas as mesasApi, employees as employeesApi, reservations as reservationsApi, reports as reportsApi, socios as sociosApi, expenses as expensesApi, supplies as suppliesApi, assets as assetsApi, users as usersApi, customizations as customizationsApi } from '../api';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../lib/utils';
 import { printSalesReport, downloadSalesCSV, printFinanceOverview, downloadFinanceCSV } from '../lib/reportPrint';
 import { useNavigate } from 'react-router-dom';
 
-const tabs = ['Resumen', 'Finanzas', 'Menú', 'Mesas', 'Reservaciones', 'Reportes', 'Gastos', 'Insumos', 'Activos', 'Órdenes', 'Historial', 'Empleados', 'Socios'];
+const tabs = ['Resumen', 'Finanzas', 'Menú', 'Personalización', 'Mesas', 'Reservaciones', 'Reportes', 'Gastos', 'Insumos', 'Activos', 'Órdenes', 'Historial', 'Empleados', 'Socios'];
 
 const ASSET_CATEGORIES = [
   { value: 'cocina', label: 'Cocina' },
@@ -265,6 +265,100 @@ function MenuAdmin({ menuData, setMenuData }) {
                   ⚡
                 </label>
                 <button onClick={() => { setNewItem({ ...newItem, catId: cat.id }); addItem(); }} className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm font-bold hover:bg-brand-600">+</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PersonalizacionAdmin() {
+  const [groups, setGroups] = useState([]);
+  const [newGroup, setNewGroup] = useState({ name: '', selection_type: 'single' });
+  const [newOption, setNewOption] = useState({ groupId: '', name: '' });
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [error, setError] = useState('');
+
+  const reload = () => customizationsApi.getAll().then(setGroups).catch(e => setError(e.message));
+  useEffect(() => { reload(); }, []);
+
+  const addGroup = async () => {
+    if (!newGroup.name) return;
+    setError('');
+    try {
+      await customizationsApi.createGroup(newGroup);
+      setNewGroup({ name: '', selection_type: 'single' });
+      reload();
+    } catch (e) { setError(e.message); }
+  };
+  const saveGroup = async (id, data) => {
+    setError('');
+    try { await customizationsApi.updateGroup(id, data); setEditingGroup(null); reload(); } catch (e) { setError(e.message); }
+  };
+  const delGroup = async (id) => {
+    setError('');
+    try { await customizationsApi.deleteGroup(id); reload(); } catch (e) { setError(e.message); }
+  };
+  const addOption = async () => {
+    if (!newOption.groupId || !newOption.name) return;
+    setError('');
+    try {
+      await customizationsApi.createOption(newOption.groupId, { name: newOption.name });
+      setNewOption({ groupId: '', name: '' });
+      reload();
+    } catch (e) { setError(e.message); }
+  };
+  const delOption = async (id) => {
+    setError('');
+    try { await customizationsApi.deleteOption(id); reload(); } catch (e) { setError(e.message); }
+  };
+
+  return (
+    <div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+      <p className="text-sm text-ink-400 mb-4">Opciones gratuitas que el cliente elige en el menú (ej. tipo de tortilla, acompañamientos) — aplican a todo el menú, no a un platillo en específico.</p>
+      <div className="flex items-center gap-2 mb-6">
+        <input value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} placeholder="Nuevo grupo (ej. Tortilla)..." className="border border-ink-200 rounded-lg p-2 text-sm flex-1" />
+        <select value={newGroup.selection_type} onChange={e => setNewGroup({ ...newGroup, selection_type: e.target.value })} className="border border-ink-200 rounded-lg p-2 text-sm bg-white">
+          <option value="single">Selección única</option>
+          <option value="multiple">Selección múltiple</option>
+        </select>
+        <button onClick={addGroup} className="bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-brand-600">Agregar</button>
+      </div>
+      <div className="space-y-6">
+        {groups.map(group => (
+          <div key={group.id} className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between bg-cream-50 px-4 py-3 border-b border-ink-100">
+              <div className="flex items-center gap-3">
+                {editingGroup === group.id ? (
+                  <>
+                    <input defaultValue={group.name} onBlur={e => saveGroup(group.id, { name: e.target.value })} autoFocus className="border border-brand-400 rounded px-2 py-1 text-sm font-bold" />
+                    <select defaultValue={group.selection_type} onChange={e => saveGroup(group.id, { selection_type: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm bg-white">
+                      <option value="single">Única</option>
+                      <option value="multiple">Múltiple</option>
+                    </select>
+                  </>
+                ) : (
+                  <h3 className="font-bold text-ink-900">{group.name} <span className="text-ink-400 font-normal text-sm">({group.selection_type === 'single' ? 'selección única' : 'selección múltiple'})</span></h3>
+                )}
+                <button onClick={() => setEditingGroup(editingGroup === group.id ? null : group.id)} className="text-xs text-brand-600 hover:underline">✏️</button>
+              </div>
+              <button onClick={() => delGroup(group.id)} className="text-xs text-red-500 hover:underline">Eliminar</button>
+            </div>
+            <div className="p-2">
+              {group.options.map(option => (
+                <div key={option.id} className="flex items-center justify-between px-3 py-2 rounded-lg">
+                  <span className="font-medium text-sm text-ink-900">{option.name}</span>
+                  <button onClick={() => delOption(option.id)} className="text-xs text-red-400 hover:text-red-600">✕</button>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 py-3 border-t border-ink-100 bg-cream-50/50">
+              <div className="flex gap-2">
+                <input value={newOption.groupId === group.id ? newOption.name : ''} placeholder="Nueva opción..." onChange={e => setNewOption({ groupId: group.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1" />
+                <button onClick={() => { setNewOption({ ...newOption, groupId: group.id }); addOption(); }} className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm font-bold hover:bg-brand-600">+</button>
               </div>
             </div>
           </div>
@@ -1854,6 +1948,7 @@ export default function AdminPanel() {
         {tab === 'Resumen' && <Resumen allOrders={allOrders} menuData={menuData} mesas={mesas} />}
         {tab === 'Finanzas' && <FinanzasAdmin />}
         {tab === 'Menú' && <MenuAdmin menuData={menuData} setMenuData={setMenuData} />}
+        {tab === 'Personalización' && <PersonalizacionAdmin />}
         {tab === 'Mesas' && <MesasAdmin mesas={mesas} setMesas={setMesas} />}
         {tab === 'Reservaciones' && <ReservacionesAdmin />}
         {tab === 'Reportes' && <ReportesAdmin />}

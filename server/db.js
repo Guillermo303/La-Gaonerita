@@ -256,6 +256,21 @@ const SCHEMA_SQL = `
     id INTEGER PRIMARY KEY CHECK(id = 1),
     last_archive TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS customization_groups (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    selection_type TEXT NOT NULL DEFAULT 'single' CHECK(selection_type IN ('single','multiple')),
+    sort_order INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS customization_options (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    FOREIGN KEY (group_id) REFERENCES customization_groups(id)
+  );
 `;
 
 async function seedDefaults() {
@@ -270,6 +285,21 @@ async function seedDefaults() {
   if (Number(userCount.count) === 0) {
     const hash = bcrypt.hashSync('admin123', 10);
     await run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Admin', 'admin@laganerita.com', hash, 'admin']);
+  }
+
+  const groupCount = await get('SELECT COUNT(*) as count FROM customization_groups');
+  if (Number(groupCount.count) === 0) {
+    const tortilla = await run('INSERT INTO customization_groups (name, selection_type, sort_order) VALUES (?, ?, ?)', ['Tortilla', 'single', 0]);
+    const tortillaOptions = ['Maíz', 'Harina', 'Harina-Chiltepín'];
+    for (let i = 0; i < tortillaOptions.length; i++) {
+      await run('INSERT INTO customization_options (group_id, name, sort_order) VALUES (?, ?, ?)', [tortilla.lastInsertRowid, tortillaOptions[i], i]);
+    }
+
+    const acompanamientos = await run('INSERT INTO customization_groups (name, selection_type, sort_order) VALUES (?, ?, ?)', ['Acompañamientos', 'multiple', 1]);
+    const acompanamientoOptions = ['Cebolla', 'Cilantro', 'Salsa Roja', 'Salsa Verde'];
+    for (let i = 0; i < acompanamientoOptions.length; i++) {
+      await run('INSERT INTO customization_options (group_id, name, sort_order) VALUES (?, ?, ?)', [acompanamientos.lastInsertRowid, acompanamientoOptions[i], i]);
+    }
   }
 }
 

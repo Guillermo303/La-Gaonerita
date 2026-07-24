@@ -42,6 +42,27 @@ router.get('/history', authenticate, async (req, res) => {
   res.json(ordersWithItems);
 });
 
+router.get('/recommendations', authenticate, async (req, res) => {
+  const orders = await query("SELECT id, created_at FROM orders WHERE user_id = ? AND status = 'completado'", [req.user.id]);
+  const distinctDays = new Set(orders.map(o => new Date(o.created_at + 'Z').toLocaleDateString('en-CA')));
+  if (distinctDays.size < 5 || !orders.length) return res.json({ eligible: false, items: [] });
+
+  const orderIds = orders.map(o => o.id);
+  const placeholders = orderIds.map(() => '?').join(',');
+  const ranked = await query(
+    `SELECT menu_item_id, SUM(quantity) as total_qty FROM order_items WHERE order_id IN (${placeholders}) AND menu_item_id IS NOT NULL GROUP BY menu_item_id ORDER BY total_qty DESC LIMIT 3`,
+    orderIds
+  );
+
+  const menuItemIds = ranked.map(r => r.menu_item_id);
+  if (!menuItemIds.length) return res.json({ eligible: true, items: [] });
+  const menuPlaceholders = menuItemIds.map(() => '?').join(',');
+  const menuItems = await query(`SELECT * FROM menu_items WHERE id IN (${menuPlaceholders}) AND available = 1`, menuItemIds);
+
+  const items = ranked.map(r => menuItems.find(m => m.id === r.menu_item_id)).filter(Boolean);
+  res.json({ eligible: true, items });
+});
+
 router.get('/:id', authenticate, async (req, res) => {
   const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'Orden no encontrada' });

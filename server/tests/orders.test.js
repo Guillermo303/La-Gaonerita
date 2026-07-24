@@ -16,6 +16,16 @@ async function seedMenuItem() {
   return item.lastInsertRowid;
 }
 
+async function createCompletedOrder({ userId, menuItemId, quantity, dateStr }) {
+  const timestamp = `${dateStr} 14:00:00`;
+  const order = await run(
+    "INSERT INTO orders (user_id, customer_name, order_type, total, status, payment_status, created_at) VALUES (?, ?, 'local', ?, 'completado', 'pagado', ?)",
+    [userId, 'Cliente', quantity * 40, timestamp]
+  );
+  await run('INSERT INTO order_items (order_id, menu_item_id, name, quantity, price) VALUES (?, ?, ?, ?, ?)', [order.lastInsertRowid, menuItemId, 'Taco de asada', quantity, 40]);
+  return order.lastInsertRowid;
+}
+
 describe('GET /api/orders/kitchen/active', () => {
   let app;
   beforeEach(async () => { app = await freshApp(); });
@@ -165,5 +175,63 @@ describe('Compra rápida (quick_sale)', () => {
       customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: readyItemId, quantity: 1 }]
     });
     expect(res.body.status).toBe('pendiente');
+  });
+});
+
+describe('GET /api/orders/recommendations', () => {
+  let app, token, userId, tacoId, gringaId;
+  beforeEach(async () => {
+    app = await freshApp();
+    const register = await request(app).post('/api/auth/register').send({ name: 'Cliente Fiel', email: 'fiel@test.com', password: 'secreto123' });
+    token = register.body.token;
+    userId = register.body.user.id;
+    tacoId = await seedMenuItem();
+    const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Especialidades']);
+    const gringa = await run('INSERT INTO menu_items (category_id, name, price) VALUES (?, ?, ?)', [cat.lastInsertRowid, 'Gringa', 50]);
+    gringaId = gringa.lastInsertRowid;
+  });
+
+  it('rechaza sin autenticación', async () => {
+    const res = await request(app).get('/api/orders/recommendations');
+    expect(res.status).toBe(401);
+  });
+
+  it('no es elegible con menos de 5 días distintos de compra', async () => {
+    for (let i = 1; i <= 4; i++) {
+      await createCompletedOrder({ userId, menuItemId: tacoId, quantity: 1, dateStr: `2026-07-0${i}` });
+    }
+    const res = await request(app).get('/api/orders/recommendations').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.eligible).toBe(false);
+    expect(res.body.items).toEqual([]);
+  });
+
+  it('es elegible con 5 compras en días distintos y recomienda lo que más pide', async () => {
+    for (let i = 1; i <= 5; i++) {
+      await createCompletedOrder({ userId, menuItemId: tacoId, quantity: 3, dateStr: `2026-07-0${i}` });
+    }
+    await createCompletedOrder({ userId, menuItemId: gringaId, quantity: 1, dateStr: '2026-07-05' });
+
+    const res = await request(app).get('/api/orders/recommendations').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.eligible).toBe(true);
+    expect(res.body.items[0].name).toBe('Taco de asada');
+  });
+
+  it('no cuenta varios pedidos el mismo día como días distintos', async () => {
+    for (let i = 0; i < 5; i++) {
+      await createCompletedOrder({ userId, menuItemId: tacoId, quantity: 1, dateStr: '2026-07-01' });
+    }
+    const res = await request(app).get('/api/orders/recommendations').set('Authorization', `Bearer ${token}`);
+    expect(res.body.eligible).toBe(false);
+  });
+
+  it('no recomienda productos que ya no están disponibles', async () => {
+    for (let i = 1; i <= 5; i++) {
+      await createCompletedOrder({ userId, menuItemId: tacoId, quantity: 1, dateStr: `2026-07-0${i}` });
+    }
+    await run('UPDATE menu_items SET available = 0 WHERE id = ?', [tacoId]);
+    const res = await request(app).get('/api/orders/recommendations').set('Authorization', `Bearer ${token}`);
+    expect(res.body.items.find(i => i.id === tacoId)).toBeUndefined();
   });
 });
