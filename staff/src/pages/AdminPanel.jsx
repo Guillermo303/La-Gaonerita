@@ -74,7 +74,7 @@ function Resumen({ allOrders, menuData, mesas }) {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {stats.map(s => (
-          <div key={s.label} className={`${s.bg} rounded-xl p-4 shadow-sm border border-ink-100`}>
+          <div key={s.label} className={`card-glow ${s.bg} rounded-xl p-4 shadow-sm border border-ink-100`}>
             <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
             <div className="text-xs text-ink-400 font-medium uppercase tracking-wider mt-1">{s.label}</div>
           </div>
@@ -233,7 +233,7 @@ function MenuAdmin({ menuData, setMenuData }) {
       </div>
       <div className="space-y-6">
         {menuData.map(cat => (
-          <div key={cat.id} className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div key={cat.id} className="card-glow bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between bg-cream-50 px-4 py-3 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 {editing === `cat-${cat.id}` ? (
@@ -332,7 +332,7 @@ function PersonalizacionAdmin() {
       </div>
       <div className="space-y-6">
         {groups.map(group => (
-          <div key={group.id} className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div key={group.id} className="card-glow bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between bg-cream-50 px-4 py-3 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 {editingGroup === group.id ? (
@@ -611,15 +611,15 @@ function ReportesAdmin() {
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+            <div className="card-glow bg-white rounded-xl p-4 shadow-sm border border-ink-100">
               <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Ingresos totales</div>
               <div className="text-2xl font-black text-brand-600 mt-1">{formatPrice(report.totalRevenue)}</div>
             </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+            <div className="card-glow bg-white rounded-xl p-4 shadow-sm border border-ink-100">
               <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Órdenes pagadas</div>
               <div className="text-2xl font-black text-ink-900 mt-1">{report.orderCount}</div>
             </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+            <div className="card-glow bg-white rounded-xl p-4 shadow-sm border border-ink-100">
               <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Ticket promedio</div>
               <div className="text-2xl font-black text-ink-900 mt-1">{formatPrice(report.avgTicket)}</div>
             </div>
