@@ -43,20 +43,37 @@ body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; 
 .btn-grow:hover { transform: scale(1.06); box-shadow: 0 12px 28px -8px rgba(214, 67, 31, 0.5); }
 .btn-grow:active { transform: scale(0.97); }
 
-/* Botones de contorno: el color de marca entra deslizando de izquierda a derecha */
-.btn-sweep { position: relative; overflow: hidden; z-index: 0; transition: color 0.35s ease; }
+/* Botones de contorno: el color de marca entra en diagonal, con un destello
+   brillante encima — inspirado en el efecto "slash" de un portafolio revisado. */
+.btn-sweep { position: relative; overflow: hidden; z-index: 0; transition: color 0.3s ease; }
 .btn-sweep::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: -120%;
+  width: 120%;
+  height: 100%;
   background: #D6431F;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.35s ease;
+  transform: skewX(-20deg);
+  transition: left 0.4s ease-in-out;
   z-index: -1;
 }
+.btn-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  z-index: 1;
+  pointer-events: none;
+}
 .btn-sweep:hover { color: #fff !important; }
-.btn-sweep:hover::before { transform: scaleX(1); }
+.btn-sweep:hover::before { left: 0; }
+.btn-sweep:hover::after { left: 125%; }
 
 /* Links de navegación: subrayado que se desliza desde el centro */
 .link-underline { position: relative; }
@@ -75,7 +92,23 @@ body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; 
 .card-glow { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .card-glow:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(214, 67, 31, 0.35); }
 
+/* Ícono que flota suavemente cuando se pasa el mouse sobre la tarjeta que lo contiene */
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.group:hover .icon-float { animation: icon-float 1s ease-in-out infinite; }
+
+/* Aparición con rebote elástico, para insignias y confirmaciones */
+@keyframes pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .btn-grow, .btn-sweep, .btn-sweep::before, .link-underline::after, .card-glow { transition: none; }
+  .btn-grow, .btn-sweep, .btn-sweep::before, .btn-sweep::after, .link-underline::after, .card-glow { transition: none; }
   .btn-grow:hover, .card-glow:hover { transform: none; }
+  .group:hover .icon-float, .pop-in { animation: none; }
 }

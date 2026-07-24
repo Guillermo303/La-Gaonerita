@@ -63,7 +63,7 @@ export default function Checkout() {
     const yaListo = placed.status === 'completado';
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="text-6xl mb-4">{yaListo ? '⚡' : '✅'}</div>
+        <div className="pop-in text-6xl mb-4">{yaListo ? '⚡' : '✅'}</div>
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">{yaListo ? '¡Ya está listo!' : '¡Pedido recibido!'}</h1>
         <p className="text-ink-500 mb-2">
           {yaListo
@@ -88,7 +88,7 @@ export default function Checkout() {
   if (!user) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="text-5xl mb-4">🌮</div>
+        <div className="pop-in text-5xl mb-4">🌮</div>
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Casi listo…</h1>
         <p className="text-ink-500 mb-8">Para hacer tu pedido necesitas una cuenta. Tu carrito se guarda mientras tanto.</p>
         <div className="flex flex-col gap-3">
@@ -102,7 +102,7 @@ export default function Checkout() {
   if (count === 0) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="text-5xl mb-4">🛒</div>
+        <div className="pop-in text-5xl mb-4">🛒</div>
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Tu carrito está vacío</h1>
         <p className="text-ink-500 mb-8">Ve al menú y elige tus platillos favoritos.</p>
         <Link to="/menu" className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>

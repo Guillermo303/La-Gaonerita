@@ -40,7 +40,7 @@ export default function Join() {
               to={role.to}
               className={`card-glow group bg-white rounded-3xl border-2 ${role.border} shadow-lg p-8 text-center`}
             >
-              <div className="text-6xl mb-5 group-hover:scale-110 transition-transform duration-300">{role.icon}</div>
+              <div className="icon-float text-6xl mb-5">{role.icon}</div>
               <h2 className="font-display text-2xl font-extrabold text-ink-900 mb-1">{role.title}</h2>
               <p className="text-ink-400 text-sm mb-6">{role.desc}</p>
               <ul className="text-left space-y-2 mb-8">

@@ -153,7 +153,7 @@ export default function Menu() {
                 const pocasUnidades = !agotado && stock <= 5;
                 const alTope = cartItem && cartItem.quantity >= stock;
                 return (
-                  <div className={`card-glow bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
+                  <div key={item.id} className={`card-glow group bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
                     {item.image && (
                       <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-cream-100 group">
                         <img 
@@ -168,10 +168,10 @@ export default function Menu() {
                       <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>
                       <span className="text-brand-600 font-extrabold whitespace-nowrap">{formatPrice(item.price)}</span>
                     </div>
-                    {item.ready_to_serve ? <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">⚡ Listo al instante</p> : null}
+                    {item.ready_to_serve ? <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1"><span className="icon-float inline-block">⚡</span> Listo al instante</p> : null}
                     {item.description && <p className="text-ink-400 text-sm mt-2 leading-relaxed">{item.description}</p>}
-                  {agotado && <p className="text-red-500 text-xs font-bold uppercase tracking-wider mt-2">Agotado por hoy</p>}
-                  {pocasUnidades && <p className="text-yellow-600 text-xs font-bold uppercase tracking-wider mt-2">¡Últimas {stock}!</p>}
+                  {agotado && <p className="pop-in text-red-500 text-xs font-bold uppercase tracking-wider mt-2">Agotado por hoy</p>}
+                  {pocasUnidades && <p className="pop-in text-yellow-600 text-xs font-bold uppercase tracking-wider mt-2">¡Últimas {stock}!</p>}
                   <div className="mt-4">
                     {cartItem ? (
                       <div className="flex items-center justify-between">
