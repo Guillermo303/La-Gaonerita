@@ -3,6 +3,8 @@ import { reports as reportsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../lib/utils';
 import { printSalesReport, downloadSalesCSV } from '../lib/reportPrint';
+import GrowthLottie from '../components/GrowthLottie';
+import CountUp from '../components/CountUp';
 
 function fmtHour(h) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -129,6 +131,16 @@ export default function Dashboard() {
               <div className="text-center py-12 text-ink-400">Cargando...</div>
             ) : (
               <div className="space-y-6">
+                <div className="relative bg-gradient-to-br from-ink-900 to-ink-800 rounded-2xl overflow-hidden p-6">
+                  <GrowthLottie positive={health.profitEstimate >= 0} className="absolute inset-0 opacity-60" />
+                  <div className="relative">
+                    <div className="text-cream-100/70 text-xs font-bold uppercase tracking-widest mb-1">Ingresos · {periodLabels[period]}</div>
+                    <div className="text-4xl font-black text-white"><CountUp value={health.totalRevenue} format={formatPrice} /></div>
+                    <div className={`text-sm font-bold mt-1 ${health.profitEstimate >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                      {health.profitEstimate >= 0 ? '📈 Utilidad positiva' : '📉 Utilidad negativa'} este periodo
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Ingresos</div>
