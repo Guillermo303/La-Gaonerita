@@ -18,6 +18,14 @@ export const auth = {
   me: () => request('/auth/me')
 };
 
+export const promotions = {
+  getAll: () => request('/promotions'),
+  getAllAdmin: () => request('/promotions/all'),
+  create: (data) => request('/promotions', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/promotions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => request(`/promotions/${id}`, { method: 'DELETE' })
+};
+
 export const push = {
   getVapidKey: () => request('/push/vapid-public-key'),
   subscribe: (subscription) => request('/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription }) }),

@@ -272,6 +272,23 @@ const SCHEMA_SQL = `
     FOREIGN KEY (group_id) REFERENCES customization_groups(id)
   );
 
+  CREATE TABLE IF NOT EXISTS promotions (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    image TEXT,
+    image_shape TEXT NOT NULL DEFAULT 'rounded',
+    image_zoom REAL NOT NULL DEFAULT 1,
+    image_pos_x REAL NOT NULL DEFAULT 50,
+    image_pos_y REAL NOT NULL DEFAULT 50,
+    active INTEGER NOT NULL DEFAULT 1,
+    schedule_type TEXT NOT NULL DEFAULT 'date_range' CHECK(schedule_type IN ('date_range','weekly')),
+    start_date TEXT,
+    end_date TEXT,
+    days_of_week TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS push_subscriptions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,

@@ -18,6 +18,13 @@ export const auth = {
   me: () => request('/auth/me')
 };
 
+export const promotions = {
+  getAllAdmin: () => request('/promotions/all'),
+  create: (data) => request('/promotions', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/promotions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => request(`/promotions/${id}`, { method: 'DELETE' })
+};
+
 export const reports = {
   getSales: (period, date) => request(`/reports/sales?period=${period}${date ? `&date=${date}` : ''}`),
   getHealth: (period, date) => request(`/reports/health?period=${period}${date ? `&date=${date}` : ''}`),

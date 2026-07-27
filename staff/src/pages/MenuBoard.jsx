@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { menu as menuApi } from '../api';
+import { menu as menuApi, promotions as promotionsApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import StyledImage from '../components/StyledImage';
 
@@ -15,11 +15,15 @@ function chunk(arr, size) {
 
 export default function MenuBoard() {
   const [menuData, setMenuData] = useState([]);
+  const [promos, setPromos] = useState([]);
   const [time, setTime] = useState(new Date());
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
-    const load = () => menuApi.getAll().then(setMenuData).catch(console.error);
+    const load = () => {
+      menuApi.getAll().then(setMenuData).catch(console.error);
+      promotionsApi.getAll().then(setPromos).catch(console.error);
+    };
     load();
     const r = setInterval(load, REFRESH_MS);
     return () => clearInterval(r);
@@ -31,14 +35,15 @@ export default function MenuBoard() {
   }, []);
 
   const slides = useMemo(() => {
+    const promoSlides = promos.map(promo => ({ promo }));
     const catSlides = menuData
       .filter(cat => cat.items.length > 0)
       .flatMap(cat => chunk(cat.items, ITEMS_PER_SLIDE).map((items, i) => ({
         name: cat.items.length > ITEMS_PER_SLIDE ? `${cat.name} (${i + 1})` : cat.name,
         items
       })));
-    return [{ intro: true }, ...catSlides];
-  }, [menuData]);
+    return [{ intro: true }, ...promoSlides, ...catSlides];
+  }, [menuData, promos]);
 
   useEffect(() => {
     setSlide(0);
@@ -74,6 +79,22 @@ export default function MenuBoard() {
             <div className="text-8xl mb-6">🌮</div>
             <h2 className="text-6xl font-black font-display mb-4">Hecho al momento</h2>
             <p className="text-2xl text-cream-100/70">Tacos artesanales desde el corazón del barrio</p>
+          </div>
+        ) : current.promo ? (
+          <div className="flex flex-col items-center justify-center text-center gap-6">
+            {current.promo.image ? (
+              <StyledImage
+                src={current.promo.image} alt={current.promo.name}
+                shape={current.promo.image_shape} zoom={current.promo.image_zoom}
+                posX={current.promo.image_pos_x} posY={current.promo.image_pos_y}
+                className="w-64 h-64 border-4 border-brand-500 shadow-2xl"
+              />
+            ) : (
+              <div className="text-8xl">🎉</div>
+            )}
+            <div className="bg-brand-500 text-white text-sm font-bold uppercase tracking-widest px-5 py-1.5 rounded-full">Promoción</div>
+            <h2 className="text-6xl font-black font-display">{current.promo.name}</h2>
+            {current.promo.description && <p className="text-2xl text-cream-100/70 max-w-3xl">{current.promo.description}</p>}
           </div>
         ) : (
           <>

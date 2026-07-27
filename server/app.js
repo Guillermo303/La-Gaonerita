@@ -19,6 +19,7 @@ import assetRoutes from './routes/assets.js';
 import userRoutes from './routes/users.js';
 import customizationRoutes from './routes/customizations.js';
 import pushRoutes from './routes/push.js';
+import promotionRoutes from './routes/promotions.js';
 
 const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
 
@@ -63,6 +64,7 @@ export function createApp() {
   app.use('/api/users', userRoutes);
   app.use('/api/customizations', customizationRoutes);
   app.use('/api/push', pushRoutes);
+  app.use('/api/promotions', promotionRoutes);
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
   // Red de seguridad: captura cualquier error no manejado explícitamente por
