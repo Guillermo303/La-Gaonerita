@@ -271,6 +271,18 @@ const SCHEMA_SQL = `
     sort_order INTEGER DEFAULT 0,
     FOREIGN KEY (group_id) REFERENCES customization_groups(id)
   );
+
+  -- Ajustes de imagen (forma/zoom/posición) para platillos y opciones de personalización.
+  ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_shape TEXT NOT NULL DEFAULT 'rounded';
+  ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_zoom REAL NOT NULL DEFAULT 1;
+  ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_pos_x REAL NOT NULL DEFAULT 50;
+  ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_pos_y REAL NOT NULL DEFAULT 50;
+
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image TEXT;
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_shape TEXT NOT NULL DEFAULT 'circle';
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_zoom REAL NOT NULL DEFAULT 1;
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_x REAL NOT NULL DEFAULT 50;
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_y REAL NOT NULL DEFAULT 50;
 `;
 
 async function seedDefaults() {

@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../lib/utils';
 import { printSalesReport, downloadSalesCSV, printFinanceOverview, downloadFinanceCSV } from '../lib/reportPrint';
 import { useNavigate } from 'react-router-dom';
+import StyledImage from '../components/StyledImage';
+import ImageEditorModal from '../components/ImageEditor';
 
 const tabs = ['Resumen', 'Finanzas', 'Menú', 'Personalización', 'Mesas', 'Reservaciones', 'Reportes', 'Gastos', 'Insumos', 'Activos', 'Órdenes', 'Historial', 'Empleados', 'Socios'];
 
@@ -86,6 +88,7 @@ function Resumen({ allOrders, menuData, mesas }) {
 
 function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
   const [editing, setEditing] = useState(false);
+  const [imgOpen, setImgOpen] = useState(false);
   const [form, setForm] = useState({ name: item.name, price: item.price, description: item.description || '', readyToServe: !!item.ready_to_serve });
 
   const startEdit = () => {
@@ -121,9 +124,13 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
   return (
     <div className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
       <div className="flex items-center gap-3">
-        {item.image && (
-          <img src={item.image} alt={item.name} className="w-10 h-10 rounded object-cover" />
-        )}
+        <button onClick={() => setImgOpen(true)} title="Editar imagen" className="shrink-0">
+          {item.image ? (
+            <StyledImage src={item.image} alt={item.name} shape={item.image_shape} zoom={item.image_zoom} posX={item.image_pos_x} posY={item.image_pos_y} className="w-10 h-10 hover:opacity-80 transition" />
+          ) : (
+            <span className="w-10 h-10 rounded-lg bg-cream-100 flex items-center justify-center text-lg hover:bg-cream-200 transition">🖼️</span>
+          )}
+        </button>
         {item.ready_to_serve ? <span title="Venta rápida: no requiere preparación">⚡</span> : null}
         <span className="font-medium text-sm text-ink-900">{item.name}</span>
         <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
@@ -135,6 +142,7 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
         <button onClick={onToggle} className={`text-xs px-2 py-1 rounded font-semibold ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.available ? 'Disponible' : 'Oculto'}</button>
         <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600">✕</button>
       </div>
+      {imgOpen && <ImageEditorModal initial={item} onSave={onSaveItem} onClose={() => setImgOpen(false)} />}
     </div>
   );
 }
@@ -282,6 +290,7 @@ function PersonalizacionAdmin() {
   const [newGroup, setNewGroup] = useState({ name: '', selection_type: 'single' });
   const [newOption, setNewOption] = useState({ groupId: '', name: '' });
   const [editingGroup, setEditingGroup] = useState(null);
+  const [imgOptionId, setImgOptionId] = useState(null);
   const [error, setError] = useState('');
 
   const reload = () => customizationsApi.getAll().then(setGroups).catch(e => setError(e.message));
@@ -316,6 +325,10 @@ function PersonalizacionAdmin() {
   const delOption = async (id) => {
     setError('');
     try { await customizationsApi.deleteOption(id); reload(); } catch (e) { setError(e.message); }
+  };
+  const saveOption = async (id, data) => {
+    setError('');
+    try { await customizationsApi.updateOption(id, data); reload(); } catch (e) { setError(e.message); }
   };
 
   return (
@@ -352,9 +365,19 @@ function PersonalizacionAdmin() {
             </div>
             <div className="p-2">
               {group.options.map(option => (
-                <div key={option.id} className="flex items-center justify-between px-3 py-2 rounded-lg">
-                  <span className="font-medium text-sm text-ink-900">{option.name}</span>
-                  <button onClick={() => delOption(option.id)} className="text-xs text-red-400 hover:text-red-600">✕</button>
+                <div key={option.id} className="flex items-center justify-between px-3 py-2 rounded-lg gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <button onClick={() => setImgOptionId(option.id)} title="Editar imagen" className="shrink-0">
+                      {option.image ? (
+                        <StyledImage src={option.image} alt={option.name} shape={option.image_shape} zoom={option.image_zoom} posX={option.image_pos_x} posY={option.image_pos_y} className="w-8 h-8 hover:opacity-80 transition" />
+                      ) : (
+                        <span className="w-8 h-8 rounded-lg bg-cream-100 flex items-center justify-center text-sm hover:bg-cream-200 transition">🖼️</span>
+                      )}
+                    </button>
+                    <span className="font-medium text-sm text-ink-900 truncate">{option.name}</span>
+                  </div>
+                  <button onClick={() => delOption(option.id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">✕</button>
+                  {imgOptionId === option.id && <ImageEditorModal initial={option} onSave={(data) => saveOption(option.id, data)} onClose={() => setImgOptionId(null)} />}
                 </div>
               ))}
             </div>

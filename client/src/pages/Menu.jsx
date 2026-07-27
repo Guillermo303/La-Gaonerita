@@ -5,6 +5,7 @@ import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Reveal from '../components/Reveal';
+import StyledImage from '../components/StyledImage';
 
 function LoDeSiempre({ items, add, inCart, updateQty }) {
   if (!items.length) return null;
@@ -20,14 +21,7 @@ function LoDeSiempre({ items, add, inCart, updateQty }) {
             return (
               <div key={item.id} className="card-glow bg-white rounded-xl border border-brand-100 p-4 flex flex-col">
                 {item.image && (
-                  <div className="relative aspect-square rounded-lg overflow-hidden mb-3 bg-cream-100 group">
-                    <img 
-                      src={item.image} 
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  </div>
+                  <StyledImage src={item.image} alt={item.name} shape={item.image_shape} zoom={item.image_zoom} posX={item.image_pos_x} posY={item.image_pos_y} className="aspect-square mb-3 bg-cream-100" />
                 )}
                 <div className="flex items-baseline justify-between gap-2 mb-2">
                   <h3 className="font-display font-bold text-ink-900 text-sm">{item.name}</h3>
@@ -85,8 +79,9 @@ function PersonalizaTuPedido({ groups, customizations, setCustomizations }) {
                       key={option.id}
                       type="button"
                       onClick={() => isMultiple ? toggleMultiple(group.name, option.name) : selectSingle(group.name, option.name)}
-                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${selected ? 'bg-brand-500 text-white border-brand-500' : 'bg-cream-50 text-ink-600 border-ink-200 hover:border-brand-300'}`}
+                      className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full text-sm font-semibold border transition ${selected ? 'bg-brand-500 text-white border-brand-500' : 'bg-cream-50 text-ink-600 border-ink-200 hover:border-brand-300'}`}
                     >
+                      {option.image && <StyledImage src={option.image} alt={option.name} shape={option.image_shape || 'circle'} zoom={option.image_zoom} posX={option.image_pos_x} posY={option.image_pos_y} className="w-6 h-6 bg-white/50" />}
                       {option.name}
                     </button>
                   );
@@ -155,14 +150,7 @@ export default function Menu() {
                 return (
                   <div key={item.id} className={`card-glow group bg-white rounded-xl shadow-sm border p-5 ${agotado ? 'opacity-60' : ''} ${cartItem ? 'border-brand-400 ring-1 ring-brand-400' : 'border-ink-900/5'}`}>
                     {item.image && (
-                      <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-cream-100 group">
-                        <img 
-                          src={item.image} 
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </div>
+                      <StyledImage src={item.image} alt={item.name} shape={item.image_shape} zoom={item.image_zoom} posX={item.image_pos_x} posY={item.image_pos_y} className="aspect-[4/3] mb-3 bg-cream-100" />
                     )}
                     <div className="flex items-baseline justify-between gap-3">
                       <h3 className="font-display text-lg font-bold text-ink-900">{item.name}</h3>

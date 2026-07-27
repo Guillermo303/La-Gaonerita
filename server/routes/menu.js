@@ -37,17 +37,18 @@ router.delete('/categories/:id', authenticate, authorize('admin'), async (req, r
 });
 
 router.post('/items', authenticate, authorize('admin'), async (req, res) => {
-  const { category_id, name, description, price, image, max_stock, ready_to_serve } = req.body;
+  const { category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, max_stock, ready_to_serve } = req.body;
   if (!category_id || !name || !price) return res.status(400).json({ error: 'Categoría, nombre y precio requeridos' });
   const capacity = Number.isFinite(Number(max_stock)) && max_stock !== undefined ? Math.max(0, Math.round(max_stock)) : 20;
-  const result = await run('INSERT INTO menu_items (category_id, name, description, price, image, stock, max_stock, ready_to_serve) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [category_id, name, description || null, price, image || null, capacity, capacity, ready_to_serve ? 1 : 0]);
+  const result = await run('INSERT INTO menu_items (category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, stock, max_stock, ready_to_serve) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [category_id, name, description || null, price, image || null, image_shape || 'rounded', image_zoom || 1, image_pos_x ?? 50, image_pos_y ?? 50, capacity, capacity, ready_to_serve ? 1 : 0]);
   res.status(201).json({ id: result.lastInsertRowid, category_id, name, price, stock: capacity, max_stock: capacity, ready_to_serve: ready_to_serve ? 1 : 0 });
 });
 
 router.put('/items/:id', authenticate, authorize('admin'), async (req, res) => {
-  const { category_id, name, description, price, image, available, max_stock, ready_to_serve } = req.body;
-  await run('UPDATE menu_items SET category_id = COALESCE(?, category_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), image = COALESCE(?, image), available = COALESCE(?, available), max_stock = COALESCE(?, max_stock), ready_to_serve = COALESCE(?, ready_to_serve) WHERE id = ?',
-    [category_id, name, description, price, image, available, max_stock, ready_to_serve !== undefined ? (ready_to_serve ? 1 : 0) : undefined, req.params.id]);
+  const { category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, available, max_stock, ready_to_serve } = req.body;
+  await run('UPDATE menu_items SET category_id = COALESCE(?, category_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), image = COALESCE(?, image), image_shape = COALESCE(?, image_shape), image_zoom = COALESCE(?, image_zoom), image_pos_x = COALESCE(?, image_pos_x), image_pos_y = COALESCE(?, image_pos_y), available = COALESCE(?, available), max_stock = COALESCE(?, max_stock), ready_to_serve = COALESCE(?, ready_to_serve) WHERE id = ?',
+    [category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, available, max_stock, ready_to_serve !== undefined ? (ready_to_serve ? 1 : 0) : undefined, req.params.id]);
   res.json({ success: true });
 });
 

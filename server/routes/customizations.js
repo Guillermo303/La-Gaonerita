@@ -32,15 +32,17 @@ router.delete('/groups/:id', authenticate, authorize('admin'), async (req, res) 
 });
 
 router.post('/groups/:groupId/options', authenticate, authorize('admin'), async (req, res) => {
-  const { name } = req.body;
+  const { name, image, image_shape, image_zoom, image_pos_x, image_pos_y } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
-  const result = await run('INSERT INTO customization_options (group_id, name) VALUES (?, ?)', [req.params.groupId, name]);
+  const result = await run('INSERT INTO customization_options (group_id, name, image, image_shape, image_zoom, image_pos_x, image_pos_y) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [req.params.groupId, name, image || null, image_shape || 'circle', image_zoom || 1, image_pos_x ?? 50, image_pos_y ?? 50]);
   res.status(201).json({ id: result.lastInsertRowid, group_id: Number(req.params.groupId), name });
 });
 
 router.put('/options/:id', authenticate, authorize('admin'), async (req, res) => {
-  const { name, sort_order } = req.body;
-  await run('UPDATE customization_options SET name = COALESCE(?, name), sort_order = COALESCE(?, sort_order) WHERE id = ?', [name, sort_order, req.params.id]);
+  const { name, sort_order, image, image_shape, image_zoom, image_pos_x, image_pos_y } = req.body;
+  await run('UPDATE customization_options SET name = COALESCE(?, name), sort_order = COALESCE(?, sort_order), image = COALESCE(?, image), image_shape = COALESCE(?, image_shape), image_zoom = COALESCE(?, image_zoom), image_pos_x = COALESCE(?, image_pos_x), image_pos_y = COALESCE(?, image_pos_y) WHERE id = ?',
+    [name, sort_order, image, image_shape, image_zoom, image_pos_x, image_pos_y, req.params.id]);
   res.json({ success: true });
 });
 

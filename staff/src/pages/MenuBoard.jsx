@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { menu as menuApi } from '../api';
 import { formatPrice } from '../lib/utils';
+import StyledImage from '../components/StyledImage';
 
 const SLIDE_MS = 9000;
 const REFRESH_MS = 60000;
@@ -81,7 +82,7 @@ export default function MenuBoard() {
               {current.items.map(item => (
                 <div key={item.id} className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden flex flex-col">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-full h-52 object-cover" />
+                    <StyledImage src={item.image} alt={item.name} shape={item.image_shape} zoom={item.image_zoom} posX={item.image_pos_x} posY={item.image_pos_y} className="w-full h-52" />
                   ) : (
                     <div className="w-full h-52 bg-white/5 flex items-center justify-center text-6xl">🌮</div>
                   )}
