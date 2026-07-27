@@ -58,7 +58,7 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
               <div className={`text-lg font-black font-display uppercase ${s.text}`}>{mesa.name}</div>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.bg} ${s.text} border ${s.border}`}>{s.dot} {s.label}</span>
             </div>
-            <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl">✕</button>
+            <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl p-2 -mr-2">✕</button>
           </div>
 
           <div className="p-5 space-y-4">
@@ -105,16 +105,16 @@ export default function MesaPanel({ mesa, onClose, onUpdate }) {
                     {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mb-2">📝 {order.notes}</div>}
                     <div className="flex gap-2">
                       {order.status === 'pendiente' && (
-                        <button onClick={() => updateStatus(order.id, 'preparando')} className="btn-grow flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-blue-600">En Proceso</button>
+                        <button onClick={() => updateStatus(order.id, 'preparando')} className="btn-grow flex-1 bg-blue-500 text-white py-3 rounded-lg font-bold text-xs hover:bg-blue-600">En Proceso</button>
                       )}
                       {order.status === 'preparando' && (
-                        <button onClick={() => updateStatus(order.id, 'listo')} className="btn-grow flex-1 bg-green-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-600">Marcar Listo</button>
+                        <button onClick={() => updateStatus(order.id, 'listo')} className="btn-grow flex-1 bg-green-500 text-white py-3 rounded-lg font-bold text-xs hover:bg-green-600">Marcar Listo</button>
                       )}
                       {order.status === 'listo' && (
-                        <button onClick={() => updateStatus(order.id, 'completado')} className="btn-grow flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-xs hover:bg-brand-600">Entregado</button>
+                        <button onClick={() => updateStatus(order.id, 'completado')} className="btn-grow flex-1 bg-brand-500 text-white py-3 rounded-lg font-bold text-xs hover:bg-brand-600">Entregado</button>
                       )}
                       {order.status === 'completado' && order.payment_status !== 'pagado' && (
-                        <button onClick={() => setCobrando(order)} className="btn-grow flex-1 bg-green-600 text-white py-2 rounded-lg font-bold text-xs hover:bg-green-700">💰 Cobrar {formatPrice(order.total)}</button>
+                        <button onClick={() => setCobrando(order)} className="btn-grow flex-1 bg-green-600 text-white py-3 rounded-lg font-bold text-xs hover:bg-green-700">💰 Cobrar {formatPrice(order.total)}</button>
                       )}
                     </div>
                   </div>

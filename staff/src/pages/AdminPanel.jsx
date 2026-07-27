@@ -107,15 +107,15 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
         <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem]" autoFocus />
           <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="border border-brand-400 rounded px-2 py-1 text-sm w-20" />
-          <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descripción..." className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[8rem] hidden sm:block" />
+          <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descripción..." className="border border-brand-400 rounded px-2 py-1 text-sm flex-1 min-w-[10rem]" />
           <label className="flex items-center gap-1 text-xs text-ink-500 whitespace-nowrap" title="No requiere preparación (ej. bebidas embotelladas)">
             <input type="checkbox" checked={form.readyToServe} onChange={e => setForm({ ...form, readyToServe: e.target.checked })} />
             ⚡
           </label>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={save} className="text-xs bg-brand-500 text-white px-2 py-1 rounded font-bold hover:bg-brand-600">✓</button>
-          <button onClick={() => setEditing(false)} className="text-xs text-ink-400 px-1">✕</button>
+          <button onClick={save} className="text-xs bg-brand-500 text-white px-3 py-2 rounded font-bold hover:bg-brand-600">✓</button>
+          <button onClick={() => setEditing(false)} className="text-xs text-ink-400 px-2 py-2">✕</button>
         </div>
       </div>
     );
@@ -123,7 +123,7 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
 
   return (
     <div className={`flex items-center justify-between px-3 py-2 rounded-lg gap-2 flex-wrap ${!item.available ? 'opacity-50 bg-ink-50' : ''}`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <button onClick={() => setImgOpen(true)} title="Editar imagen" className="shrink-0">
           {item.image ? (
             <StyledImage src={item.image} alt={item.name} shape={item.image_shape} zoom={item.image_zoom} posX={item.image_pos_x} posY={item.image_pos_y} className="w-10 h-10 hover:opacity-80 transition" />
@@ -131,16 +131,16 @@ function MenuItemRow({ item, onToggle, onDelete, onSaveStock, onSaveItem }) {
             <span className="w-10 h-10 rounded-lg bg-cream-100 flex items-center justify-center text-lg hover:bg-cream-200 transition">🖼️</span>
           )}
         </button>
-        {item.ready_to_serve ? <span title="Venta rápida: no requiere preparación">⚡</span> : null}
-        <span className="font-medium text-sm text-ink-900">{item.name}</span>
-        <span className="text-brand-600 font-bold text-sm">{formatPrice(item.price)}</span>
-        {item.description && <span className="text-ink-400 text-xs hidden sm:inline">{item.description}</span>}
+        {item.ready_to_serve ? <span title="Venta rápida: no requiere preparación" className="shrink-0">⚡</span> : null}
+        <span className="font-medium text-sm text-ink-900 truncate">{item.name}</span>
+        <span className="text-brand-600 font-bold text-sm shrink-0">{formatPrice(item.price)}</span>
+        {item.description && <span className="text-ink-400 text-xs hidden md:inline truncate">{item.description}</span>}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <StockBadge item={item} onSave={onSaveStock} />
-        <button onClick={startEdit} className="text-xs text-brand-600 hover:underline">✏️</button>
-        <button onClick={onToggle} className={`text-xs px-2 py-1 rounded font-semibold ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.available ? 'Disponible' : 'Oculto'}</button>
-        <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-600">✕</button>
+        <button onClick={startEdit} className="text-sm text-brand-600 hover:underline px-2 py-2">✏️</button>
+        <button onClick={onToggle} className={`text-xs px-2 py-2 rounded font-semibold ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{item.available ? 'Disponible' : 'Oculto'}</button>
+        <button onClick={() => { if (confirm(`¿Eliminar "${item.name}"? Esta acción no se puede deshacer.`)) onDelete(); }} className="text-sm text-red-400 hover:text-red-600 px-2 py-2">✕</button>
       </div>
       {imgOpen && <ImageEditorModal initial={item} onSave={onSaveItem} onClose={() => setImgOpen(false)} />}
     </div>
@@ -157,13 +157,13 @@ function StockBadge({ item, onSave }) {
 
   if (open) {
     return (
-      <div className="flex items-center gap-1.5 bg-cream-50 border border-ink-200 rounded-lg px-2 py-1">
+      <div className="flex items-center gap-1.5 bg-cream-50 border border-ink-200 rounded-lg px-2 py-1 flex-wrap">
         <span className="text-[10px] text-ink-400 font-semibold">Stock</span>
-        <input type="number" min="0" value={stock} onChange={e => setStock(e.target.value)} className="w-14 text-xs border border-ink-200 rounded px-1 py-0.5" />
+        <input type="number" min="0" value={stock} onChange={e => setStock(e.target.value)} className="w-14 text-xs border border-ink-200 rounded px-1 py-1.5" />
         <span className="text-[10px] text-ink-400 font-semibold">Cap.</span>
-        <input type="number" min="0" value={maxStock} onChange={e => setMaxStock(e.target.value)} className="w-14 text-xs border border-ink-200 rounded px-1 py-0.5" />
-        <button onClick={async () => { await onSave(Number(stock), Number(maxStock)); setOpen(false); }} className="text-xs bg-brand-500 text-white px-2 py-0.5 rounded font-bold hover:bg-brand-600">✓</button>
-        <button onClick={() => setOpen(false)} className="text-xs text-ink-400 px-1">✕</button>
+        <input type="number" min="0" value={maxStock} onChange={e => setMaxStock(e.target.value)} className="w-14 text-xs border border-ink-200 rounded px-1 py-1.5" />
+        <button onClick={async () => { await onSave(Number(stock), Number(maxStock)); setOpen(false); }} className="text-xs bg-brand-500 text-white px-3 py-1.5 rounded font-bold hover:bg-brand-600">✓</button>
+        <button onClick={() => setOpen(false)} className="text-xs text-ink-400 px-2 py-1.5">✕</button>
       </div>
     );
   }
@@ -251,7 +251,7 @@ function MenuAdmin({ menuData, setMenuData }) {
                 )}
                 <button onClick={() => setEditing(`cat-${cat.id}`)} className="text-xs text-brand-600 hover:underline">✏️</button>
               </div>
-              <button onClick={() => delCat(cat.id)} className="text-xs text-red-500 hover:underline">Eliminar</button>
+              <button onClick={() => { if (confirm(`¿Eliminar la categoría "${cat.name}"?`)) delCat(cat.id); }} className="text-xs text-red-500 hover:underline px-2 py-2">Eliminar</button>
             </div>
             <div className="p-2">
               {cat.items.map(item => (
@@ -270,7 +270,7 @@ function MenuAdmin({ menuData, setMenuData }) {
                 <input value={newItem.catId === cat.id ? newItem.name : ''} placeholder="Item..." onChange={e => setNewItem({ ...newItem, catId: cat.id, name: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 min-w-[7rem]" />
                 <input value={newItem.catId === cat.id ? newItem.price : ''} placeholder="$0" onChange={e => setNewItem({ ...newItem, catId: cat.id, price: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-16" />
                 <input value={newItem.catId === cat.id ? newItem.maxStock : ''} placeholder="Cap. 20" onChange={e => setNewItem({ ...newItem, catId: cat.id, maxStock: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm w-20" title="Capacidad diaria" />
-                <input value={newItem.catId === cat.id ? newItem.description : ''} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 min-w-[7rem] hidden sm:block" />
+                <input value={newItem.catId === cat.id ? newItem.description : ''} placeholder="Descripción..." onChange={e => setNewItem({ ...newItem, catId: cat.id, description: e.target.value })} className="border border-ink-200 rounded p-1.5 text-sm flex-1 min-w-[10rem]" />
                 <label className="flex items-center gap-1 text-xs text-ink-500 whitespace-nowrap" title="No requiere preparación (ej. bebidas embotelladas)">
                   <input type="checkbox" checked={newItem.catId === cat.id ? newItem.readyToServe : false} onChange={e => setNewItem({ ...newItem, catId: cat.id, readyToServe: e.target.checked })} />
                   ⚡
@@ -359,9 +359,9 @@ function PersonalizacionAdmin() {
                 ) : (
                   <h3 className="font-bold text-ink-900">{group.name} <span className="text-ink-400 font-normal text-sm">({group.selection_type === 'single' ? 'selección única' : 'selección múltiple'})</span></h3>
                 )}
-                <button onClick={() => setEditingGroup(editingGroup === group.id ? null : group.id)} className="text-xs text-brand-600 hover:underline">✏️</button>
+                <button onClick={() => setEditingGroup(editingGroup === group.id ? null : group.id)} className="text-xs text-brand-600 hover:underline px-2 py-2">✏️</button>
               </div>
-              <button onClick={() => delGroup(group.id)} className="text-xs text-red-500 hover:underline">Eliminar</button>
+              <button onClick={() => { if (confirm(`¿Eliminar el grupo "${group.name}" y todas sus opciones?`)) delGroup(group.id); }} className="text-xs text-red-500 hover:underline px-2 py-2">Eliminar</button>
             </div>
             <div className="p-2">
               {group.options.map(option => (
@@ -376,7 +376,7 @@ function PersonalizacionAdmin() {
                     </button>
                     <span className="font-medium text-sm text-ink-900 truncate">{option.name}</span>
                   </div>
-                  <button onClick={() => delOption(option.id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">✕</button>
+                  <button onClick={() => { if (confirm(`¿Eliminar "${option.name}"?`)) delOption(option.id); }} className="text-sm text-red-400 hover:text-red-600 shrink-0 px-2 py-2">✕</button>
                   {imgOptionId === option.id && <ImageEditorModal initial={option} onSave={(data) => saveOption(option.id, data)} onClose={() => setImgOptionId(null)} />}
                 </div>
               ))}
@@ -1957,20 +1957,20 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-cream-50">
       <div className="sticky top-0 z-30">
-        <div className="bg-ink-900 text-cream-50 py-4 px-6">
+        <div className="bg-ink-900 text-cream-50 py-3 px-4 sm:py-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-black font-display">⚙️ Admin</h1>
+            <h1 className="text-xl sm:text-2xl font-black font-display">⚙️ Admin</h1>
           </div>
         </div>
         <div className="bg-white border-b border-ink-200">
-          <div className="max-w-7xl mx-auto flex flex-wrap">
+          <div className="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar">
             {tabs.map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`link-underline px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
+              <button key={t} onClick={() => setTab(t)} className={`link-underline px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
             ))}
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
         {tab === 'Resumen' && <Resumen allOrders={allOrders} menuData={menuData} mesas={mesas} />}
         {tab === 'Finanzas' && <FinanzasAdmin />}
         {tab === 'Menú' && <MenuAdmin menuData={menuData} setMenuData={setMenuData} />}

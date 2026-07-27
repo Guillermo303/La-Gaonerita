@@ -60,7 +60,7 @@ export default function CobroModal({ order, onClose, onPaid }) {
       <div onClick={e => e.stopPropagation()} className="bg-cream-50 w-full max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-cream-50 z-10 border-b border-ink-200 px-5 py-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink-900">Cobrar</h2>
-          <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl">✕</button>
+          <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl p-2 -mr-2">✕</button>
         </div>
 
         <div className="p-5 space-y-5">

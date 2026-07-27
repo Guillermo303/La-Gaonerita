@@ -55,7 +55,7 @@ export default function NewOrder() {
   };
 
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
+    <div className="grid lg:grid-cols-2 gap-6 pb-20 lg:pb-0">
       <div>
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate('/waiter')} className="text-ink-400 hover:text-ink-600 text-lg">←</button>
@@ -130,22 +130,22 @@ export default function NewOrder() {
       </div>
 
       <div>
-        <div className="bg-white p-4 rounded-xl shadow-md sticky top-4">
+        <div id="cart-section" className="bg-white p-4 rounded-xl shadow-md lg:sticky lg:top-20 scroll-mt-20">
           <h2 className="text-xl font-bold mb-4">Carrito</h2>
           {cart.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Selecciona productos del menú</p>
           ) : (
             <>
               {cart.map(item => (
-                <div key={item.menu_item_id} className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <div className="font-medium">{item.name}</div>
+                <div key={item.menu_item_id} className="flex justify-between items-center py-2 border-b gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{item.name}</div>
                     <div className="text-sm text-gray-600">{formatPrice(item.price)} c/u</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-7 h-7 bg-gray-100 rounded-full">-</button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">-</button>
                     <span className="w-6 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-7 h-7 bg-gray-100 rounded-full">+</button>
+                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">+</button>
                     <span className="w-20 text-right font-bold">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>
@@ -154,13 +154,23 @@ export default function NewOrder() {
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
               </div>
-              <button onClick={handleSubmit} disabled={loading} className="w-full bg-brand-600 text-white py-2 rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={loading} className="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50">
                 {loading ? 'Creando...' : 'Crear Orden'}
               </button>
             </>
           )}
         </div>
       </div>
+
+      {cart.length > 0 && (
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-white border-t border-ink-100 shadow-2xl flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs text-ink-400 font-semibold uppercase tracking-wider">{cart.reduce((n, i) => n + i.quantity, 0)} producto{cart.reduce((n, i) => n + i.quantity, 0) !== 1 ? 's' : ''}</div>
+            <div className="font-black text-lg text-ink-900">{formatPrice(total)}</div>
+          </div>
+          <button onClick={() => document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth' })} className="bg-brand-500 text-white px-5 py-3 rounded-lg font-bold text-sm hover:bg-brand-600 transition">Ver Carrito →</button>
+        </div>
+      )}
     </div>
   );
 }

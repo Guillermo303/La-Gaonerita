@@ -55,7 +55,7 @@ export default function QuickSaleModal({ onClose, onCreated }) {
       <div onClick={e => e.stopPropagation()} className="bg-cream-50 w-full max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-cream-50 z-10 border-b border-ink-200 px-5 py-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink-900">⚡ Venta Rápida</h2>
-          <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl">✕</button>
+          <button onClick={onClose} className="text-ink-400 hover:text-ink-600 text-xl p-2 -mr-2">✕</button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -82,9 +82,9 @@ export default function QuickSaleModal({ onClose, onCreated }) {
                 <div key={item.menu_item_id} className="flex items-center justify-between py-1">
                   <span className="text-sm text-ink-800">{item.name}</span>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-6 h-6 bg-cream-100 rounded-full text-sm">−</button>
+                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-9 h-9 bg-cream-100 rounded-full text-sm font-bold">−</button>
                     <span className="w-5 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-6 h-6 bg-brand-500 text-white rounded-full text-sm">+</button>
+                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-9 h-9 bg-brand-500 text-white rounded-full text-sm font-bold">+</button>
                     <span className="w-16 text-right text-sm font-bold">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>

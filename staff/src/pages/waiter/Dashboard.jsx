@@ -132,7 +132,7 @@ export default function WaiterDashboard() {
           <h1 className="text-xl font-extrabold text-ink-900">Órdenes</h1>
           <p className="text-xs text-ink-400">{counts}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <select value={filter} onChange={e => setFilter(e.target.value)}
             className="text-sm border border-ink-200 rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400">
             <option value="todas">Todas</option>
@@ -141,8 +141,8 @@ export default function WaiterDashboard() {
             <option value="pendiente">Pendientes</option>
             <option value="domicilio">Domicilio</option>
           </select>
-          <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
           <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>
+          <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
         </div>
       </div>
 
@@ -159,15 +159,15 @@ export default function WaiterDashboard() {
             return (
               <div key={order.id} className={`rounded-xl border-2 shadow-sm ${cfg.bg} transition`}>
                 <button onClick={() => setExpanded(isExpanded ? null : order.id)}
-                  className="w-full flex items-center gap-3 p-3 text-left">
-                  <span className="font-black text-base text-ink-900">#{order.id}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
-                  <span className="text-sm font-semibold text-ink-700 truncate">{order.customer_name}</span>
-                  {order.mesa && <span className="text-xs text-ink-400 font-medium">{order.mesa}</span>}
+                  className="w-full flex items-center gap-2 gap-y-1 p-3 text-left flex-wrap">
+                  <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
+                  <span className="text-sm font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
+                  {order.mesa && <span className="text-xs text-ink-400 font-medium shrink-0">{order.mesa}</span>}
                   <span className="font-bold text-ink-900 shrink-0 ml-auto text-sm">{formatPrice(order.total)}</span>
                   <span className="text-xs text-ink-400 shrink-0 w-14 text-right"><ElapsedTime created={order.created_at} /></span>
-                  <span className="text-ink-300 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                  <span className="text-ink-300 text-xs shrink-0">{isExpanded ? '▲' : '▼'}</span>
                 </button>
                 {isExpanded && (
                   <div className="px-3 pb-3 space-y-2">

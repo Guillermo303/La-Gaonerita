@@ -22,9 +22,9 @@ export default function PendingBills() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-8">
         <div>
-          <h1 className="text-3xl font-black font-display text-ink-900">💰 Cuentas Pendientes</h1>
+          <h1 className="text-2xl sm:text-3xl font-black font-display text-ink-900">💰 Cuentas Pendientes</h1>
           <p className="text-ink-400 text-sm mt-1">{unpaid.length} orden{(unpaid.length !== 1) ? 'es' : ''} por cobrar</p>
         </div>
         <div className="text-right">
@@ -44,8 +44,8 @@ export default function PendingBills() {
           {unpaid.map(order => (
             <div key={order.id} className="bg-white rounded-xl border-2 border-ink-100 shadow-sm overflow-hidden">
               <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                  <div className="flex items-center gap-2 gap-y-1 flex-wrap">
                     <span className="font-black text-xl text-ink-900">#{order.id}</span>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">Entregado</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>

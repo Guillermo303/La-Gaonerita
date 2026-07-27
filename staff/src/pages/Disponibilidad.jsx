@@ -13,7 +13,7 @@ function ItemRow({ item, onToggle }) {
   };
 
   return (
-    <div className={`flex items-center justify-between px-4 py-3 rounded-lg gap-3 ${agotado ? 'bg-red-50' : ''}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 rounded-lg gap-2 sm:gap-3 ${agotado ? 'bg-red-50' : ''}`}>
       <div className="min-w-0">
         <div className="font-medium text-ink-900 truncate">{item.name}</div>
         <div className="text-sm text-ink-400">{formatPrice(item.price)}</div>
@@ -21,9 +21,9 @@ function ItemRow({ item, onToggle }) {
       <button
         onClick={handleToggle}
         disabled={loading}
-        className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold transition disabled:opacity-50 ${agotado ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+        className={`shrink-0 w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-bold transition disabled:opacity-50 ${agotado ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
       >
-        {agotado ? '✅ Disponible de nuevo' : '🚫 Marcar agotado hoy'}
+        {agotado ? '✅ Disponible de nuevo' : '🚫 Marcar agotado'}
       </button>
     </div>
   );

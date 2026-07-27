@@ -45,8 +45,7 @@ function BigButton({ orders, onAdvance }) {
   const isPendiente = target.status === 'pendiente';
   const nextStatus = isPendiente ? 'preparando' : 'listo';
   const label = isPendiente ? 'Preparar' : 'Listo';
-  const color = isPendiente ? 'bg-blue-500' : 'bg-green-500';
-  const hoverColor = isPendiente ? 'bg-blue-600' : 'bg-green-600';
+  const color = isPendiente ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600';
   const icon = isPendiente ? '👨‍🍳' : '✅';
 
   const handlePress = () => {
@@ -66,7 +65,7 @@ function BigButton({ orders, onAdvance }) {
         <ElapsedTimer created={target.created_at} status={target.status} />
       </div>
       <button onClick={handlePress}
-        className={`w-72 h-72 rounded-full ${color} text-white text-4xl font-black uppercase tracking-wider shadow-2xl hover:${hoverColor} active:scale-95 transition-all duration-100 flex flex-col items-center justify-center gap-3 ${flashing ? 'ring-8 ring-white scale-95' : ''}`}>
+        className={`w-56 h-56 sm:w-72 sm:h-72 rounded-full ${color} text-white text-3xl sm:text-4xl font-black uppercase tracking-wider shadow-2xl active:scale-95 transition-all duration-100 flex flex-col items-center justify-center gap-3 ${flashing ? 'ring-8 ring-white scale-95' : ''}`}>
         <span className="text-7xl">{icon}</span>
         <span>{label}</span>
       </button>
@@ -243,7 +242,7 @@ export default function KitchenDisplay() {
 
   if (bigMode) {
     return (
-      <div className="min-h-screen bg-cream-50 p-8">
+      <div className="min-h-screen bg-cream-50 p-4 sm:p-8">
         <button onClick={() => setBigMode(false)} className="fixed top-4 right-4 z-10 bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-ink-800 transition">Salir Modo Botón</button>
         <BigButton orders={orders} onAdvance={handleAdvance} />
       </div>
@@ -251,24 +250,24 @@ export default function KitchenDisplay() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100 p-3 sm:p-4">
       <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+Af39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f3+Af39/f4B/f3+AgH9/f3+AgH9/f3+AgH9/f3+AgH9/f38=" preload="auto"></audio>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-3xl font-bold text-gray-800">👨‍🍳 Cocina - La Gaonerita</h1>
-        <div className="flex items-center gap-3">
+        <h1 className="text-xl sm:text-3xl font-bold text-gray-800">👨‍🍳 Cocina - La Gaonerita</h1>
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex bg-white rounded-xl shadow-sm border border-gray-200 p-1">
             <button onClick={() => setView('tablero')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'tablero' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Tablero</button>
             <button onClick={() => setView('historial')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'historial' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Historial</button>
           </div>
-          <button onClick={() => setBigMode(true)} className="bg-ink-900 text-white px-5 py-3 rounded-xl text-lg font-bold hover:bg-ink-800 transition shadow-lg flex items-center gap-2">
-            <span className="text-2xl">🔘</span> Botón Físico
+          <button onClick={() => setBigMode(true)} className="bg-ink-900 text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-sm sm:text-lg font-bold hover:bg-ink-800 transition shadow-lg flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">🔘</span> Botón Físico
           </button>
         </div>
       </div>
       {view === 'historial' ? (
         <HistorialActivas orders={orders} onDeliver={handleDeliver} />
       ) : (
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <h2 className="text-xl font-bold text-yellow-700 bg-yellow-100 p-3 rounded-t-lg text-center">Pendientes ({pendingOrders.length})</h2>
           <div className="space-y-3 mt-3">
