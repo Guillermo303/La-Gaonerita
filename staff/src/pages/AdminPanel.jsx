@@ -573,7 +573,7 @@ function MesasAdmin({ mesas, setMesas }) {
               {m.reservation && (
                 <div className="text-xs text-blue-600 mt-1 truncate">{m.reservation.time} · {m.reservation.customer_name}</div>
               )}
-              {m.lastCustomer && <div className="text-xs text-ink-400 mt-1 truncate">{m.lastCustomer}</div>}
+              {m.state !== 'libre' && m.lastCustomer && <div className="text-xs text-ink-400 mt-1 truncate">{m.lastCustomer}</div>}
               <button onClick={() => delMesa(m.id)} className="text-xs text-red-400 hover:text-red-600 mt-2">Eliminar</button>
             </div>
           );
@@ -2118,7 +2118,7 @@ export default function AdminPanel() {
           </div>
         </div>
         <div className="bg-white border-b border-ink-200">
-          <div className="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar">
+          <div className="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar sm:flex-wrap sm:overflow-visible">
             {tabs.map(t => (
               <button key={t} onClick={() => setTab(t)} className={`link-underline px-4 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition ${tab === t ? 'text-brand-600 border-b-2 border-brand-600' : 'text-ink-400 hover:text-ink-600'}`}>{t}</button>
             ))}
