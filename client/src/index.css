@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+/* Red de seguridad: las animaciones de entrada (reveal-left/right) empiezan
+   desplazadas horizontalmente fuera de pantalla — sin esto, un navegador
+   móvil puede dejar la página entera con scroll/zoom horizontal mientras
+   anima, mostrando el fondo por el borde. */
+html { overflow-x: hidden; }
+body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
 
 /* Zoom lento tipo Ken Burns para fotos de fondo */
 @keyframes kenburns {
