@@ -24,6 +24,7 @@ export default function Navbar() {
             {(user.role === 'admin' || user.role === 'mesero') && <Link to="/pending-bills" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Cuentas</Link>}
             {(user.role === 'admin' || user.role === 'cocina') && <Link to="/kitchen" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Cocina</Link>}
             {(user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && <Link to="/tv" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">TV</Link>}
+            {(user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && <Link to="/menu-board" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Cartelera</Link>}
             {(user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && <Link to="/disponibilidad" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Disponibilidad</Link>}
             {user.role === 'admin' && <Link to="/admin" className="link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition">Admin</Link>}
             <span className="hidden sm:inline text-xs uppercase tracking-widest text-ink-300">{user.name}</span>

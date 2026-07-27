@@ -6,6 +6,7 @@ import WaiterDashboard from './pages/waiter/Dashboard';
 import NewOrder from './pages/waiter/NewOrder';
 import KitchenDisplay from './pages/kitchen/Display';
 import TVDisplay from './pages/TVDisplay';
+import MenuBoard from './pages/MenuBoard';
 import PendingBills from './pages/PendingBills';
 import AdminPanel from './pages/AdminPanel';
 import Disponibilidad from './pages/Disponibilidad';
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/kitchen" element={<ProtectedRoute roles={['admin', 'cocina']}><KitchenDisplay /></ProtectedRoute>} />
         <Route path="/tv" element={<ProtectedRoute roles={['admin', 'cocina', 'mesero']}><TVDisplay /></ProtectedRoute>} />
+        <Route path="/menu-board" element={<ProtectedRoute roles={['admin', 'cocina', 'mesero']}><MenuBoard /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>} />
         <Route element={<StaffLayout />}>
           <Route path="/waiter" element={<ProtectedRoute roles={['admin', 'mesero']}><WaiterDashboard /></ProtectedRoute>} />

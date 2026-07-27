@@ -107,8 +107,16 @@ body { font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; 
 }
 .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
+/* Transición entre diapositivas de la pantalla de menú (estilo cartelera) */
+@keyframes menuboard-fade {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.menuboard-slide { animation: menuboard-fade 0.6s ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
   .btn-grow, .btn-sweep, .btn-sweep::before, .btn-sweep::after, .link-underline::after, .card-glow { transition: none; }
   .btn-grow:hover, .card-glow:hover { transform: none; }
   .group:hover .icon-float, .pop-in { animation: none; }
+  .menuboard-slide { animation: none; }
 }
