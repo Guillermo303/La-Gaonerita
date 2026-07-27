@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth as authApi } from '../api';
+import { subscribeToPush } from '../lib/pushNotifications';
 
 const AuthContext = createContext(null);
 
@@ -15,6 +16,10 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (user && (user.role === 'mesero' || user.role === 'admin')) subscribeToPush();
+  }, [user]);
 
   const login = async (email, password) => {
     const data = await authApi.login({ email, password });

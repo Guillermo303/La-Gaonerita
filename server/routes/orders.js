@@ -4,6 +4,7 @@ import { query, get, run, withTransaction } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { decrementStock } from '../inventory.js';
 import { decrementSuppliesForOrder } from '../supplies.js';
+import { sendPushToRoles } from '../push.js';
 
 const router = Router();
 
@@ -124,6 +125,13 @@ router.post('/', authenticate, async (req, res) => {
 
     const io = req.app.get('io');
     notifyOrderUpdate(io, order);
+    if (order.status === 'pendiente') {
+      sendPushToRoles(['mesero', 'admin'], {
+        title: '🌮 Nueva orden',
+        body: `#${order.id} · ${order.customer_name} · ${order.order_type === 'domicilio' ? 'Domicilio' : order.mesa || 'Local'}`,
+        url: '/waiter'
+      }).catch(console.error);
+    }
     res.status(201).json(order);
   } catch (err) {
     res.status(400).json({ error: err.message || 'No se pudo crear la orden' });
@@ -156,6 +164,21 @@ router.put('/:id/status', authenticate, authorize('admin', 'cocina', 'mesero'), 
   const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   order.items = await query('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
   notifyOrderUpdate(req.app.get('io'), order);
+
+  if (status === 'listo') {
+    sendPushToRoles(['mesero', 'admin'], {
+      title: '✅ Orden lista',
+      body: `#${order.id} · ${order.customer_name} · ${order.order_type === 'domicilio' ? 'Domicilio' : order.mesa || 'Local'}`,
+      url: '/waiter'
+    }).catch(console.error);
+  } else if (status === 'completado' && order.order_type === 'local' && order.payment_status !== 'pagado') {
+    sendPushToRoles(['mesero', 'admin'], {
+      title: '💰 Mesa lista para cobrar',
+      body: `${order.mesa || `Orden #${order.id}`} · ${order.customer_name}`,
+      url: '/waiter'
+    }).catch(console.error);
+  }
+
   res.json(order);
 });
 

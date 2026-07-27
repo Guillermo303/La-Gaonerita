@@ -18,6 +18,12 @@ export const auth = {
   me: () => request('/auth/me')
 };
 
+export const push = {
+  getVapidKey: () => request('/push/vapid-public-key'),
+  subscribe: (subscription) => request('/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription }) }),
+  unsubscribe: (endpoint) => request('/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) })
+};
+
 export const employees = {
   getAll: () => request('/employees'),
   hire: (data) => request('/employees', { method: 'POST', body: JSON.stringify(data) }),
