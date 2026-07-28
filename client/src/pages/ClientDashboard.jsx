@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { orders as ordersApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { formatPrice } from '../lib/utils';
 
 const statusColors = {
@@ -15,8 +16,17 @@ const statusColors = {
 export default function ClientDashboard() {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
+  const socket = useSocket();
 
-  useEffect(() => { ordersApi.getAll().then(setOrders).catch(console.error); }, []);
+  const loadOrders = () => ordersApi.getAll().then(setOrders).catch(console.error);
+
+  useEffect(() => { loadOrders(); }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('order:update', loadOrders);
+    return () => socket.off('order:update', loadOrders);
+  }, [socket]);
 
   const myOrders = user ? orders.filter(o => o.customer_name === user.name || o.user_id === user.id) : [];
   const activeOrders = myOrders.filter(o => o.status !== 'completado' && o.status !== 'cancelado');

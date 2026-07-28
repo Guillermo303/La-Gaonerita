@@ -2,14 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { orders as ordersApi } from '../api';
 import { formatPrice, statusColors, statusLabels, typeLabels } from '../lib/utils';
+import { useSocket } from '../context/SocketContext';
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const socket = useSocket();
+
+  const loadOrders = () => ordersApi.getAll().then(setOrders).catch(console.error).finally(() => setLoading(false));
+
+  useEffect(() => { loadOrders(); }, []);
 
   useEffect(() => {
-    ordersApi.getAll().then(setOrders).catch(console.error).finally(() => setLoading(false));
-  }, []);
+    if (!socket) return;
+    socket.on('order:update', loadOrders);
+    return () => socket.off('order:update', loadOrders);
+  }, [socket]);
 
   if (loading) return <div className="text-center py-24"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto"></div></div>;
 

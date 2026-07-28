@@ -21,6 +21,12 @@ export const auth = {
   setUserStatus: (id, active) => request(`/auth/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ active }) })
 };
 
+export const push = {
+  getVapidKey: () => request('/push/vapid-public-key'),
+  subscribe: (subscription) => request('/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription }) }),
+  unsubscribe: (endpoint) => request('/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) })
+};
+
 export const menu = {
   getAll: () => request('/menu'),
   getAllAdmin: () => request('/menu/all'),

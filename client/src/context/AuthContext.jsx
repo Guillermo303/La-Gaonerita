@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth as authApi } from '../api';
+import { subscribeToPush } from '../lib/pushNotifications';
 
 const AuthContext = createContext(null);
 
@@ -16,6 +17,10 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) subscribeToPush();
+  }, [user]);
 
   const login = async (email, password) => {
     const data = await authApi.login({ email, password });

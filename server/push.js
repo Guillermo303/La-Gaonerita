@@ -18,18 +18,29 @@ export async function sendPushToRoles(roles, payload) {
     roles
   );
 
-  await Promise.all(subs.map(async (sub) => {
-    try {
-      await webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        JSON.stringify(payload)
-      );
-    } catch (err) {
-      if (err.statusCode === 404 || err.statusCode === 410) {
-        await run('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
-      } else {
-        console.error('Error enviando push:', err.statusCode || err.message);
-      }
+  await Promise.all(subs.map((sub) => sendToSubscription(sub, payload)));
+}
+
+// Manda una notificación push a un usuario específico (típicamente el
+// cliente dueño de la orden), sin importar su rol.
+export async function sendPushToUser(userId, payload) {
+  if (!process.env.VAPID_PUBLIC_KEY || !userId) return;
+
+  const subs = await query('SELECT * FROM push_subscriptions WHERE user_id = ?', [userId]);
+  await Promise.all(subs.map((sub) => sendToSubscription(sub, payload)));
+}
+
+async function sendToSubscription(sub, payload) {
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify(payload)
+    );
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 410) {
+      await run('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
+    } else {
+      console.error('Error enviando push:', err.statusCode || err.message);
     }
-  }));
+  }
 }

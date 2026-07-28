@@ -4,13 +4,31 @@ import { query, get, run, withTransaction } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { decrementStock } from '../inventory.js';
 import { decrementSuppliesForOrder } from '../supplies.js';
-import { sendPushToRoles } from '../push.js';
+import { sendPushToRoles, sendPushToUser } from '../push.js';
 import { createPaymentLink, isConfigured as mercadoPagoConfigured } from '../mercadopago.js';
 
 const router = Router();
 
 function notifyOrderUpdate(io, order) {
   if (io) io.emit('order:update', order);
+}
+
+const CUSTOMER_STATUS_MESSAGES = {
+  preparando: { title: '👨‍🍳 Tu pedido está en preparación', body: 'La cocina ya está trabajando en tu orden' },
+  listo: { title: '✅ ¡Tu pedido está listo!', body: 'Tu orden está lista' },
+  completado: { title: '🎉 Pedido entregado', body: '¡Gracias por tu compra! Esperamos que lo disfrutes' }
+};
+
+// Solo se notifica al cliente cuando el dueño de la orden es una cuenta de
+// tipo "cliente" (pedido hecho por él mismo desde la app) — si un mesero
+// creó la orden a nombre de un cliente local, el user_id es del mesero y no
+// debe recibir esta notificación.
+async function notifyCustomerStatus(order, status) {
+  const msg = CUSTOMER_STATUS_MESSAGES[status];
+  if (!msg || !order.user_id) return;
+  const owner = await get('SELECT role FROM users WHERE id = ?', [order.user_id]);
+  if (owner?.role !== 'cliente') return;
+  sendPushToUser(order.user_id, { ...msg, body: `#${order.id} · ${msg.body}`, url: '/my-orders' }).catch(console.error);
 }
 
 router.get('/', authenticate, async (req, res) => {
@@ -184,6 +202,7 @@ router.put('/:id/status', authenticate, authorize('admin', 'cocina', 'mesero'), 
   const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   order.items = await query('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
   notifyOrderUpdate(req.app.get('io'), order);
+  notifyCustomerStatus(order, status);
 
   if (status === 'listo') {
     sendPushToRoles(['mesero', 'admin'], {
