@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="bg-ink-900 text-cream-100">
       <div className="serape-line" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="font-display text-lg font-extrabold uppercase tracking-wider text-brand-500 mb-3">La Gaonerita</div>
             <p className="text-sm text-ink-300 max-w-xs">Tacos artesanales hechos con ingredientes frescos y recetas de tradición familiar.</p>

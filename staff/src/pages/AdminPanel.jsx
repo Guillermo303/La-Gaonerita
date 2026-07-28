@@ -350,8 +350,8 @@ function PersonalizacionAdmin() {
     <div>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
       <p className="text-sm text-ink-400 mb-4">Opciones gratuitas que el cliente elige en el menú (ej. tipo de tortilla, acompañamientos) — aplican a todo el menú, no a un platillo en específico.</p>
-      <div className="flex items-center gap-2 mb-6">
-        <input value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} placeholder="Nuevo grupo (ej. Tortilla)..." className="border border-ink-200 rounded-lg p-2 text-sm flex-1" />
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <input value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} placeholder="Nuevo grupo (ej. Tortilla)..." className="border border-ink-200 rounded-lg p-2 text-sm flex-1 min-w-[140px]" />
         <select value={newGroup.selection_type} onChange={e => setNewGroup({ ...newGroup, selection_type: e.target.value })} className="border border-ink-200 rounded-lg p-2 text-sm bg-white">
           <option value="single">Selección única</option>
           <option value="multiple">Selección múltiple</option>
@@ -776,7 +776,7 @@ function ReportesAdmin() {
             <button key={key} onClick={() => setPeriod(key)} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${period === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <input type="date" value={date} onChange={e => { setDate(e.target.value); setSaved(false); }} className="border border-ink-200 rounded-lg p-2 text-sm bg-white" />
           {report && (
             <>

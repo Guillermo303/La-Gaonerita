@@ -136,7 +136,7 @@ export default function Checkout() {
     <div className="max-w-5xl mx-auto px-4 py-14">
       <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900 text-center mb-10">Tu Pedido</h1>
       {error && <div className="bg-brand-50 border border-brand-200 text-brand-700 p-3 rounded-lg mb-6 max-w-2xl mx-auto">{error}</div>}
-      <div className="grid lg:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Carrito */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-md p-6">

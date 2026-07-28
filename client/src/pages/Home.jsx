@@ -261,7 +261,7 @@ export default function Home() {
 
       {/* Historia */}
       <section className="max-w-7xl mx-auto px-4 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <Reveal variant="reveal-left">
             <div className="relative group">
               <div className="absolute -inset-3 bg-brand-500/10 rounded-2xl rotate-2 group-hover:rotate-1 transition duration-500" />
@@ -296,7 +296,7 @@ export default function Home() {
             <h2 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Misión y Visión</h2>
           </div>
         </Reveal>
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Reveal variant="reveal-left">
             <div className="bg-white rounded-2xl p-8 shadow-md border border-ink-100 h-full">
               <div className="text-4xl mb-4">🎯</div>
