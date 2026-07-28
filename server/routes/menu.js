@@ -64,6 +64,11 @@ router.put('/items/:id/stock', authenticate, authorize('admin', 'mesero', 'cocin
 });
 
 router.delete('/items/:id', authenticate, authorize('admin'), async (req, res) => {
+  const orderCount = await get('SELECT COUNT(*) as count FROM order_items WHERE menu_item_id = ?', [req.params.id]);
+  if (Number(orderCount.count) > 0) {
+    return res.status(400).json({ error: 'No se puede eliminar un producto que ya tiene pedidos registrados. Usa "Oculto" para dejar de ofrecerlo sin borrar el historial.' });
+  }
+  await run('DELETE FROM menu_item_supplies WHERE menu_item_id = ?', [req.params.id]);
   await run('DELETE FROM menu_items WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
