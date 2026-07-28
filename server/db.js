@@ -310,6 +310,12 @@ const SCHEMA_SQL = `
   ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_zoom REAL NOT NULL DEFAULT 1;
   ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_x REAL NOT NULL DEFAULT 50;
   ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_y REAL NOT NULL DEFAULT 50;
+
+  -- Link de pago de Mercado Pago generado para la orden (reemplaza el pago
+  -- manual por "transferencia" con un link real que se puede regenerar sin
+  -- perder el id de preferencia ya creado).
+  ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_link TEXT;
+  ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_preference_id TEXT;
 `;
 
 async function seedDefaults() {

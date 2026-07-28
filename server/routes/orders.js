@@ -5,6 +5,7 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { decrementStock } from '../inventory.js';
 import { decrementSuppliesForOrder } from '../supplies.js';
 import { sendPushToRoles } from '../push.js';
+import { createPaymentLink, isConfigured as mercadoPagoConfigured } from '../mercadopago.js';
 
 const router = Router();
 
@@ -153,6 +154,25 @@ router.post('/create-payment-intent', authenticate, async (req, res) => {
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch {
     res.status(500).json({ error: 'Error al crear el pago' });
+  }
+});
+
+router.post('/:id/mercadopago-link', authenticate, async (req, res) => {
+  const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
+  const puedeGenerar = req.user.role === 'admin' || req.user.role === 'mesero' || order.user_id === req.user.id;
+  if (!puedeGenerar) return res.status(403).json({ error: 'No autorizado' });
+
+  if (order.mercadopago_link) {
+    return res.json({ link: order.mercadopago_link, demo: !mercadoPagoConfigured });
+  }
+
+  try {
+    const { link, preferenceId, demo } = await createPaymentLink(order);
+    await run('UPDATE orders SET mercadopago_link = ?, mercadopago_preference_id = ?, payment_method = ? WHERE id = ?', [link, preferenceId, 'transferencia', order.id]);
+    res.json({ link, demo });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo generar el link de pago' });
   }
 });
 

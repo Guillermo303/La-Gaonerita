@@ -9,6 +9,9 @@ export default function CobroModal({ order, onClose, onPaid }) {
   const [cambio, setCambio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mpLink, setMpLink] = useState(null);
+  const [mpLoading, setMpLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const total = order?.total || 0;
 
@@ -42,6 +45,21 @@ export default function CobroModal({ order, onClose, onPaid }) {
     setRecibido('');
     setCambio(null);
     setError('');
+    if (m === 'transferencia' && !mpLink) {
+      setMpLoading(true);
+      ordersApi.getMercadoPagoLink(order.id)
+        .then(setMpLink)
+        .catch(err => setError(err.message))
+        .finally(() => setMpLoading(false));
+    }
+  };
+
+  const copyLink = () => {
+    if (!mpLink) return;
+    navigator.clipboard.writeText(mpLink.link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const calcCambio = (val) => {
@@ -53,7 +71,7 @@ export default function CobroModal({ order, onClose, onPaid }) {
 
   if (!order) return null;
 
-  const puedePagar = metodo === 'tarjeta' || (metodo === 'efectivo' && parseFloat(recibido) >= total);
+  const puedePagar = metodo === 'tarjeta' || (metodo === 'efectivo' && parseFloat(recibido) >= total) || (metodo === 'transferencia' && !!mpLink);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
@@ -88,14 +106,18 @@ export default function CobroModal({ order, onClose, onPaid }) {
           {/* Payment method */}
           <div>
             <div className="text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Método de pago</div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button onClick={() => selectMetodo('efectivo')}
-                className={`p-4 rounded-xl border-2 text-center transition font-bold text-sm ${metodo === 'efectivo' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300'}`}>
+                className={`p-3 rounded-xl border-2 text-center transition font-bold text-xs ${metodo === 'efectivo' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300'}`}>
                 <div className="text-2xl mb-1">💵</div> Efectivo
               </button>
               <button onClick={() => selectMetodo('tarjeta')}
-                className={`p-4 rounded-xl border-2 text-center transition font-bold text-sm ${metodo === 'tarjeta' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300'}`}>
+                className={`p-3 rounded-xl border-2 text-center transition font-bold text-xs ${metodo === 'tarjeta' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300'}`}>
                 <div className="text-2xl mb-1">💳</div> Tarjeta
+              </button>
+              <button onClick={() => selectMetodo('transferencia')}
+                className={`p-3 rounded-xl border-2 text-center transition font-bold text-xs ${metodo === 'transferencia' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300'}`}>
+                <div className="text-2xl mb-1">🔗</div> Transferencia
               </button>
             </div>
           </div>
@@ -131,6 +153,29 @@ export default function CobroModal({ order, onClose, onPaid }) {
           {metodo === 'tarjeta' && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
               💳 Cobra <strong>{formatPrice(total)}</strong> en la terminal y confirma aquí. Al confirmar se imprime el ticket automáticamente.
+            </div>
+          )}
+
+          {/* Transferencia (Mercado Pago) panel */}
+          {metodo === 'transferencia' && (
+            <div className="space-y-3">
+              {mpLoading ? (
+                <div className="text-center py-4 text-ink-400 text-sm">Generando link de pago…</div>
+              ) : mpLink ? (
+                <div className="bg-[#009EE3]/10 border border-[#009EE3]/30 rounded-xl p-4 space-y-3">
+                  {mpLink.demo && (
+                    <p className="text-xs text-ink-500">🚧 Modo demostración — este link es solo para probar cómo se vería, aún no procesa pagos reales.</p>
+                  )}
+                  <p className="text-sm text-ink-700">Comparte este link con el cliente para que pague <strong>{formatPrice(total)}</strong> desde su celular:</p>
+                  <div className="flex gap-2">
+                    <input readOnly value={mpLink.link} className="flex-1 min-w-0 p-2.5 border border-ink-200 rounded-lg text-xs bg-white truncate" />
+                    <button type="button" onClick={copyLink} className="shrink-0 px-3 py-2.5 rounded-lg text-xs font-bold bg-[#009EE3] text-white hover:opacity-90">{copied ? '✓ Copiado' : 'Copiar'}</button>
+                  </div>
+                  <a href={mpLink.link} target="_blank" rel="noopener noreferrer" className="block text-center text-xs font-semibold text-[#009EE3] hover:underline">Abrir link →</a>
+                </div>
+              ) : (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm">No se pudo generar el link de pago.</div>
+              )}
             </div>
           )}
 

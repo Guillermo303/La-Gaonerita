@@ -21,6 +21,7 @@ export default function Checkout() {
   const [form, setForm] = useState({ phone: '', address: '', type: 'domicilio', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(null);
+  const [mpLink, setMpLink] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -50,6 +51,9 @@ export default function Checkout() {
       });
       clear();
       setPlaced(order);
+      if (form.payment === 'transferencia') {
+        ordersApi.getMercadoPagoLink(order.id).then(setMpLink).catch(() => {});
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -77,6 +81,24 @@ export default function Checkout() {
               ? 'Te lo llevamos a tu dirección en cuanto esté listo.'
               : 'Te avisamos en sucursal cuando esté listo.')}
         </p>
+        {placed.payment_method === 'transferencia' && (
+          <div className="bg-cream-50 border border-brand-200 rounded-xl p-5 mb-6 text-left">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-2">Pago por transferencia</p>
+            {mpLink ? (
+              <>
+                {mpLink.demo && (
+                  <p className="text-xs text-ink-400 mb-2">🚧 Modo demostración — este link es solo para probar cómo se vería, aún no procesa pagos reales.</p>
+                )}
+                <a href={mpLink.link} target="_blank" rel="noopener noreferrer"
+                  className="btn-grow block w-full text-center bg-[#009EE3] text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:opacity-90">
+                  Pagar con Mercado Pago
+                </a>
+              </>
+            ) : (
+              <p className="text-sm text-ink-500">Generando tu link de pago…</p>
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-3">
           <Link to="/my-orders" className="bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Seguir mi pedido</Link>
           <Link to="/menu" className="border border-ink-200 text-ink-600 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-cream-100 transition">Volver al menú</Link>
@@ -191,7 +213,7 @@ export default function Checkout() {
                 className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white">
                 <option value="efectivo">Efectivo {form.type === 'domicilio' ? 'al recibir' : 'en sucursal'}</option>
                 <option value="tarjeta">Tarjeta {form.type === 'domicilio' ? 'al recibir' : 'en sucursal'}</option>
-                <option value="transferencia">Transferencia</option>
+                <option value="transferencia">Transferencia (Mercado Pago)</option>
               </select>
             </div>
 

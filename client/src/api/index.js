@@ -43,6 +43,7 @@ export const orders = {
   updateStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   updatePayment: (id, payment_status) => request(`/orders/${id}/payment`, { method: 'PUT', body: JSON.stringify({ payment_status }) }),
   createPaymentIntent: (order_id) => request('/orders/create-payment-intent', { method: 'POST', body: JSON.stringify({ order_id }) }),
+  getMercadoPagoLink: (id) => request(`/orders/${id}/mercadopago-link`, { method: 'POST' }),
   getRecommendations: () => request('/orders/recommendations')
 };
 
