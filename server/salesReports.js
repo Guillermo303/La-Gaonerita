@@ -232,8 +232,34 @@ export async function autoArchiveDailyReport() {
   return true;
 }
 
-export function startSalesReportSchedule(checkIntervalMinutes = 60) {
+// A diferencia del archivo diario (que necesita recordar el último día
+// archivado porque corre muchas veces por día), semana y mes solo cierran
+// una vez, así que basta con checar si ya existe un reporte automático para
+// ese rango exacto antes de crear uno — sin necesidad de más estado.
+export async function autoArchiveWeeklyReport() {
+  const lastWeekAnchor = new Date();
+  lastWeekAnchor.setDate(lastWeekAnchor.getDate() - 7);
+  const [rangeStart] = computeRange('week', lastWeekAnchor);
+  const exists = await get("SELECT id FROM sales_reports WHERE period = 'week' AND range_start = ? AND auto = 1", [rangeStart.toISOString()]);
+  if (!exists) await saveReportSnapshot('week', lastWeekAnchor, { auto: true });
+}
+
+export async function autoArchiveMonthlyReport() {
+  const lastMonthAnchor = new Date();
+  lastMonthAnchor.setMonth(lastMonthAnchor.getMonth() - 1);
+  const [rangeStart] = computeRange('month', lastMonthAnchor);
+  const exists = await get("SELECT id FROM sales_reports WHERE period = 'month' AND range_start = ? AND auto = 1", [rangeStart.toISOString()]);
+  if (!exists) await saveReportSnapshot('month', lastMonthAnchor, { auto: true });
+}
+
+function runAllArchives() {
   autoArchiveDailyReport();
+  autoArchiveWeeklyReport();
+  autoArchiveMonthlyReport();
+}
+
+export function startSalesReportSchedule(checkIntervalMinutes = 60) {
+  runAllArchives();
   const ms = checkIntervalMinutes * 60 * 1000;
-  return setInterval(autoArchiveDailyReport, ms);
+  return setInterval(runAllArchives, ms);
 }

@@ -32,6 +32,10 @@ router.put('/categories/:id', authenticate, authorize('admin'), async (req, res)
 });
 
 router.delete('/categories/:id', authenticate, authorize('admin'), async (req, res) => {
+  const itemCount = await get('SELECT COUNT(*) as count FROM menu_items WHERE category_id = ?', [req.params.id]);
+  if (Number(itemCount.count) > 0) {
+    return res.status(400).json({ error: 'No se puede eliminar una categoría que tiene productos. Elimina o mueve sus productos primero.' });
+  }
   await run('DELETE FROM categories WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

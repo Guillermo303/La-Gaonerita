@@ -16,7 +16,7 @@ initDB().then(() => {
   startReservationSchedule();
   console.log('Reservaciones: asignación automática de mesas activada');
   startSalesReportSchedule();
-  console.log('Reportes: archivo automático diario de ventas activado');
+  console.log('Reportes: archivo automático de ventas (día/semana/mes) activado');
   startSupplySchedule();
   console.log('Insumos: recuento y reinicio semanal activado');
 });
