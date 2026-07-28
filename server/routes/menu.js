@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, get, run } from '../db.js';
+import { query, run } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
@@ -32,12 +32,21 @@ router.put('/categories/:id', authenticate, authorize('admin'), async (req, res)
 });
 
 router.delete('/categories/:id', authenticate, authorize('admin'), async (req, res) => {
-  const itemCount = await get('SELECT COUNT(*) as count FROM menu_items WHERE category_id = ?', [req.params.id]);
-  if (Number(itemCount.count) > 0) {
-    return res.status(400).json({ error: 'No se puede eliminar una categoría que tiene productos. Elimina o mueve sus productos primero.' });
+  const items = await query('SELECT id FROM menu_items WHERE category_id = ?', [req.params.id]);
+
+  // Cada producto conserva su historial de ventas aunque se elimine: los
+  // pedidos ya hechos guardan su propia copia de nombre/precio en
+  // order_items, así que solo desligamos el order_item del producto
+  // eliminado (no se pierde nada de lo que ve el cliente/mesero en el
+  // historial).
+  for (const item of items) {
+    await run('DELETE FROM menu_item_supplies WHERE menu_item_id = ?', [item.id]);
+    await run('UPDATE order_items SET menu_item_id = NULL WHERE menu_item_id = ?', [item.id]);
+    await run('DELETE FROM menu_items WHERE id = ?', [item.id]);
   }
+
   await run('DELETE FROM categories WHERE id = ?', [req.params.id]);
-  res.json({ success: true });
+  res.json({ success: true, deletedItems: items.length });
 });
 
 router.post('/items', authenticate, authorize('admin'), async (req, res) => {
@@ -64,11 +73,10 @@ router.put('/items/:id/stock', authenticate, authorize('admin', 'mesero', 'cocin
 });
 
 router.delete('/items/:id', authenticate, authorize('admin'), async (req, res) => {
-  const orderCount = await get('SELECT COUNT(*) as count FROM order_items WHERE menu_item_id = ?', [req.params.id]);
-  if (Number(orderCount.count) > 0) {
-    return res.status(400).json({ error: 'No se puede eliminar un producto que ya tiene pedidos registrados. Usa "Oculto" para dejar de ofrecerlo sin borrar el historial.' });
-  }
+  // order_items guarda su propia copia de nombre/precio, así que borrar el
+  // producto no afecta el historial ya mostrado — solo se desliga.
   await run('DELETE FROM menu_item_supplies WHERE menu_item_id = ?', [req.params.id]);
+  await run('UPDATE order_items SET menu_item_id = NULL WHERE menu_item_id = ?', [req.params.id]);
   await run('DELETE FROM menu_items WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

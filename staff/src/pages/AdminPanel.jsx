@@ -261,7 +261,12 @@ function MenuAdmin({ menuData, setMenuData }) {
                 )}
                 <button onClick={() => setEditing(`cat-${cat.id}`)} className="text-xs text-brand-600 hover:underline">✏️</button>
               </div>
-              <button onClick={() => { if (confirm(`¿Eliminar la categoría "${cat.name}"?`)) delCat(cat.id); }} className="text-xs text-red-500 hover:underline px-2 py-2">Eliminar</button>
+              <button onClick={() => {
+                const msg = cat.items.length > 0
+                  ? `La categoría "${cat.name}" tiene ${cat.items.length} producto(s). ¿Eliminar la categoría junto con todos sus productos? Esta acción no se puede deshacer.`
+                  : `¿Eliminar la categoría "${cat.name}"?`;
+                if (confirm(msg)) delCat(cat.id);
+              }} className="text-xs text-red-500 hover:underline px-2 py-2">Eliminar</button>
             </div>
             <div className="p-2">
               {cat.items.map(item => (
