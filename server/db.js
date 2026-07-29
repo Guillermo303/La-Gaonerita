@@ -3,6 +3,14 @@ import bcrypt from 'bcryptjs';
 
 const { Pool } = pg;
 
+// Las columnas `TIMESTAMP` (sin zona horaria) guardan la hora en UTC (la
+// sesión de Postgres usa TimeZone=UTC), pero por default el driver `pg` las
+// interpreta como hora LOCAL del proceso de Node al convertirlas a Date —
+// y si el proceso corre en una zona distinta a UTC (ej. America/Mexico_City,
+// UTC-6), eso corrompe cada created_at/updated_at por 6 horas al leerlo.
+// Forzamos a que se interpreten como UTC, que es como realmente se guardan.
+pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, (str) => new Date(str + 'Z'));
+
 // En pruebas (NODE_ENV=test) se usa un schema aparte del mismo proyecto de
 // Supabase, para que las pruebas automatizadas (que hacen TRUNCATE entre
 // cada test) nunca toquen los datos reales de desarrollo/producción.

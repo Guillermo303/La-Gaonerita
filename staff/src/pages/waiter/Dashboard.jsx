@@ -20,7 +20,7 @@ function ElapsedTime({ created }) {
     idRef.current = setInterval(() => setTick(t => t + 1), 30000);
     return () => clearInterval(idRef.current);
   }, []);
-  const diff = Date.now() - new Date(created + 'Z').getTime();
+  const diff = Date.now() - new Date(created).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return <span className="text-ink-300">recién</span>;
   if (mins < 60) return <span>{mins} min</span>;

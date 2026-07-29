@@ -1,7 +1,11 @@
 import { query, get, run } from './db.js';
 
 function parseDate(sqlTimestamp) {
-  return new Date(sqlTimestamp + 'Z');
+  // pg ya entrega created_at como un Date object correcto en UTC (ver el
+  // typeParser en db.js) — envolverlo de nuevo con new Date() lo clona sin
+  // tocarlo; concatenar '+Z' aquí coaccionaría el Date a texto (.toString(),
+  // en hora local) y lo volvería a parsear mal.
+  return new Date(sqlTimestamp);
 }
 
 function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }

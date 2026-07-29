@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { menu as menuApi, orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 export default function OrderLocal() {
+  const { user, loading } = useAuth();
   const [menuData, setMenuData] = useState([]);
   const [cart, setCart] = useState([]);
   const [name, setName] = useState('');
@@ -13,6 +15,10 @@ export default function OrderLocal() {
   const [error, setError] = useState('');
 
   useEffect(() => { menuApi.getAll().then(setMenuData).catch(console.error); }, []);
+
+  useEffect(() => {
+    if (user?.name) setName(n => n || user.name);
+  }, [user]);
 
   const addItem = (item) => {
     setCart(prev => {
@@ -55,6 +61,22 @@ export default function OrderLocal() {
       setPlacing(false);
     }
   };
+
+  if (loading) return <div className="text-center py-24"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto"></div></div>;
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="pop-in text-5xl mb-4">🏠</div>
+        <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Casi listo…</h1>
+        <p className="text-ink-500 mb-8">Para hacer tu pedido necesitas una cuenta.</p>
+        <div className="flex flex-col gap-3">
+          <Link to="/join" className="bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Crear Cuenta</Link>
+          <Link to="/login" className="border border-ink-200 text-ink-600 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-cream-100 transition">Ya tengo cuenta</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (placed) {
     return (

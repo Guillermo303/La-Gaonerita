@@ -4,10 +4,10 @@ import { useSocket } from '../../context/SocketContext';
 import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
 
 function ElapsedTimer({ created, status }) {
-  const [elapsed, setElapsed] = useState(() => Date.now() - new Date(created + 'Z').getTime());
+  const [elapsed, setElapsed] = useState(() => Date.now() - new Date(created).getTime());
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed(Date.now() - new Date(created + 'Z').getTime()), 1000);
+    const id = setInterval(() => setElapsed(Date.now() - new Date(created).getTime()), 1000);
     return () => clearInterval(id);
   }, [created]);
 
@@ -29,8 +29,8 @@ function ElapsedTimer({ created, status }) {
 function BigButton({ orders, onAdvance }) {
   const [flashing, setFlashing] = useState(false);
 
-  const nextPendiente = orders.filter(o => o.status === 'pendiente').sort((a, b) => new Date(a.created_at + 'Z') - new Date(b.created_at + 'Z'))[0];
-  const nextPreparando = orders.filter(o => o.status === 'preparando').sort((a, b) => new Date(a.created_at + 'Z') - new Date(b.created_at + 'Z'))[0];
+  const nextPendiente = orders.filter(o => o.status === 'pendiente').sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
+  const nextPreparando = orders.filter(o => o.status === 'preparando').sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
 
   const target = nextPendiente || nextPreparando;
   if (!target) return (
@@ -90,11 +90,11 @@ function HistorialActivas({ orders, onDeliver }) {
   useEffect(() => {
     ordersApi.getHistory().then(all => {
       const hoy = new Date().toDateString();
-      setEntregadosHoy(all.filter(o => o.status === 'completado' && new Date(o.created_at + 'Z').toDateString() === hoy));
+      setEntregadosHoy(all.filter(o => o.status === 'completado' && new Date(o.created_at).toDateString() === hoy));
     }).catch(() => {});
   }, [orders]);
 
-  const sorted = [...orders].sort((a, b) => new Date(a.created_at + 'Z') - new Date(b.created_at + 'Z'));
+  const sorted = [...orders].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   const handleDeliver = async (id) => {
     setDelivering(id);

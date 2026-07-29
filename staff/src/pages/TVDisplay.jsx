@@ -23,7 +23,7 @@ export default function TVDisplay() {
     return () => { clearInterval(t); clearInterval(s); };
   }, []);
 
-  const activeOrders = orders.filter(o => o.status !== 'completado').sort((a, b) => new Date(b.created_at + 'Z') - new Date(a.created_at + 'Z'));
+  const activeOrders = orders.filter(o => o.status !== 'completado').sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const readyOrders = orders.filter(o => o.status === 'listo');
 
   if (screen === 0) {

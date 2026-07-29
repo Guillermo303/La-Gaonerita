@@ -64,7 +64,7 @@ router.get('/history', authenticate, async (req, res) => {
 
 router.get('/recommendations', authenticate, async (req, res) => {
   const orders = await query("SELECT id, created_at FROM orders WHERE user_id = ? AND status = 'completado'", [req.user.id]);
-  const distinctDays = new Set(orders.map(o => new Date(o.created_at + 'Z').toLocaleDateString('en-CA')));
+  const distinctDays = new Set(orders.map(o => new Date(o.created_at).toLocaleDateString('en-CA')));
   if (distinctDays.size < 5 || !orders.length) return res.json({ eligible: false, items: [] });
 
   const orderIds = orders.map(o => o.id);

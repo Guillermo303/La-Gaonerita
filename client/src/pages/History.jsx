@@ -66,7 +66,7 @@ export default function History() {
                 <span className="font-extrabold text-brand-600">{formatPrice(order.total)}</span>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink-400 mb-2">
-                <span>{new Date(order.created_at + 'Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{new Date(order.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
                 {order.customer_phone && <span>📞 {order.customer_phone}</span>}
                 {order.order_type === 'domicilio' && order.customer_address && <span>📍 {order.customer_address}</span>}
                 {order.payment_method && <span>💳 {order.payment_method}{order.payment_status === 'pagado' ? ' (pagado)' : ''}</span>}

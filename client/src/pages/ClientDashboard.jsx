@@ -120,7 +120,7 @@ export default function ClientDashboard() {
           <div className="space-y-2">
             {recentOrders.map(order => {
               const cfg = statusColors[order.status] || statusColors.pendiente;
-              const created = new Date(order.created_at + 'Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+              const created = new Date(order.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
               return (
                 <div key={order.id} className="bg-white rounded-xl border border-ink-100 p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">

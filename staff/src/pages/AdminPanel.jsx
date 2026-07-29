@@ -712,7 +712,7 @@ function ReportesGuardadosAdmin() {
                   <span className="font-black text-ink-900">{r.date}</span>
                   {r.auto ? <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Automático</span> : <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Manual</span>}
                 </div>
-                <div className="text-sm text-ink-500 mt-0.5">{formatPrice(r.total_revenue)} · {r.order_count} órdenes · guardado {new Date(r.created_at + 'Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="text-sm text-ink-500 mt-0.5">{formatPrice(r.total_revenue)} · {r.order_count} órdenes · guardado {new Date(r.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => ver(r.id)} className="text-xs bg-ink-800 text-white px-3 py-2 rounded-lg font-bold hover:bg-ink-900">🖨️ Ver / Imprimir</button>
@@ -932,7 +932,7 @@ function HistorialAdmin() {
               <div className="flex items-center gap-3">
                 <span className="font-black text-ink-900">#{order.id}</span>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || ''}`}>{order.status}</span>
-                <span className="text-xs text-ink-400">{new Date(order.created_at + 'Z').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="text-xs text-ink-400">{new Date(order.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{order.payment_status}</span>
