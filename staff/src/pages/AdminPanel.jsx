@@ -1196,23 +1196,58 @@ function EmpleadosAdmin() {
   );
 }
 
+function CuentaPruebaCard({ account, onDeleted }) {
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState('');
+
+  const eliminar = async () => {
+    setError('');
+    try {
+      await usersApi.delete(account.id);
+      onDeleted(account.id);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="bg-cream-50 rounded-lg p-4 space-y-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-bold text-ink-900">{account.name}</span>
+        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">{account.role}</span>
+        {!account.active && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Desactivado</span>}
+      </div>
+      <div className="text-sm text-ink-500">{account.email}</div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-2 rounded-lg text-sm">{error}</div>}
+      {account.hasHistory ? (
+        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">Esta cuenta tiene historial (pedidos, reportes o gastos) y no se puede eliminar — usa "Desactivar" en Empleados/Socios si necesitas bloquearla.</p>
+      ) : confirming ? (
+        <div className="flex gap-2">
+          <button onClick={eliminar} className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Sí, eliminar permanentemente</button>
+          <button onClick={() => setConfirming(false)} className="text-ink-500 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-ink-100">Cancelar</button>
+        </div>
+      ) : (
+        <button onClick={() => setConfirming(true)} className="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-200">🗑️ Eliminar Permanentemente</button>
+      )}
+    </div>
+  );
+}
+
 function CuentasPruebaAdmin() {
   const [email, setEmail] = useState('');
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
   const buscar = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
     setError('');
-    setResult(null);
-    setConfirming(false);
+    setResults(null);
     setLoading(true);
     try {
-      const user = await usersApi.lookup(email.trim());
-      setResult(user);
+      const accounts = await usersApi.lookup(email.trim());
+      setResults(accounts);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -1220,45 +1255,20 @@ function CuentasPruebaAdmin() {
     }
   };
 
-  const eliminar = async () => {
-    setError('');
-    try {
-      await usersApi.delete(result.id);
-      setResult(null);
-      setEmail('');
-      setConfirming(false);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   return (
     <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
       <h3 className="font-bold text-ink-900 mb-1">Cuentas de Prueba</h3>
-      <p className="text-xs text-ink-400 mb-4">Busca una cuenta por email para eliminarla y poder reutilizar ese correo en pruebas. Un empleado desactivado (despedido) sigue bloqueando su email aunque no lo elimines aquí — así nadie puede volver a registrarse con ese correo.</p>
+      <p className="text-xs text-ink-400 mb-4">Busca por email para eliminar una cuenta y poder reutilizar ese correo en pruebas. Un mismo correo puede tener varias cuentas (una por rol, ej. cliente y mesero) — aquí aparecen todas. Un empleado desactivado (despedido) sigue bloqueando su email en ese rol aunque no lo elimines aquí.</p>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
       <form onSubmit={buscar} className="flex gap-2 mb-4">
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@ejemplo.com" className="flex-1 border border-ink-200 rounded-lg p-2 text-sm" />
         <button type="submit" disabled={loading} className="bg-ink-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-ink-900 disabled:opacity-50">{loading ? 'Buscando…' : 'Buscar'}</button>
       </form>
-      {result && (
-        <div className="bg-cream-50 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-ink-900">{result.name}</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">{result.role}</span>
-            {!result.active && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Desactivado</span>}
-          </div>
-          <div className="text-sm text-ink-500">{result.email}</div>
-          {result.hasHistory ? (
-            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">Esta cuenta tiene historial (pedidos, reportes o gastos) y no se puede eliminar — usa "Desactivar" en Empleados/Socios si necesitas bloquearla.</p>
-          ) : confirming ? (
-            <div className="flex gap-2">
-              <button onClick={eliminar} className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Sí, eliminar permanentemente</button>
-              <button onClick={() => setConfirming(false)} className="text-ink-500 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-ink-100">Cancelar</button>
-            </div>
-          ) : (
-            <button onClick={() => setConfirming(true)} className="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-200">🗑️ Eliminar Permanentemente</button>
-          )}
+      {results && (
+        <div className="space-y-3">
+          {results.map(account => (
+            <CuentaPruebaCard key={account.id} account={account} onDeleted={(id) => setResults(rs => rs.filter(r => r.id !== id))} />
+          ))}
         </div>
       )}
     </div>

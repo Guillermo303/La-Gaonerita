@@ -51,8 +51,8 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   const allowedRole = ['admin', 'cocina', 'mesero'].includes(role) ? role : 'mesero';
   if (periodo_pago && !PERIODOS.includes(periodo_pago)) return res.status(400).json({ error: 'Periodo de pago inválido' });
 
-  const existing = await get('SELECT id FROM users WHERE email = ?', [email]);
-  if (existing) return res.status(400).json({ error: 'El email ya está registrado' });
+  const existing = await get('SELECT id FROM users WHERE email = ? AND role = ?', [email, allowedRole]);
+  if (existing) return res.status(400).json({ error: 'Ya existe una cuenta con ese email y ese rol' });
 
   const hash = bcrypt.hashSync(password, 10);
   const result = await run('INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)', [name, email, hash, phone || null, allowedRole]);

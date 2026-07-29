@@ -19,8 +19,8 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   if (!name || !email || !password) return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
   if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
 
-  const existing = await get('SELECT id FROM users WHERE email = ?', [email]);
-  if (existing) return res.status(400).json({ error: 'El email ya está registrado' });
+  const existing = await get("SELECT id FROM users WHERE email = ? AND role = 'socio'", [email]);
+  if (existing) return res.status(400).json({ error: 'Ya existe una cuenta de socio con ese email' });
 
   const hash = bcrypt.hashSync(password, 10);
   const result = await run('INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)', [name, email, hash, phone || null, 'socio']);

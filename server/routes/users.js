@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { get, run } from '../db.js';
+import { query, get, run } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
@@ -14,9 +14,12 @@ async function hasHistory(userId) {
 router.get('/lookup', authenticate, authorize('admin'), async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
-  const user = await get('SELECT id, name, email, role, active, created_at FROM users WHERE email = ?', [email]);
-  if (!user) return res.status(404).json({ error: 'No existe ninguna cuenta con ese email' });
-  res.json({ ...user, hasHistory: await hasHistory(user.id) });
+  // El mismo email puede tener varias cuentas (una por rol), así que se
+  // devuelven todas para que el admin elija cuál administrar.
+  const users = await query('SELECT id, name, email, role, active, created_at FROM users WHERE email = ?', [email]);
+  if (!users.length) return res.status(404).json({ error: 'No existe ninguna cuenta con ese email' });
+  const withHistory = await Promise.all(users.map(async (u) => ({ ...u, hasHistory: await hasHistory(u.id) })));
+  res.json(withHistory);
 });
 
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {

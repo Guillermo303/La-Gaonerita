@@ -316,6 +316,12 @@ const SCHEMA_SQL = `
   -- perder el id de preferencia ya creado).
   ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_link TEXT;
   ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_preference_id TEXT;
+
+  -- Una misma persona puede tener varias cuentas con distinto rol usando el
+  -- mismo correo (ej. cliente y mesero) — el email deja de ser único por sí
+  -- solo y ahora se valida junto con el rol.
+  ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
+  CREATE UNIQUE INDEX IF NOT EXISTS users_email_role_idx ON users(email, role);
 `;
 
 async function seedDefaults() {

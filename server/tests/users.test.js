@@ -36,8 +36,9 @@ describe('Búsqueda de cuentas por email', () => {
     await request(app).post('/api/auth/register').send({ name: 'Cliente Prueba', email: 'prueba@test.com', password: 'secreto123' });
     const res = await request(app).get('/api/users/lookup?email=prueba@test.com').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
-    expect(res.body.role).toBe('cliente');
-    expect(res.body.hasHistory).toBe(false);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].role).toBe('cliente');
+    expect(res.body[0].hasHistory).toBe(false);
   });
 
   it('indica que sí tiene historial si ya hizo un pedido', async () => {
@@ -48,7 +49,18 @@ describe('Búsqueda de cuentas por email', () => {
       customer_name: 'Cliente Prueba', order_type: 'local', items: [{ menu_item_id: item.lastInsertRowid, quantity: 1 }]
     });
     const res = await request(app).get('/api/users/lookup?email=prueba@test.com').set('Authorization', `Bearer ${token}`);
-    expect(res.body.hasHistory).toBe(true);
+    expect(res.body[0].hasHistory).toBe(true);
+  });
+
+  it('devuelve todas las cuentas que comparten el mismo email (una por rol)', async () => {
+    await request(app).post('/api/auth/register').send({ name: 'Multi Rol', email: 'multi@test.com', password: 'secreto123' });
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({
+      name: 'Multi Rol', email: 'multi@test.com', password: 'otraClave123', role: 'mesero'
+    });
+    const res = await request(app).get('/api/users/lookup?email=multi@test.com').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body.map(u => u.role).sort()).toEqual(['cliente', 'mesero']);
   });
 });
 
@@ -108,14 +120,26 @@ describe('Eliminar cuenta permanentemente', () => {
     expect(await get('SELECT id FROM users WHERE id = ?', [userId])).not.toBeNull();
   });
 
-  it('un empleado desactivado sigue bloqueando su email aunque no se elimine', async () => {
+  it('un empleado desactivado sigue bloqueando su email en el mismo rol aunque no se elimine', async () => {
     const hired = await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({
       name: 'Empleado', email: 'empleado@test.com', password: 'secreto123', role: 'mesero'
     });
     await request(app).put(`/api/employees/${hired.body.id}/status`).set('Authorization', `Bearer ${token}`).send({ active: false });
 
-    const reregister = await request(app).post('/api/auth/register').send({ name: 'Otra Persona', email: 'empleado@test.com', password: 'secreto123' });
-    expect(reregister.status).toBe(400);
+    const rehire = await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({
+      name: 'Otra Persona', email: 'empleado@test.com', password: 'secreto123', role: 'mesero'
+    });
+    expect(rehire.status).toBe(400);
+  });
+
+  it('permite usar el mismo email en un rol distinto aunque el otro esté desactivado', async () => {
+    const hired = await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({
+      name: 'Empleado', email: 'empleado2@test.com', password: 'secreto123', role: 'mesero'
+    });
+    await request(app).put(`/api/employees/${hired.body.id}/status`).set('Authorization', `Bearer ${token}`).send({ active: false });
+
+    const registerCliente = await request(app).post('/api/auth/register').send({ name: 'Otra Persona', email: 'empleado2@test.com', password: 'secreto123' });
+    expect(registerCliente.status).toBe(201);
   });
 
   it('elimina también su fila de employee_details', async () => {
