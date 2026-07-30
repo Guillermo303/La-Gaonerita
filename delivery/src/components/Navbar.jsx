@@ -4,7 +4,7 @@ export default function Navbar({ onReset }) {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <button onClick={onReset} className="shrink-0 hover:opacity-80 transition">
-            <img src="/Logo%20img.jpeg" alt="La Gaonerita" className="h-10 w-auto" />
+            <img src="/logo.jpeg" alt="La Gaonerita" className="h-10 w-auto" />
           </button>
           <span className="text-xs font-semibold uppercase tracking-widest text-cream-100/70">A Domicilio</span>
         </div>
