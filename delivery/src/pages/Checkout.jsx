@@ -24,7 +24,7 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
     try {
       const timeNote = orderTime ? `Horario: ${orderTime}` : null;
       const notes = [timeNote, form.notes.trim()].filter(Boolean).join(' — ') || null;
-      const orderItems = items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.variant || null }));
+      const orderItems = items.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, notes: i.variant || null }));
       if (deliveryFee > 0) {
         orderItems.push({ name: 'Costo de entrega', price: DELIVERY_FEE, quantity: 1 });
       }
