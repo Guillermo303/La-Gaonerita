@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { menu as menuApi, customizations as customizationsApi } from '../api';
+import { useState } from 'react';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 
@@ -49,24 +48,10 @@ const FALLBACK_MENU = [
 ];
 
 export default function Menu({ onPrev, onNext }) {
-  const [menuData, setMenuData] = useState([]);
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS);
-  const [loading, setLoading] = useState(true);
+  const [menuData] = useState(FALLBACK_MENU);
+  const [columns] = useState(DEFAULT_COLUMNS);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const { add, updateQty, getQty, count, total } = useCart();
-
-  useEffect(() => {
-    Promise.all([
-      menuApi.getAll().catch(() => FALLBACK_MENU),
-      customizationsApi.getAll().catch(() => []),
-    ]).then(([menu, customGroups]) => {
-      setMenuData(menu);
-      const tortilla = customGroups.find(g => g.name === 'Tortilla');
-      if (tortilla?.options?.length) setColumns(tortilla.options.map(o => o.name));
-    }).catch(console.error).finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="text-center py-24"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto"></div></div>;
 
   if (selectedCategory) {
     const cat = selectedCategory;
