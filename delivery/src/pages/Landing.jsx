@@ -45,7 +45,6 @@ export default function Landing({ onStartOrder }) {
         <div className="text-center max-w-lg">
           <img src="/logo.jpeg" alt="La Gaonerita" className="mx-auto mb-6 h-28 lg:h-36 w-auto" />
           <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-4">Hecho al momento</p>
-          <h1 className="font-display text-5xl lg:text-6xl font-extrabold text-ink-900 leading-tight">La Gaonerita</h1>
           <div className="flex items-center justify-center gap-3 mt-5" aria-hidden="true">
             <span className="h-px w-16 bg-brand-400" />
             <span className="text-brand-500 text-lg">✦</span>
