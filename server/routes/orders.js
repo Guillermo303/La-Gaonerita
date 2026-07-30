@@ -83,6 +83,12 @@ router.get('/recommendations', authenticate, async (req, res) => {
   res.json({ eligible: true, items });
 });
 
+router.get('/:id/status', async (req, res) => {
+  const order = await get('SELECT id, status, created_at FROM orders WHERE id = ?', [req.params.id]);
+  if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
+  res.json(order);
+});
+
 router.get('/:id', authenticate, async (req, res) => {
   const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'Orden no encontrada' });

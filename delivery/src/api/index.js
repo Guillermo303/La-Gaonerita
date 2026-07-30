@@ -18,7 +18,8 @@ export const menu = {
 
 export const orders = {
   create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
-  getMercadoPagoLink: (id) => request(`/orders/${id}/mercadopago-link`, { method: 'POST' })
+  getMercadoPagoLink: (id) => request(`/orders/${id}/mercadopago-link`, { method: 'POST' }),
+  getStatus: (id) => request(`/orders/${id}/status`)
 };
 
 export const customizations = {
