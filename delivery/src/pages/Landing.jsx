@@ -43,6 +43,7 @@ export default function Landing({ onStartOrder }) {
       {showMenu && <FullMenu onClose={() => setShowMenu(false)} />}
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
         <div className="text-center max-w-lg">
+          <img src="/Logo%20img.jpeg" alt="La Gaonerita" className="mx-auto mb-6 h-28 lg:h-36 w-auto" />
           <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-4">Hecho al momento</p>
           <h1 className="font-display text-5xl lg:text-6xl font-extrabold text-ink-900 leading-tight">La Gaonerita</h1>
           <div className="flex items-center justify-center gap-3 mt-5" aria-hidden="true">
