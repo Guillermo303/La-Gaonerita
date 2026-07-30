@@ -1,51 +1,44 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 
-function customizationsSummary(customizations) {
-  const parts = Object.entries(customizations || {})
-    .map(([group, value]) => {
-      const text = Array.isArray(value) ? value.join(', ') : value;
-      return text ? `${group}: ${text}` : null;
-    })
-    .filter(Boolean);
-  return parts.join(' · ');
-}
+const DELIVERY_FEE = 15;
 
-export default function Checkout() {
-  const { items, updateQty, clear, count, total, customizations } = useCart();
+export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
+  const { items, updateQty, clear, count, total, orderType, orderTime } = useCart();
   const [form, setForm] = useState({ name: '', phone: '', address: '', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
-  const [placed, setPlaced] = useState(null);
-  const [mpLink, setMpLink] = useState(null);
   const [error, setError] = useState('');
+
+  const deliveryFee = orderType === 'domicilio' ? DELIVERY_FEE : 0;
+  const finalTotal = total + deliveryFee;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!form.name.trim()) { setError('Escribe tu nombre'); return; }
     if (!form.phone.trim()) { setError('Escribe un teléfono para contactarte'); return; }
-    if (!form.address.trim()) { setError('Escribe la dirección de entrega'); return; }
+    if (orderType === 'domicilio' && !form.address.trim()) { setError('Escribe la dirección de entrega'); return; }
     setPlacing(true);
     try {
-      const summary = customizationsSummary(customizations);
-      const notes = [summary, form.notes.trim()].filter(Boolean).join(' — ') || null;
+      const timeNote = orderTime ? `Horario: ${orderTime}` : null;
+      const notes = [timeNote, form.notes.trim()].filter(Boolean).join(' — ') || null;
+      const orderItems = items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.variant || null }));
+      if (deliveryFee > 0) {
+        orderItems.push({ name: 'Costo de entrega', price: DELIVERY_FEE, quantity: 1 });
+      }
       const order = await ordersApi.create({
         customer_name: form.name.trim(),
         customer_phone: form.phone.trim(),
-        customer_address: form.address.trim(),
-        order_type: 'domicilio',
+        customer_address: orderType === 'local' ? 'Recoge en local' : form.address.trim(),
+        order_type: orderType || 'domicilio',
         notes,
         payment_method: form.payment,
-        items: items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }))
+        items: orderItems,
       });
       clear();
-      setPlaced(order);
-      if (form.payment === 'transferencia') {
-        ordersApi.getMercadoPagoLink(order.id).then(setMpLink).catch(() => {});
-      }
+      onPlaced(order);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -53,74 +46,70 @@ export default function Checkout() {
     }
   };
 
-  if (placed) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="pop-in text-6xl mb-4">✅</div>
-        <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">¡Pedido recibido!</h1>
-        <p className="text-ink-500 mb-2">Tu orden <span className="font-bold text-brand-600">#{placed.id}</span> ya está en la cocina.</p>
-        <p className="text-ink-400 text-sm mb-8">Te lo llevamos a tu dirección en cuanto esté listo.</p>
-        {placed.payment_method === 'transferencia' && (
-          <div className="bg-cream-50 border border-brand-200 rounded-xl p-5 mb-6 text-left">
-            <p className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-2">Pago por transferencia</p>
-            {mpLink ? (
-              <>
-                {mpLink.demo && (
-                  <p className="text-xs text-ink-400 mb-2">🚧 Modo demostración — este link es solo para probar cómo se vería, aún no procesa pagos reales.</p>
-                )}
-                <a href={mpLink.link} target="_blank" rel="noopener noreferrer"
-                  className="btn-grow block w-full text-center bg-[#009EE3] text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:opacity-90">
-                  Pagar con Mercado Pago
-                </a>
-              </>
-            ) : (
-              <p className="text-sm text-ink-500">Generando tu link de pago…</p>
-            )}
-          </div>
-        )}
-        <Link to="/" className="block bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">Volver al menú</Link>
-      </div>
-    );
-  }
-
   if (count === 0) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <div className="pop-in text-5xl mb-4">🛒</div>
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Tu carrito está vacío</h1>
         <p className="text-ink-500 mb-8">Ve al menú y elige tus platillos favoritos.</p>
-        <Link to="/" className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
+        <button onClick={onGoToMenu} className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">← Volver al Menú</button>
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-14">
-      <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900 text-center mb-10">Tu Pedido</h1>
+      <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] text-center mb-1">PASO 5 DE 6</p>
+      <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900 text-center mb-2">Confirmar Pedido</h1>
+
+      <div className="max-w-2xl mx-auto mb-8 flex items-center justify-center gap-6 text-sm">
+        <span className="flex items-center gap-1.5 font-semibold text-ink-600">
+          {orderType === 'local' ? '🏪 Recoger en local' : '🛵 Entregar a domicilio'}
+        </span>
+        {orderTime && (
+          <>
+            <span className="text-ink-300">·</span>
+            <span className="flex items-center gap-1.5 font-semibold text-ink-600">
+              🕐 {orderTime === 'lo antes posible' ? 'Lo antes posible' : orderTime}
+            </span>
+          </>
+        )}
+      </div>
+
       {error && <div className="bg-brand-50 border border-brand-200 text-brand-700 p-3 rounded-lg mb-6 max-w-2xl mx-auto">{error}</div>}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-md p-6">
             <h2 className="font-display text-xl font-bold text-ink-900 mb-4">Productos ({count})</h2>
             {items.map(item => (
-              <div key={item.menu_item_id} className="flex items-center justify-between py-3 border-b border-cream-200 last:border-0">
+              <div key={`${item.menu_item_id}-${item.variant || ''}`} className="flex items-center justify-between py-3 border-b border-cream-200 last:border-0">
                 <div className="min-w-0">
                   <div className="font-semibold text-ink-800 truncate">{item.name}</div>
                   <div className="text-sm text-ink-400">{formatPrice(item.price)} c/u</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => updateQty(item.menu_item_id, -1)} aria-label={`Quitar un ${item.name}`} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold hover:bg-cream-200 transition">−</button>
+                  <button onClick={() => updateQty(item.menu_item_id, -1, item.variant)} aria-label={`Quitar un ${item.name}`} className="w-8 h-8 rounded-full bg-cream-100 text-ink-700 font-bold hover:bg-cream-200 transition">−</button>
                   <span className="w-6 text-center font-bold">{item.quantity}</span>
-                  <button onClick={() => updateQty(item.menu_item_id, 1)} aria-label={`Agregar otro ${item.name}`} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition">+</button>
+                  <button onClick={() => updateQty(item.menu_item_id, 1, item.variant)} aria-label={`Agregar otro ${item.name}`} className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition">+</button>
                   <span className="w-20 text-right font-bold text-ink-900">{formatPrice(item.price * item.quantity)}</span>
                 </div>
               </div>
             ))}
             <div className="flex justify-between items-center pt-4 text-lg">
-              <span className="font-bold text-ink-900">Total</span>
-              <span className="font-extrabold text-brand-600 text-xl">{formatPrice(total)}</span>
+              <span className="font-bold text-ink-900">Subtotal</span>
+              <span className="font-bold text-ink-900">{formatPrice(total)}</span>
             </div>
-            <Link to="/" className="block text-center text-sm text-brand-600 font-semibold hover:underline mt-3">+ Agregar más productos</Link>
+            {deliveryFee > 0 && (
+              <div className="flex justify-between items-center text-sm mt-1">
+                <span className="text-ink-500">Costo de entrega</span>
+                <span className="text-ink-500">+ {formatPrice(deliveryFee)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-2 mt-2 border-t border-cream-200">
+              <span className="font-bold text-ink-900 text-lg">Total</span>
+              <span className="font-extrabold text-brand-600 text-xl">{formatPrice(finalTotal)}</span>
+            </div>
+            <button onClick={onGoToMenu} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-3">+ Agregar más productos</button>
           </div>
         </div>
 
@@ -138,11 +127,19 @@ export default function Checkout() {
                 className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="55 1234 5678" />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Dirección de entrega</label>
-              <textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows="2"
-                className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Calle, número, colonia y referencias" />
-            </div>
+            {orderType === 'domicilio' && (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Dirección de entrega</label>
+                <textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows="2"
+                  className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Calle, número, colonia y referencias" />
+              </div>
+            )}
+            {orderType === 'local' && (
+              <div className="bg-cream-50 border border-brand-200 rounded-xl p-4 text-center">
+                <p className="text-sm font-semibold text-brand-700">🏪 Recoges en el local</p>
+                <p className="text-xs text-ink-500 mt-1">Te esperamos en la dirección del local para entregarte tu pedido.</p>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Notas para la cocina <span className="normal-case font-normal text-ink-300">(opcional)</span></label>
@@ -160,10 +157,15 @@ export default function Checkout() {
               </select>
             </div>
 
-            <button type="submit" disabled={placing}
-              className="btn-grow w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 disabled:opacity-50 disabled:hover:transform-none">
-              {placing ? 'Enviando pedido…' : `Confirmar Pedido · ${formatPrice(total)}`}
-            </button>
+            <div className="flex gap-3">
+              <button type="button" onClick={onPrev} className="flex-1 px-6 py-3.5 rounded-lg font-bold border border-ink-200 text-ink-600 hover:bg-cream-50 transition">
+                ← Atrás
+              </button>
+              <button type="submit" disabled={placing}
+                className="flex-1 btn-grow bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 disabled:opacity-50 disabled:hover:transform-none">
+                {placing ? 'Enviando pedido…' : `Confirmar Pedido · ${formatPrice(finalTotal)}`}
+              </button>
+            </div>
           </div>
         </form>
       </div>
