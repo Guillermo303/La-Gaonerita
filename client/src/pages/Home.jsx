@@ -4,6 +4,8 @@ import { formatPrice } from '../lib/utils';
 import Reveal from '../components/Reveal';
 import ReservationModal from '../components/ReservationModal';
 
+const DELIVERY_URL = import.meta.env.VITE_DELIVERY_URL || 'http://localhost:5176';
+
 const IMG = {
   hero: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1800&q=80',
   historia: 'https://images.unsplash.com/photo-1613514785940-daed07799d9b?auto=format&fit=crop&w=900&q=80',
@@ -250,8 +252,7 @@ export default function Home() {
           <Reveal delay={450}>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link to="/menu" className="btn-grow bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
-              <Link to="/local-order" className="btn-sweep bg-white/10 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Pedir desde el Local 🏠</Link>
-              <Link to="/register" className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Ordenar a Domicilio</Link>
+              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Ordenar a Domicilio 🛵</a>
               <button onClick={() => setReserving(true)} className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Reservar Mesa 🍽️</button>
             </div>
           </Reveal>
@@ -400,7 +401,7 @@ export default function Home() {
                 </div>
                 </div>
               </div>
-              <Link to="/local-order" className="btn-grow mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Pedir desde tu Mesa 🏠</Link>
+              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-grow mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ordenar a Domicilio 🛵</a>
               <button onClick={() => setReserving(true)} className="btn-sweep mt-3 inline-block w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 transition">Reservar Mesa 🍽️</button>
             </Reveal>
           </div>

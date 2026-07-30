@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Red de seguridad: las animaciones de entrada (reveal-left/right) empiezan
+   desplazadas horizontalmente fuera de pantalla — sin esto, un navegador
+   móvil puede dejar la página entera con scroll/zoom horizontal mientras
+   anima, mostrando el fondo por el borde. */
+html { overflow-x: hidden; }
+body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+
+/* Zoom lento tipo Ken Burns para fotos de fondo */
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+.animate-kenburns { animation: kenburns 20s ease-in-out infinite alternate; }
+
+/* Revelado al hacer scroll (se activa con IntersectionObserver) */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
+.reveal.reveal-left { transform: translateX(-36px); }
+.reveal.reveal-right { transform: translateX(36px); }
+.reveal.is-visible { opacity: 1; transform: none; }
+
+/* Franja de sarape */
+.serape-line {
+  height: 4px;
+  background: repeating-linear-gradient(90deg,
+    #D6431F 0, #D6431F 48px,
+    #E2A33F 48px, #E2A33F 96px,
+    #2F7D4F 96px, #2F7D4F 144px,
+    #8C4A2F 144px, #8C4A2F 192px);
+}
+
+/* Ocultar barra de scroll del carrusel */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns { animation: none; }
+  .reveal, .reveal.reveal-left, .reveal.reveal-right { opacity: 1; transform: none; transition: none; }
+}
+
+/* Animaciones de hover inspiradas en Hover.css, adaptadas a la paleta de marca */
+
+/* Botones sólidos: crecen y levantan una sombra cálida */
+.btn-grow { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.btn-grow:hover { transform: scale(1.06); box-shadow: 0 12px 28px -8px rgba(214, 67, 31, 0.5); }
+.btn-grow:active { transform: scale(0.97); }
+
+/* Botones de contorno: el color de marca entra en diagonal, con un destello
+   brillante encima — inspirado en el efecto "slash" de un portafolio revisado. */
+.btn-sweep { position: relative; overflow: hidden; z-index: 0; transition: color 0.3s ease; }
+.btn-sweep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 120%;
+  height: 100%;
+  background: #D6431F;
+  transform: skewX(-20deg);
+  transition: left 0.4s ease-in-out;
+  z-index: -1;
+}
+.btn-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.btn-sweep:hover { color: #fff !important; }
+.btn-sweep:hover::before { left: 0; }
+.btn-sweep:hover::after { left: 125%; }
+
+/* Links de navegación: subrayado que se desliza desde el centro */
+.link-underline { position: relative; }
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+.link-underline:hover::after { transform: scaleX(1); }
+
+/* Tarjetas: resplandor cálido y ligero levantamiento */
+.card-glow { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card-glow:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(214, 67, 31, 0.35); }
+
+/* Ícono que flota suavemente cuando se pasa el mouse sobre la tarjeta que lo contiene */
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.group:hover .icon-float { animation: icon-float 1s ease-in-out infinite; }
+
+/* Aparición con rebote elástico, para insignias y confirmaciones */
+@keyframes pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-grow, .btn-sweep, .btn-sweep::before, .btn-sweep::after, .link-underline::after, .card-glow { transition: none; }
+  .btn-grow:hover, .card-glow:hover { transform: none; }
+  .group:hover .icon-float, .pop-in { animation: none; }
+}

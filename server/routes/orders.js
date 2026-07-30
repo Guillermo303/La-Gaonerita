@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { Router } from 'express';
 import { query, get, run, withTransaction } from '../db.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, authorize, optionalAuth } from '../middleware/auth.js';
 import { decrementStock } from '../inventory.js';
 import { decrementSuppliesForOrder } from '../supplies.js';
 import { sendPushToRoles, sendPushToUser } from '../push.js';
@@ -90,9 +90,16 @@ router.get('/:id', authenticate, async (req, res) => {
   res.json(order);
 });
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, quick_sale, payment_status } = req.body;
   if (!customer_name || !order_type || !items || !items.length) return res.status(400).json({ error: 'Nombre, tipo de orden y al menos un producto requeridos' });
+  if (!req.user) {
+    // Los pedidos sin cuenta (app de domicilio) solo se aceptan para
+    // domicilio — las órdenes locales/de mesa las captura el personal
+    // autenticado desde el panel de meseros.
+    if (order_type !== 'domicilio') return res.status(401).json({ error: 'Token requerido' });
+    if (!customer_phone || !customer_address) return res.status(400).json({ error: 'Teléfono y dirección requeridos para pedidos a domicilio' });
+  }
 
   try {
     const order = await withTransaction(async (db) => {
@@ -123,7 +130,7 @@ router.post('/', authenticate, async (req, res) => {
       const initialPaymentStatus = ['pendiente', 'pagado', 'reembolsado'].includes(payment_status) ? payment_status : 'pendiente';
 
       const result = await db.run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method, status, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [req.user.id, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo', initialStatus, initialPaymentStatus]);
+        [req.user?.id || null, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo', initialStatus, initialPaymentStatus]);
       const orderId = result.lastInsertRowid;
 
       for (const item of orderItems) {
@@ -175,10 +182,13 @@ router.post('/create-payment-intent', authenticate, async (req, res) => {
   }
 });
 
-router.post('/:id/mercadopago-link', authenticate, async (req, res) => {
+router.post('/:id/mercadopago-link', optionalAuth, async (req, res) => {
   const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
-  const puedeGenerar = req.user.role === 'admin' || req.user.role === 'mesero' || order.user_id === req.user.id;
+  if (!req.user && order.user_id) return res.status(401).json({ error: 'Token requerido' });
+  // Una orden de invitado (sin user_id, hecha desde la app de domicilio sin
+  // cuenta) puede generar su propio link de pago sin estar autenticado.
+  const puedeGenerar = !order.user_id || req.user?.role === 'admin' || req.user?.role === 'mesero' || order.user_id === req.user?.id;
   if (!puedeGenerar) return res.status(403).json({ error: 'No autorizado' });
 
   if (order.mercadopago_link) {

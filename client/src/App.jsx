@@ -1,18 +1,9 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Checkout from './pages/Checkout';
-import MyOrders from './pages/MyOrders';
-import OrderLocal from './pages/OrderLocal';
-import Join from './pages/Join';
-import History from './pages/History';
 import Jobs from './pages/Jobs';
-import ClientDashboard from './pages/ClientDashboard';
 
 function WhatsAppBtn() {
   return (
@@ -45,16 +36,8 @@ export default function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/menu" element={<Menu />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/dashboard" element={<ProtectedRoute roles={['admin', 'cliente']}><ClientDashboard /></ProtectedRoute>} />
-          <Route path="/my-orders" element={<ProtectedRoute roles={['admin', 'cliente']}><MyOrders /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute roles={['admin', 'cliente']}><History /></ProtectedRoute>} />
-          <Route path="/local-order" element={<OrderLocal />} />
           <Route path="/about" element={<Navigate to="/" replace />} />
           <Route path="/jobs" element={<Jobs />} />
-          <Route path="/join" element={<Join />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

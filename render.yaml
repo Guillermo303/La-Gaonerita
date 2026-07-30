@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://gaonerita-client.onrender.com,https://gaonerita-staff.onrender.com,https://gaonerita-socios.onrender.com
+        value: https://gaonerita-client.onrender.com,https://gaonerita-staff.onrender.com,https://gaonerita-socios.onrender.com,https://gaonerita-delivery.onrender.com
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: DATABASE_URL
@@ -30,6 +30,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://gaonerita-server.onrender.com
+      - key: VITE_DELIVERY_URL
+        value: https://gaonerita-delivery.onrender.com
     routes:
       - type: rewrite
         source: /*
@@ -53,6 +55,20 @@ services:
     runtime: static
     name: gaonerita-socios
     rootDir: socios
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://gaonerita-server.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    runtime: static
+    name: gaonerita-delivery
+    rootDir: delivery
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:

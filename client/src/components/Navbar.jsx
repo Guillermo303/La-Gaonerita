@@ -1,17 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+
+const DELIVERY_URL = import.meta.env.VITE_DELIVERY_URL || 'http://localhost:5176';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
-  const handleLogout = () => {
-    setOpen(false);
-    logout();
-    navigate('/');
-  };
 
   const linkCls = "link-underline text-xs font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition";
   const mobileLinkCls = "block py-2.5 text-sm font-semibold uppercase tracking-widest text-cream-100/80 hover:text-white transition";
@@ -28,19 +21,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-5">
             <Link to="/menu" className={linkCls}>Menú</Link>
             <Link to="/jobs" className={linkCls}>Trabajo</Link>
-            {user ? (
-              <>
-                {user.role === 'cliente' && <Link to="/dashboard" className={linkCls}>Inicio</Link>}
-                <Link to="/history" className={linkCls}>Historial</Link>
-                <span className="text-xs uppercase tracking-widest text-ink-300">{user.name}</span>
-                <button onClick={handleLogout} className="text-xs font-semibold uppercase tracking-widest border border-cream-100/30 px-3 py-1.5 rounded hover:bg-cream-100/10 transition">Salir</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="btn-sweep text-xs font-bold uppercase tracking-widest border border-cream-100/30 px-4 py-2 rounded transition">Iniciar Sesión</Link>
-                <Link to="/join" className="btn-grow bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded hover:bg-brand-600">Registrarse</Link>
-              </>
-            )}
+            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-grow bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded hover:bg-brand-600">Ordenar a Domicilio</a>
           </div>
 
           {/* Mobile hamburger */}
@@ -58,19 +39,7 @@ export default function Navbar() {
           <div className="md:hidden pb-4 border-t border-cream-100/10 pt-2">
             <Link to="/menu" onClick={() => setOpen(false)} className={mobileLinkCls}>Menú</Link>
             <Link to="/jobs" onClick={() => setOpen(false)} className={mobileLinkCls}>Trabajo</Link>
-            {user ? (
-              <>
-                {user.role === 'cliente' && <Link to="/dashboard" onClick={() => setOpen(false)} className={mobileLinkCls}>Inicio</Link>}
-                <Link to="/history" onClick={() => setOpen(false)} className={mobileLinkCls}>Historial</Link>
-                <div className="text-xs uppercase tracking-widest text-ink-300 py-2.5">{user.name}</div>
-                <button onClick={handleLogout} className="mt-1 w-full text-center text-xs font-semibold uppercase tracking-widest border border-cream-100/30 px-3 py-2.5 rounded hover:bg-cream-100/10 transition">Salir</button>
-              </>
-            ) : (
-              <div className="flex flex-col gap-2 mt-2">
-                <Link to="/login" onClick={() => setOpen(false)} className="text-center text-xs font-bold uppercase tracking-widest border border-cream-100/30 px-4 py-2.5 rounded hover:bg-cream-100/10 transition">Iniciar Sesión</Link>
-                <Link to="/join" onClick={() => setOpen(false)} className="text-center bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded hover:bg-brand-600 transition">Registrarse</Link>
-              </div>
-            )}
+            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="mt-2 block text-center bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded hover:bg-brand-600">Ordenar a Domicilio</a>
           </div>
         )}
       </div>

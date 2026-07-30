@@ -16,6 +16,11 @@ export const menu = {
   getAll: () => request('/menu')
 };
 
-export const reservations = {
-  create: (data) => request('/reservations', { method: 'POST', body: JSON.stringify(data) })
+export const orders = {
+  create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  getMercadoPagoLink: (id) => request(`/orders/${id}/mercadopago-link`, { method: 'POST' })
+};
+
+export const customizations = {
+  getAll: () => request('/customizations')
 };

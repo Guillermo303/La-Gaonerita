@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+const DELIVERY_URL = import.meta.env.VITE_DELIVERY_URL || 'http://localhost:5176';
+
 export default function Footer() {
   return (
     <footer className="bg-ink-900 text-cream-100">
@@ -15,8 +17,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link to="/menu" className="hover:text-brand-400 transition">Menú</Link></li>
               <li><Link to="/jobs" className="hover:text-brand-400 transition">Trabajo</Link></li>
-              <li><Link to="/join" className="hover:text-brand-400 transition">Crear Cuenta</Link></li>
-              <li><Link to="/login" className="hover:text-brand-400 transition">Iniciar Sesión</Link></li>
+              <li><a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="hover:text-brand-400 transition">Ordenar a Domicilio</a></li>
             </ul>
           </div>
           <div>
