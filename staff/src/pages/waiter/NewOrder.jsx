@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { menu as menuApi, orders as ordersApi } from '../../api';
+import { menu as menuApi, orders as ordersApi, customizations as customizationsApi } from '../../api';
 import { formatPrice } from '../../lib/utils';
 import MesaSelector from '../../components/MesaSelector';
+
+const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina Chiltepin'];
+const FOOD_CATS = ['Gaonerita', 'Asadita', 'Prensadita'];
 
 export default function NewOrder() {
   const [searchParams] = useSearchParams();
   const [menuData, setMenuData] = useState([]);
+  const [columns, setColumns] = useState(DEFAULT_COLUMNS);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '', type: 'local', notes: '' });
   const [mesa, setMesa] = useState(searchParams.get('mesa') || '');
@@ -15,21 +20,41 @@ export default function NewOrder() {
 
   const navigate = useNavigate();
 
-  useEffect(() => { menuApi.getAll().then(setMenuData).catch(console.error); }, []);
+  useEffect(() => {
+    menuApi.getAll().then(setMenuData).catch(console.error);
+    customizationsApi.getAll().then(groups => {
+      const tortilla = groups.find(g => g.name === 'Tortilla');
+      if (tortilla?.options?.length) setColumns(tortilla.options.map(o => o.name));
+    }).catch(console.error);
+  }, []);
 
-  const addItem = (item) => {
+  const itemKey = (menuItemId, variant = '') => variant ? `${menuItemId}:${variant}` : String(menuItemId);
+
+  const addItem = (item, variant = '') => {
+    const key = itemKey(item.id, variant);
     setCart(prev => {
-      const existing = prev.find(i => i.menu_item_id === item.id);
-      if (existing) return prev.map(i => i.menu_item_id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { menu_item_id: item.id, name: item.name, price: item.price, quantity: 1 }];
+      const existing = prev.find(i => itemKey(i.menu_item_id, i.variant) === key);
+      if (existing) return prev.map(i => itemKey(i.menu_item_id, i.variant) === key ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { menu_item_id: item.id, name: variant ? `${item.name} (${variant})` : item.name, price: item.price, quantity: 1, variant: variant || null }];
     });
   };
 
-  const updateQty = (id, delta) => {
-    setCart(prev => prev.map(i => i.menu_item_id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i));
+  const updateQty = (id, delta, variant = '') => {
+    const key = itemKey(id, variant);
+    setCart(prev => prev.flatMap(i => {
+      if (itemKey(i.menu_item_id, i.variant) !== key) return [i];
+      const q = i.quantity + delta;
+      return q <= 0 ? [] : [{ ...i, quantity: q }];
+    }));
+  };
+
+  const getQty = (id, variant = '') => {
+    const key = itemKey(id, variant);
+    return cart.find(i => itemKey(i.menu_item_id, i.variant) === key)?.quantity || 0;
   };
 
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +70,7 @@ export default function NewOrder() {
         order_type: customer.type,
         notes: customer.notes || null,
         payment_method: 'efectivo',
-        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: null }))
+        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.variant || null }))
       });
       navigate('/waiter');
     } catch (err) {
@@ -103,29 +128,82 @@ export default function NewOrder() {
 
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-3">Menú</h2>
-          {menuData.map(cat => (
-            <div key={cat.id} className="mb-4">
-              <h3 className="font-bold text-brand-700 mb-2">{cat.name}</h3>
-              <div className="grid grid-cols-2 gap-2">
-{cat.items.map(item => (
-                    <button key={item.id} onClick={() => addItem(item)} className="bg-white p-3 rounded-lg shadow text-left hover:bg-brand-50 transition card-glow">
-                      {item.image && (
-                        <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-cream-100">
-                          <img 
-                            src={item.image} 
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
+          {selectedCategory ? (
+            <div>
+              <button onClick={() => setSelectedCategory(null)} className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 transition mb-3">
+                ← Todas las categorías
+              </button>
+              <h3 className="font-bold text-brand-700 mb-2">{selectedCategory.name}</h3>
+              {FOOD_CATS.includes(selectedCategory.name) ? (
+                <div className="overflow-x-auto no-scrollbar">
+                  <table className="w-full min-w-[420px] border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="text-left text-xs font-bold uppercase tracking-widest text-ink-400 pb-2 pr-3 w-1/4"></th>
+                        {columns.map(col => (
+                          <th key={col} className="text-center text-xs font-bold uppercase tracking-widest text-brand-600 pb-2 px-1">{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedCategory.items.map(item => (
+                        <tr key={item.id} className="border-t border-cream-200">
+                          <td className="py-2 pr-3">
+                            <div className="font-bold text-ink-900 text-sm">{item.name}</div>
+                            <div className="text-brand-600 font-extrabold text-xs mt-0.5">{formatPrice(item.price)}</div>
+                          </td>
+                          {columns.map(col => {
+                            const qty = getQty(item.id, col);
+                            return (
+                              <td key={col} className="py-1.5 px-1 text-center">
+                                <div className="inline-flex items-center gap-1 bg-cream-50 rounded-lg border border-ink-200 px-1 py-0.5">
+                                  <button onClick={() => updateQty(item.id, -1, col)} className="w-6 h-6 rounded-md bg-white text-ink-700 font-bold text-xs hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                                  <span className="w-5 text-center font-bold text-ink-900 text-xs">{qty}</span>
+                                  <button onClick={() => addItem(item, col)} className="w-6 h-6 rounded-md bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {selectedCategory.items.map(item => {
+                    const qty = getQty(item.id, '');
+                    return (
+                      <div key={item.id} className="bg-white rounded-xl shadow-sm border border-ink-900/5 p-3 flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-ink-900 text-sm">{item.name}</div>
+                          <div className="text-brand-600 font-extrabold text-xs">{formatPrice(item.price)}</div>
                         </div>
-                      )}
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-brand-600 text-sm">{formatPrice(item.price)}</div>
-                    </button>
-                  ))}
-              </div>
+                        <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
+                          <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                          <span className="w-5 text-center font-bold text-ink-900 text-sm">{qty}</span>
+                          <button onClick={() => addItem(item)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ))}
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {menuData.filter(cat => cat.items.length > 0).map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat)}
+                  className="card-glow bg-white rounded-xl shadow-sm border border-ink-900/5 p-5 text-center hover:border-brand-400 hover:shadow-lg transition"
+                >
+                  <h3 className="font-bold text-ink-900">{cat.name}</h3>
+                  <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">{cat.items.length} platillos</p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,15 +215,15 @@ export default function NewOrder() {
           ) : (
             <>
               {cart.map(item => (
-                <div key={item.menu_item_id} className="flex justify-between items-center py-2 border-b gap-2">
+                <div key={`${item.menu_item_id}-${item.variant || ''}`} className="flex justify-between items-center py-2 border-b gap-2">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{item.name}</div>
                     <div className="text-sm text-gray-600">{formatPrice(item.price)} c/u</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => updateQty(item.menu_item_id, -1)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">-</button>
+                    <button onClick={() => updateQty(item.menu_item_id, -1, item.variant)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">-</button>
                     <span className="w-6 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.menu_item_id, 1)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">+</button>
+                    <button onClick={() => updateQty(item.menu_item_id, 1, item.variant)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">+</button>
                     <span className="w-20 text-right font-bold">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>
@@ -165,7 +243,7 @@ export default function NewOrder() {
       {cart.length > 0 && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-white border-t border-ink-100 shadow-2xl flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs text-ink-400 font-semibold uppercase tracking-wider">{cart.reduce((n, i) => n + i.quantity, 0)} producto{cart.reduce((n, i) => n + i.quantity, 0) !== 1 ? 's' : ''}</div>
+            <div className="text-xs text-ink-400 font-semibold uppercase tracking-wider">{cartCount} producto{cartCount !== 1 ? 's' : ''}</div>
             <div className="font-black text-lg text-ink-900">{formatPrice(total)}</div>
           </div>
           <button onClick={() => document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth' })} className="bg-brand-500 text-white px-5 py-3 rounded-lg font-bold text-sm hover:bg-brand-600 transition">Ver Carrito →</button>
