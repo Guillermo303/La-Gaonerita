@@ -169,7 +169,7 @@ export default function WaiterDashboard() {
       )}
 
       {/* Delivery orders summary */}
-      {orders.some(o => o.order_type === 'domicilio' && o.status !== 'completado' && o.status !== 'cancelado') && (
+      {!isAdmin && orders.some(o => o.order_type === 'domicilio' && o.status !== 'completado' && o.status !== 'cancelado') && (
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">🛵</span>
