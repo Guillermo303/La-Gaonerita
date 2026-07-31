@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
+import { findCustomerByName, saveCustomer } from '../lib/customers';
 
 const DELIVERY_FEE = 15;
 
@@ -10,9 +11,34 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
   const [form, setForm] = useState({ name: '', phone: '', address: '', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
+  const [suggested, setSuggested] = useState(null);
+  const [appliedFor, setAppliedFor] = useState('');
 
   const deliveryFee = orderType === 'domicilio' ? DELIVERY_FEE : 0;
   const finalTotal = total + deliveryFee;
+
+  const handleNameChange = (value) => {
+    setForm({ ...form, name: value });
+    const match = value.trim() ? findCustomerByName(value) : null;
+    const alreadyApplied = match && normalizeForCompare(match.name) === normalizeForCompare(appliedFor);
+    setSuggested(match && !alreadyApplied ? match : null);
+  };
+
+  const applySuggestion = () => {
+    if (!suggested) return;
+    setForm(prev => ({
+      ...prev,
+      phone: suggested.phone || prev.phone,
+      address: suggested.address || prev.address,
+    }));
+    setAppliedFor(suggested.name);
+    setSuggested(null);
+  };
+
+  const dismissSuggestion = () => {
+    setAppliedFor(form.name);
+    setSuggested(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +63,11 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
         payment_method: form.payment,
         items: orderItems,
       });
+      saveCustomer({
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        address: orderType === 'local' ? '' : form.address.trim(),
+      });
       clear();
       onPlaced(order);
     } catch (err) {
@@ -45,6 +76,10 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
       setPlacing(false);
     }
   };
+
+  function normalizeForCompare(name) {
+    return (name || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  }
 
   if (count === 0) {
     return (
@@ -117,9 +152,25 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
           <div className="bg-white rounded-2xl shadow-md p-6 space-y-5">
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Tu nombre</label>
-              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+              <input type="text" value={form.name} onChange={e => handleNameChange(e.target.value)}
                 className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Nombre y apellido" />
             </div>
+
+            {suggested && orderType === 'domicilio' && (
+              <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                <p className="text-sm font-bold text-ink-900 mb-2">¿Este es tu número/dirección?</p>
+                {suggested.phone && <p className="text-sm text-ink-600">📞 {suggested.phone}</p>}
+                {suggested.address && <p className="text-sm text-ink-600 mt-0.5">📍 {suggested.address}</p>}
+                <div className="flex gap-2 mt-3">
+                  <button type="button" onClick={applySuggestion} className="flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition">
+                    Sí, usar
+                  </button>
+                  <button type="button" onClick={dismissSuggestion} className="flex-1 bg-white border border-ink-200 text-ink-600 py-2 rounded-lg font-bold text-sm hover:bg-cream-50 transition">
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono</label>
