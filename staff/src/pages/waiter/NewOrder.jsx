@@ -1,16 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { menu as menuApi, orders as ordersApi, customizations as customizationsApi } from '../../api';
+import { orders as ordersApi } from '../../api';
 import { formatPrice } from '../../lib/utils';
 import MesaSelector from '../../components/MesaSelector';
 
 const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina Chiltepin'];
 const FOOD_CATS = ['Gaonerita', 'Asadita', 'Prensadita'];
 
+const FALLBACK_MENU = [
+  { id: 1, name: 'Gaonerita', items: [
+    { id: 101, name: 'Taco', price: 65, stock: 20 },
+    { id: 102, name: 'Especial', price: 75, stock: 20 },
+    { id: 103, name: 'Volcán', price: 75, stock: 20 },
+  ]},
+  { id: 2, name: 'Asadita', items: [
+    { id: 201, name: 'Taco', price: 45, stock: 20 },
+    { id: 202, name: 'Especial', price: 55, stock: 20 },
+    { id: 203, name: 'Volcán', price: 55, stock: 20 },
+  ]},
+  { id: 3, name: 'Prensadita', items: [
+    { id: 301, name: 'Taco', price: 40, stock: 20 },
+    { id: 302, name: 'Especial', price: 50, stock: 20 },
+    { id: 303, name: 'Volcán', price: 50, stock: 20 },
+  ]},
+  { id: 4, name: 'Rellenita', items: [
+    { id: 401, name: 'Rellenita', price: 120, stock: 20 },
+  ]},
+  { id: 5, name: 'Aguas Frescas', items: [
+    { id: 501, name: 'Horchata', price: 35, stock: 20 },
+    { id: 502, name: 'Jamaica', price: 35, stock: 20 },
+    { id: 503, name: 'Limón', price: 35, stock: 20 },
+    { id: 504, name: 'Tamarindo', price: 35, stock: 20 },
+    { id: 505, name: 'Agua Natural', price: 35, stock: 20 },
+  ]},
+  { id: 6, name: 'Refrescos', items: [
+    { id: 601, name: 'Coca Cola', price: 35, stock: 20 },
+    { id: 602, name: 'Coca Cola Light', price: 35, stock: 20 },
+    { id: 603, name: 'Coca Cola Zero', price: 35, stock: 20 },
+    { id: 604, name: 'Sprite', price: 35, stock: 20 },
+    { id: 605, name: 'Fanta', price: 35, stock: 20 },
+    { id: 606, name: 'Mundet', price: 35, stock: 20 },
+    { id: 607, name: 'Fresca', price: 35, stock: 20 },
+    { id: 608, name: 'Agua Mineral', price: 35, stock: 20 },
+  ]},
+  { id: 7, name: 'Postres', items: [
+    { id: 701, name: 'Choux', price: 50, stock: 10 },
+  ]},
+];
+
 export default function NewOrder() {
   const [searchParams] = useSearchParams();
-  const [menuData, setMenuData] = useState([]);
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS);
+  const [menuData] = useState(FALLBACK_MENU);
+  const [columns] = useState(DEFAULT_COLUMNS);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '', type: 'local', notes: '' });
@@ -19,14 +60,6 @@ export default function NewOrder() {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    menuApi.getAll().then(setMenuData).catch(console.error);
-    customizationsApi.getAll().then(groups => {
-      const tortilla = groups.find(g => g.name === 'Tortilla');
-      if (tortilla?.options?.length) setColumns(tortilla.options.map(o => o.name));
-    }).catch(console.error);
-  }, []);
 
   const itemKey = (menuItemId, variant = '') => variant ? `${menuItemId}:${variant}` : String(menuItemId);
 
@@ -70,7 +103,7 @@ export default function NewOrder() {
         order_type: customer.type,
         notes: customer.notes || null,
         payment_method: 'efectivo',
-        items: cart.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity, notes: i.variant || null }))
+        items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, notes: i.variant || null }))
       });
       navigate('/waiter');
     } catch (err) {
