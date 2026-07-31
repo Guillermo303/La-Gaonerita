@@ -118,7 +118,7 @@ function HistorialActivas({ orders, onDeliver }) {
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className="font-black text-lg">#{order.id}</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${activeStatusBadge[order.status]}`}>{statusLabels[order.status]}</span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{typeLabels[order.order_type]}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{order.order_type === 'domicilio' ? '🛵' : '🏠'} {typeLabels[order.order_type]}</span>
                   <span className="font-semibold text-gray-800">{order.customer_name}</span>
                 </div>
                 <div className="text-sm text-gray-400 truncate">
@@ -207,10 +207,12 @@ export default function KitchenDisplay() {
   const OrderCard = ({ order, compact }) => (
     <div className={`bg-white rounded-xl shadow-lg p-4 border-l-4 ${order.order_type === 'domicilio' ? 'border-l-blue-500' : 'border-l-green-500'}`}>
       <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="text-2xl font-bold">#{order.id}</span>
           <ElapsedTimer created={order.created_at} status={order.status} />
-          <span className={`ml-1 text-lg font-semibold ${order.order_type === 'domicilio' ? 'text-blue-600' : 'text-green-600'}`}>{typeLabels[order.order_type]}</span>
+          <span className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+            {order.order_type === 'domicilio' ? '🛵' : '🏠'} {typeLabels[order.order_type]}
+          </span>
         </div>
         <span className="text-lg font-bold">{formatPrice(order.total)}</span>
       </div>

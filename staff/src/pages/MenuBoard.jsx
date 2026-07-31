@@ -14,31 +14,57 @@ function chunk(arr, size) {
   return out;
 }
 
-function QueueBanner() {
-  const [queue, setQueue] = useState(null);
+function QueueChip({ order }) {
+  return (
+    <span className="inline-flex items-center gap-2 bg-white/10 rounded-full pl-2 pr-4 py-1.5 whitespace-nowrap">
+      <span className="bg-white text-ink-900 font-black text-lg w-9 h-9 rounded-full flex items-center justify-center shrink-0">#{order.id}</span>
+      <span className="font-semibold text-lg truncate max-w-[12rem]">{order.customer_name}</span>
+    </span>
+  );
+}
+
+// Franja fija (no forma parte de las diapositivas que rotan) con la fila de
+// pedidos activos — se actualiza sola via Socket.IO cada vez que cambia el
+// estado de una orden, sin depender del refresco de 60s del menu/promos.
+function QueueList() {
+  const [orders, setOrders] = useState([]);
   const socket = useSocket();
 
   useEffect(() => {
-    const load = () => ordersApi.getQueueCurrent().then(setQueue).catch(console.error);
+    const load = () => ordersApi.getKitchen().then(setOrders).catch(console.error);
     load();
     if (socket) socket.on('order:update', load);
     return () => { if (socket) socket.off('order:update', load); };
   }, [socket]);
 
-  if (!queue) return null;
+  const preparando = orders.filter(o => o.status === 'preparando').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const pendiente = orders.filter(o => o.status === 'pendiente').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  if (!preparando.length && !pendiente.length) {
+    return (
+      <div className="shrink-0 bg-brand-500 px-10 py-3 text-center">
+        <span className="text-xl font-bold uppercase tracking-widest">🍃 Sin pedidos en fila</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="shrink-0 bg-brand-500 px-10 py-4 flex items-center justify-center gap-4">
-      {queue.number ? (
-        <>
-          <span className="text-2xl">{queue.status === 'preparando' ? '👨‍🍳' : '⏭️'}</span>
-          <span className="text-2xl font-bold uppercase tracking-widest">
-            {queue.status === 'preparando' ? 'Preparando ahora' : 'Siguiente turno'}
-          </span>
-          <span className="text-4xl font-black font-display">#{queue.number}</span>
-        </>
-      ) : (
-        <span className="text-xl font-bold uppercase tracking-widest">🍃 Sin pedidos en fila</span>
+    <div className="shrink-0 bg-brand-500 px-6 sm:px-10 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      {preparando.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-bold uppercase tracking-widest text-white/80 shrink-0">👨‍🍳 Preparando</span>
+          <div className="flex flex-wrap gap-2">
+            {preparando.map(o => <QueueChip key={o.id} order={o} />)}
+          </div>
+        </div>
+      )}
+      {pendiente.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-bold uppercase tracking-widest text-white/80 shrink-0">⏭️ En fila</span>
+          <div className="flex flex-wrap gap-2">
+            {pendiente.map(o => <QueueChip key={o.id} order={o} />)}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -103,7 +129,7 @@ export default function MenuBoard() {
         <h1 className="text-3xl font-black font-display">🌮 La Gaonerita</h1>
         <div className="text-2xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
       </div>
-      <QueueBanner />
+      <QueueList />
 
       <div key={slide} className="menuboard-slide flex-1 px-14 pb-10 flex flex-col justify-center">
         {current.intro ? (
