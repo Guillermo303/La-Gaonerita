@@ -28,6 +28,11 @@ function ElapsedTime({ created }) {
   return <span>{Math.floor(mins / 60)}h {mins % 60}m</span>;
 }
 
+function numberQueue(list) {
+  let n = 0;
+  return list.map(order => ({ order, num: order.status === 'completado' ? null : ++n }));
+}
+
 const statusConfig = {
   pendiente: { label: 'Pendiente', bg: 'bg-yellow-50 border-yellow-400', badge: 'bg-yellow-100 text-yellow-800', nextLabel: 'En Proceso', nextStatus: 'preparando', nextBg: 'bg-blue-500 hover:bg-blue-600' },
   preparando: { label: 'Preparando', bg: 'bg-blue-50 border-blue-400', badge: 'bg-blue-100 text-blue-800', nextLabel: 'Marcar Listo', nextStatus: 'listo', nextBg: 'bg-green-500 hover:bg-green-600' },
@@ -35,13 +40,16 @@ const statusConfig = {
   completado: { label: 'Entregado', bg: 'bg-purple-50 border-purple-400', badge: 'bg-purple-100 text-purple-800' }
 };
 
-function OrderCard({ order, expanded, onToggle, onUpdateStatus, onCobrar }) {
+function OrderCard({ order, expanded, onToggle, onUpdateStatus, onCobrar, queueNumber }) {
   const cfg = statusConfig[order.status] || statusConfig.pendiente;
   const isExpanded = expanded === order.id;
   return (
     <div className={`rounded-xl border-2 shadow-sm ${cfg.bg} transition`}>
       <button onClick={() => onToggle(order.id)}
         className="w-full flex items-center gap-2 gap-y-1 p-3 text-left flex-wrap">
+        {queueNumber != null && (
+          <span className="shrink-0 w-7 h-7 rounded-full bg-ink-900 text-white text-sm font-black flex items-center justify-center">{queueNumber}</span>
+        )}
         <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
@@ -237,8 +245,8 @@ export default function WaiterDashboard() {
               {localOrders.length === 0 ? (
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de local</div>
               ) : (
-                localOrders.map(order => (
-                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+                numberQueue(localOrders).map(({ order, num }) => (
+                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} queueNumber={num} />
                 ))
               )}
             </div>
@@ -249,8 +257,8 @@ export default function WaiterDashboard() {
               {deliveryOrders.length === 0 ? (
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de domicilio</div>
               ) : (
-                deliveryOrders.map(order => (
-                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+                numberQueue(deliveryOrders).map(({ order, num }) => (
+                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} queueNumber={num} />
                 ))
               )}
             </div>
