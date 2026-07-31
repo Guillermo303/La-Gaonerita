@@ -362,15 +362,15 @@ export default function NewOrder() {
         </div>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6">{error}</div>}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat)}
-              className="card-glow bg-white rounded-2xl shadow-sm border border-ink-900/5 px-5 py-6 text-center hover:border-brand-400 hover:shadow-lg transition group"
+              className="card-glow bg-white rounded-2xl shadow-sm border border-ink-900/5 p-8 text-center hover:border-brand-400 hover:shadow-lg transition group"
             >
-              <h2 className="font-display text-lg md:text-xl font-extrabold text-ink-900 group-hover:text-brand-600 transition leading-tight">{cat.name}</h2>
-              <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-2">{cat.items.length} platillos</p>
+              <h2 className="font-display text-2xl font-extrabold text-ink-900 group-hover:text-brand-600 transition">{cat.name}</h2>
+              <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-4">{cat.items.length} platillos</p>
             </button>
           ))}
         </div>
