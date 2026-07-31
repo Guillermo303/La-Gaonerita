@@ -50,7 +50,7 @@ const FALLBACK_MENU = [
 
 const STEPS = [
   { num: 1, label: 'Inicio' },
-  { num: 2, label: 'Tipo' },
+  { num: 2, label: 'Mesa' },
   { num: 3, label: 'Menú' },
   { num: 4, label: 'Conf.' },
   { num: 5, label: 'Listo' },
@@ -73,17 +73,37 @@ function StepBar({ current }) {
   );
 }
 
+function TotalBar({ cartCount, total, onNext }) {
+  return (
+    <div className="fixed bottom-4 inset-x-4 z-40">
+      <div className="max-w-xl mx-auto flex items-center gap-3">
+        <button onClick={onNext} disabled={cartCount === 0}
+          className="btn-grow flex items-center justify-between gap-4 w-full bg-ink-900 text-cream-50 rounded-full shadow-2xl px-6 py-4 hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed">
+          <span className="flex items-center gap-3">
+            <span className="bg-brand-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{cartCount}</span>
+            <span className="font-semibold">{cartCount === 1 ? '1 producto' : `${cartCount} productos`}</span>
+          </span>
+          <span className="flex items-center gap-3">
+            <span className="font-extrabold text-lg">{formatPrice(total)}</span>
+            <span className="text-brand-300 font-bold uppercase tracking-wider text-sm">Siguiente →</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function NewOrder() {
   const [searchParams] = useSearchParams();
   const mesaParam = searchParams.get('mesa') || '';
   const [step, setStep] = useState(mesaParam ? 3 : 1);
+  const [browsing, setBrowsing] = useState(false);
   const [menuData] = useState(FALLBACK_MENU);
   const [columns] = useState(DEFAULT_COLUMNS);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
-  const [orderType, setOrderType] = useState(mesaParam ? 'local' : '');
   const [mesa, setMesa] = useState(mesaParam);
-  const [customer, setCustomer] = useState({ name: '', phone: '', address: '', notes: '' });
+  const [customer, setCustomer] = useState({ name: '', phone: '', notes: '' });
   const [payment, setPayment] = useState('efectivo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -122,27 +142,32 @@ export default function NewOrder() {
   const reset = () => {
     setCart([]);
     setSelectedCategory(null);
-    setCustomer({ name: '', phone: '', address: '', notes: '' });
+    setCustomer({ name: '', phone: '', notes: '' });
     setPayment('efectivo');
     setPlaced(null);
+    setBrowsing(false);
     setError('');
     setStep(mesaParam ? 3 : 1);
+  };
+
+  const goBackFromMenu = () => {
+    if (browsing) { setBrowsing(false); setStep(1); }
+    else if (mesaParam) navigate('/waiter/tables');
+    else setStep(2);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!customer.name.trim()) { setError('Escribe el nombre del cliente'); return; }
-    if (orderType === 'local' && !mesa) { setError('Selecciona una mesa'); return; }
-    if (orderType === 'domicilio' && !customer.address.trim()) { setError('Escribe la dirección de entrega'); return; }
+    if (!mesa) { setError('Selecciona una mesa'); return; }
     setLoading(true);
     try {
       const order = await ordersApi.create({
         customer_name: customer.name.trim(),
         customer_phone: customer.phone.trim() || null,
-        customer_address: orderType === 'domicilio' ? customer.address.trim() : null,
-        mesa: orderType === 'local' ? mesa : null,
-        order_type: orderType || 'local',
+        mesa,
+        order_type: 'local',
         notes: customer.notes.trim() || null,
         payment_method: payment,
         items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, notes: i.variant || null }))
@@ -165,34 +190,40 @@ export default function NewOrder() {
           <div className="pop-in text-6xl mb-4">🌮</div>
           <h1 className="font-display text-4xl font-extrabold text-ink-900 mb-3">Nueva Orden</h1>
           <p className="text-ink-400 mb-10">Toma el pedido de tus clientes, igual que en la app de domicilio.</p>
-          <button onClick={() => setStep(2)} className="btn-grow w-full bg-brand-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition">
-            🛎️ Comenzar Pedido
-          </button>
+          <div className="flex flex-col gap-4">
+            <button onClick={() => { setBrowsing(true); setStep(3); }}
+              className="btn-grow w-full bg-white border-2 border-ink-900/10 text-ink-900 py-5 rounded-2xl font-bold text-lg hover:border-brand-400 hover:shadow-lg transition flex items-center justify-center gap-3">
+              <span className="text-2xl">📋</span>
+              Ver Menú
+            </button>
+            <button onClick={() => { setBrowsing(false); setStep(2); }}
+              className="btn-grow w-full bg-brand-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition flex items-center justify-center gap-3">
+              <span className="text-2xl">🛎️</span>
+              Ordenar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ----- Paso 2: Tipo -----
+  // ----- Paso 2: Elegir mesa -----
   if (step === 2) {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
         <StepBar current={2} />
         <div className="text-center mb-8">
           <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-3">PASO 2 DE 5</p>
-          <h1 className="font-display text-3xl font-extrabold text-ink-900">¿Dónde se sirve?</h1>
+          <h1 className="font-display text-3xl font-extrabold text-ink-900">Elige la mesa</h1>
+          <p className="text-ink-400 text-sm mt-2">Toca la mesa donde se sentaron tus clientes</p>
         </div>
-        <div className="flex flex-col gap-4">
-          <button onClick={() => { setOrderType('local'); setStep(3); }}
-            className="btn-grow bg-white border-2 border-ink-900/10 text-ink-900 py-6 rounded-2xl font-bold text-lg hover:border-brand-400 hover:shadow-lg transition flex items-center justify-center gap-3">
-            <span className="text-3xl">🏪</span> En el local
-          </button>
-          <button onClick={() => { setOrderType('domicilio'); setMesa(''); setStep(3); }}
-            className="btn-grow bg-brand-500 text-white py-6 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition flex items-center justify-center gap-3">
-            <span className="text-3xl">🛵</span> A domicilio
-          </button>
-        </div>
-        <button onClick={() => { setStep(1); }} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-6">← Atrás</button>
+        <MesaSelector selected={mesa} onSelect={setMesa} showLabel={false} />
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mt-4">{error}</div>}
+        <button onClick={() => setStep(3)} disabled={!mesa}
+          className="mt-8 w-full bg-brand-500 text-white py-4 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Continuar →
+        </button>
+        <button onClick={() => { setStep(1); setMesa(mesaParam); }} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-4">← Atrás</button>
       </div>
     );
   }
@@ -235,11 +266,15 @@ export default function NewOrder() {
                         const qty = getQty(item.id, col);
                         return (
                           <td key={col} className="py-2 px-1 text-center">
-                            <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
-                              <button onClick={() => updateQty(item.id, -1, col)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
-                              <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
-                              <button onClick={() => addItem(item, col)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
-                            </div>
+                            {browsing ? (
+                              <span className="text-ink-400 text-xs font-semibold">—</span>
+                            ) : (
+                              <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
+                                <button onClick={() => updateQty(item.id, -1, col)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                                <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
+                                <button onClick={() => addItem(item, col)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                              </div>
+                            )}
                           </td>
                         );
                       })}
@@ -258,41 +293,49 @@ export default function NewOrder() {
                       <div className="font-bold text-ink-900">{item.name}</div>
                       <div className="text-brand-600 font-extrabold text-sm">{formatPrice(item.price)}</div>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
-                      <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
-                      <button onClick={() => addItem(item)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
-                    </div>
+                    {browsing ? null : (
+                      <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
+                        <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                        <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
+                        <button onClick={() => addItem(item)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
 
-          <div className="fixed bottom-4 inset-x-4 z-40">
-            <div className="max-w-xl mx-auto">
-              <div className="bg-ink-900 text-cream-50 rounded-2xl shadow-2xl px-6 py-4 mb-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm">Subtotal {cat.name}</span>
-                  <span className="font-extrabold text-lg">{formatPrice(subtotal)}</span>
-                </div>
-                {cartCount > 0 && (
-                  <div className="flex items-center justify-between text-xs text-ink-300 mt-1">
-                    <span>Total del pedido: {cartCount} producto{cartCount !== 1 ? 's' : ''}</span>
-                    <span>{formatPrice(total)}</span>
+          {!browsing && (
+            <>
+              <div className="fixed bottom-4 inset-x-4 z-40">
+                <div className="max-w-xl mx-auto">
+                  <div className="bg-ink-900 text-cream-50 rounded-2xl shadow-2xl px-6 py-4 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-sm">Subtotal {cat.name}</span>
+                      <span className="font-extrabold text-lg">{formatPrice(subtotal)}</span>
+                    </div>
+                    {cartCount > 0 && (
+                      <div className="flex items-center justify-between text-xs text-ink-300 mt-1">
+                        <span>Total del pedido: {cartCount} producto{cartCount !== 1 ? 's' : ''}</span>
+                        <span>{formatPrice(total)}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSelectedCategory(null)} className="shrink-0 px-5 py-4 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-lg hover:bg-cream-50 transition">
+                      ← Categorías
+                    </button>
+                    <button onClick={() => setStep(4)} disabled={cartCount === 0}
+                      className="btn-grow flex items-center justify-between gap-4 w-full bg-brand-500 text-white rounded-full shadow-2xl px-6 py-4 hover:bg-brand-600 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                      <span className="font-extrabold text-lg">{formatPrice(total)}</span>
+                      <span className="uppercase tracking-wider">Confirmar →</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setSelectedCategory(null)} className="shrink-0 px-5 py-4 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-lg hover:bg-cream-50 transition">
-                  ← Categorías
-                </button>
-                <button onClick={() => setSelectedCategory(null)} className="btn-grow w-full bg-brand-500 text-white rounded-full shadow-2xl px-6 py-4 hover:bg-brand-600 font-bold text-sm">
-                  Listo
-                </button>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       );
     }
@@ -301,14 +344,23 @@ export default function NewOrder() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-14 pb-32">
         <div className="flex items-center justify-between mb-8">
-          <button onClick={() => setStep(2)} className="shrink-0 px-4 py-2 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-sm hover:bg-cream-50 transition">
+          <button onClick={goBackFromMenu} className="shrink-0 px-4 py-2 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-sm hover:bg-cream-50 transition">
             ← Atrás
           </button>
           <div className="text-center flex-1">
-            <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">PASO 3 DE 5</p>
-            <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Menú Principal</h1>
+            {browsing ? (
+              <>
+                <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">VER MENÚ</p>
+                <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Menú Completo</h1>
+              </>
+            ) : (
+              <>
+                <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">PASO 3 DE 5</p>
+                <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Menú Principal</h1>
+              </>
+            )}
           </div>
-          {orderType === 'local' && mesa && <span className="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-1 rounded-full shrink-0">{mesa}</span>}
+          {!browsing && mesa && <span className="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-1 rounded-full shrink-0">{mesa}</span>}
         </div>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6">{error}</div>}
 
@@ -325,36 +377,19 @@ export default function NewOrder() {
           ))}
         </div>
 
-        <div className="fixed bottom-4 inset-x-4 z-40">
-          <div className="max-w-xl mx-auto flex items-center gap-3">
-            <button onClick={() => setStep(2)} className="shrink-0 px-5 py-4 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-lg hover:bg-cream-50 transition">
-              ← Atrás
-            </button>
-            <button onClick={() => setStep(4)} disabled={cartCount === 0}
-              className="btn-grow flex items-center justify-between gap-4 w-full bg-ink-900 text-cream-50 rounded-full shadow-2xl px-6 py-4 hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed">
-              <span className="flex items-center gap-3">
-                <span className="bg-brand-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{cartCount}</span>
-                <span className="font-semibold">{cartCount === 1 ? '1 producto' : `${cartCount} productos`}</span>
-              </span>
-              <span className="flex items-center gap-3">
-                <span className="font-extrabold text-lg">{formatPrice(total)}</span>
-                <span className="text-brand-300 font-bold uppercase tracking-wider text-sm">Confirmar →</span>
-              </span>
-            </button>
-          </div>
-        </div>
+        {!browsing && <TotalBar cartCount={cartCount} total={total} onNext={() => setStep(4)} />}
       </div>
     );
   }
 
-  // ----- Paso 4: Confirmar -----
+  // ----- Paso 4: Info del cliente -----
   if (step === 4) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-14">
         <StepBar current={4} />
         <div className="text-center mb-8">
           <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">PASO 4 DE 5</p>
-          <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Confirmar Pedido</h1>
+          <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Datos del Cliente</h1>
         </div>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6 max-w-2xl mx-auto">{error}</div>}
 
@@ -380,6 +415,7 @@ export default function NewOrder() {
                 <span className="font-bold text-ink-900">Total</span>
                 <span className="font-extrabold text-brand-600">{formatPrice(total)}</span>
               </div>
+              {mesa && <div className="mt-2 text-sm text-ink-500">📍 Mesa: <span className="font-bold text-brand-600">{mesa}</span></div>}
               <button onClick={() => setStep(3)} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-3">+ Agregar más productos</button>
             </div>
           </div>
@@ -392,22 +428,10 @@ export default function NewOrder() {
                   className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Nombre y apellido" />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono <span className="normal-case font-normal text-ink-300">(opcional)</span></label>
                 <input type="tel" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })}
                   className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="55 1234 5678" />
               </div>
-              {orderType === 'local' ? (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Mesa</label>
-                  <MesaSelector selected={mesa} onSelect={setMesa} showLabel={true} />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Dirección de entrega</label>
-                  <textarea value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} rows="2"
-                    className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Calle, número, colonia y referencias" />
-                </div>
-              )}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Notas para la cocina <span className="normal-case font-normal text-ink-300">(opcional)</span></label>
                 <textarea value={customer.notes} onChange={e => setCustomer({ ...customer, notes: e.target.value })} rows="2"
@@ -450,8 +474,8 @@ export default function NewOrder() {
         <button onClick={reset} className="w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">
           Nueva Orden
         </button>
-        <button onClick={() => navigate('/waiter')} className="w-full bg-ink-900 text-cream-50 py-3 rounded-lg font-bold text-sm hover:bg-ink-800 transition">
-          Ver Pedidos
+        <button onClick={() => navigate('/waiter/tables')} className="w-full bg-ink-900 text-cream-50 py-3 rounded-lg font-bold text-sm hover:bg-ink-800 transition">
+          Ver Mesas
         </button>
       </div>
     </div>
