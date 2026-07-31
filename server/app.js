@@ -40,7 +40,7 @@ export function createApp() {
   app.use(express.json());
   app.set('io', io);
 
-  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.API_RATE_LIMIT_MAX) || 300, standardHeaders: true, legacyHeaders: false });
+  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.API_RATE_LIMIT_MAX) || 300, standardHeaders: true, legacyHeaders: false, message: { error: 'Demasiadas peticiones, intenta de nuevo en unos minutos' } });
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Demasiados intentos, intenta de nuevo más tarde' } });
   app.use('/api', apiLimiter);
   app.use('/api/auth/login', authLimiter);
