@@ -14,18 +14,39 @@ function chunk(arr, size) {
   return out;
 }
 
-function QueueChip({ order }) {
+const MAX_QUEUE_SLOTS = 10;
+
+function QueueChip({ position, order }) {
   return (
     <span className="inline-flex items-center gap-2 bg-white/10 rounded-full pl-2 pr-4 py-1.5 whitespace-nowrap">
-      <span className="bg-white text-ink-900 font-black text-lg w-9 h-9 rounded-full flex items-center justify-center shrink-0">#{order.id}</span>
+      <span className="bg-white text-ink-900 font-black text-lg w-9 h-9 rounded-full flex items-center justify-center shrink-0">{position}</span>
       <span className="font-semibold text-lg truncate max-w-[12rem]">{order.customer_name}</span>
     </span>
+  );
+}
+
+function QueueTypeList({ label, icon, orders }) {
+  if (!orders.length) return null;
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="text-sm font-bold uppercase tracking-widest text-white/80 shrink-0">{icon} {label}</span>
+      <div className="flex flex-wrap gap-2">
+        {orders.map((o, i) => <QueueChip key={o.id} position={i + 1} order={o} />)}
+      </div>
+    </div>
   );
 }
 
 // Franja fija (no forma parte de las diapositivas que rotan) con la fila de
 // pedidos activos — se actualiza sola via Socket.IO cada vez que cambia el
 // estado de una orden, sin depender del refresco de 60s del menu/promos.
+//
+// El numero que se muestra NO es el id real de la orden: es la posicion en
+// su fila (domicilio o local por separado), del 1 al 10. Al marcar una
+// orden como "listo" (o completado/cancelado) sale de la fila y las demas
+// recorren su posicion automaticamente — el numero 2 pasa a ser el 1, el 3
+// al 2, etc. — porque simplemente se recalcula el indice cada vez que la
+// lista de ordenes activas cambia, no se guarda ningun numero fijo.
 function QueueList() {
   const [orders, setOrders] = useState([]);
   const socket = useSocket();
@@ -37,10 +58,16 @@ function QueueList() {
     return () => { if (socket) socket.off('order:update', load); };
   }, [socket]);
 
-  const preparando = orders.filter(o => o.status === 'preparando').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  const pendiente = orders.filter(o => o.status === 'pendiente').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const queued = orders.filter(o => o.status === 'pendiente' || o.status === 'preparando');
+  const byType = (type) => queued
+    .filter(o => o.order_type === type)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .slice(0, MAX_QUEUE_SLOTS);
 
-  if (!preparando.length && !pendiente.length) {
+  const domicilio = byType('domicilio');
+  const local = byType('local');
+
+  if (!domicilio.length && !local.length) {
     return (
       <div className="shrink-0 bg-brand-500 px-10 py-3 text-center">
         <span className="text-xl font-bold uppercase tracking-widest">🍃 Sin pedidos en fila</span>
@@ -50,22 +77,8 @@ function QueueList() {
 
   return (
     <div className="shrink-0 bg-brand-500 px-6 sm:px-10 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-      {preparando.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-bold uppercase tracking-widest text-white/80 shrink-0">👨‍🍳 Preparando</span>
-          <div className="flex flex-wrap gap-2">
-            {preparando.map(o => <QueueChip key={o.id} order={o} />)}
-          </div>
-        </div>
-      )}
-      {pendiente.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-bold uppercase tracking-widest text-white/80 shrink-0">⏭️ En fila</span>
-          <div className="flex flex-wrap gap-2">
-            {pendiente.map(o => <QueueChip key={o.id} order={o} />)}
-          </div>
-        </div>
-      )}
+      <QueueTypeList label="Domicilio" icon="🛵" orders={domicilio} />
+      <QueueTypeList label="Local" icon="🏠" orders={local} />
     </div>
   );
 }
