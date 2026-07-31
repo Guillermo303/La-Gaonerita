@@ -4,15 +4,17 @@ import { orders as ordersApi } from '../api';
 const STATUSES = [
   { key: 'pendiente', label: 'Pedido recibido', icon: '📝' },
   { key: 'preparando', label: 'Preparando', icon: '👨‍🍳' },
+  { key: 'ahead', label: 'Pedidos delante', icon: '🕐' },
   { key: 'listo', label: 'Pedido listo', icon: '✅' },
-  { key: 'completado', label: 'Entregado', icon: '🏁' },
+  { key: 'completado', label: 'Entregando', icon: '🛵' },
 ];
 
-const STATUS_ORDER = { pendiente: 0, preparando: 1, listo: 2, completado: 3 };
+const CURRENT_STEP = { pendiente: 0, preparando: 1, listo: 3, completado: 4 };
 
 export default function TrackOrder({ order, onBack }) {
   const [status, setStatus] = useState(order?.status || 'pendiente');
-  const currentStep = STATUS_ORDER[status] ?? 0;
+  const [ordersAhead, setOrdersAhead] = useState(order?.orders_ahead ?? null);
+  const currentStep = CURRENT_STEP[status] ?? 0;
 
   useEffect(() => {
     if (!order?.id) return;
@@ -20,6 +22,7 @@ export default function TrackOrder({ order, onBack }) {
       try {
         const updated = await ordersApi.getStatus(order.id);
         if (updated?.status) setStatus(updated.status);
+        if (typeof updated?.orders_ahead === 'number') setOrdersAhead(updated.orders_ahead);
       } catch {}
     }, 10000);
     return () => clearInterval(interval);
@@ -46,31 +49,36 @@ export default function TrackOrder({ order, onBack }) {
 
       <div className="relative">
         {STATUSES.map((s, i) => {
-          const isDone = i <= currentStep;
           const isCurrent = i === currentStep;
+          const isReached = i <= currentStep;
           return (
             <div key={s.key} className="flex items-start gap-4 pb-8 relative">
               {i < STATUSES.length - 1 && (
-                <div className={`absolute left-3.5 top-8 w-0.5 h-10 ${isDone ? 'bg-brand-500' : 'bg-cream-200'}`} />
+                <div className={`absolute left-3.5 top-8 w-0.5 h-10 ${isReached ? 'bg-brand-500' : 'bg-cream-200'}`} />
               )}
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 ${
-                isDone ? 'bg-brand-500 text-white' : 'bg-cream-100 text-ink-400'
+                isReached ? 'bg-brand-500 text-white' : 'bg-cream-100 text-ink-400'
               } ${isCurrent ? 'ring-4 ring-brand-100 scale-110' : ''}`}>
-                {isDone ? '✓' : i + 1}
+                {isReached && !isCurrent ? '✓' : i + 1}
               </div>
               <div className="pt-0.5">
-                <p className={`font-bold ${isDone ? 'text-ink-900' : 'text-ink-300'}`}>{s.icon} {s.label}</p>
-                {isCurrent && status === 'pendiente' && (
-                  <p className="text-sm text-ink-400 mt-1">Tu pedido está en espera para prepararse</p>
+                <p className={`font-bold ${isReached ? 'text-ink-900' : 'text-ink-300'}`}>{s.icon} {s.label}</p>
+                {s.key === 'ahead' && (
+                  <p className="text-sm text-ink-400 mt-1">
+                    {ordersAhead !== null
+                      ? ordersAhead === 0
+                        ? '¡Eres el siguiente!'
+                        : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
+                      : 'Calculando fila…'}
+                  </p>
                 )}
-                {isCurrent && status === 'preparando' && (
-                  <p className="text-sm text-ink-400 mt-1">Estamos preparando tu orden</p>
-                )}
-                {isCurrent && status === 'listo' && (
-                  <p className="text-sm text-ink-400 mt-1">¡Tu pedido está listo!</p>
-                )}
-                {isCurrent && status === 'completado' && (
-                  <p className="text-sm text-ink-400 mt-1">¡Disfruta tu pedido!</p>
+                {s.key !== 'ahead' && isCurrent && (
+                  <p className="text-sm text-ink-400 mt-1">
+                    {status === 'pendiente' && 'Tu pedido está en espera para prepararse'}
+                    {status === 'preparando' && 'Estamos preparando tu orden'}
+                    {status === 'listo' && '¡Tu pedido está listo!'}
+                    {status === 'completado' && '¡Gracias, disfruta tu pedido!'}
+                  </p>
                 )}
               </div>
             </div>

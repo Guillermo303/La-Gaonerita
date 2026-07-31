@@ -86,7 +86,8 @@ router.get('/recommendations', authenticate, async (req, res) => {
 router.get('/:id/status', async (req, res) => {
   const order = await get('SELECT id, status, created_at FROM orders WHERE id = ?', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'Orden no encontrada' });
-  res.json(order);
+  const ahead = await get("SELECT COUNT(*) as c FROM orders WHERE id != ? AND status IN ('pendiente','preparando') AND created_at <= ?", [req.params.id, order.created_at]);
+  res.json({ ...order, orders_ahead: ahead?.c || 0 });
 });
 
 router.get('/:id', authenticate, async (req, res) => {
