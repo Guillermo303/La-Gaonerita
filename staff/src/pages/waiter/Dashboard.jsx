@@ -98,9 +98,6 @@ export default function WaiterDashboard() {
             );
           })}
         </div>
-        <button onClick={() => setQuickSale(true)} className="mt-3 w-full bg-ink-800 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-ink-900 transition shadow-sm flex items-center justify-center gap-2">
-          ⚡ Venta Rápida
-        </button>
         {mesas.some(m => m.state === 'pendiente-pago') && (
           <div className="mt-2 text-xs text-green-600 font-semibold text-center">💰 Hay mesas listas para cobrar</div>
         )}

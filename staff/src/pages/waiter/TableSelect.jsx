@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { mesas as mesasApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import MesaPanel from '../../components/MesaPanel';
+import QuickSaleModal from '../../components/QuickSaleModal';
+import CobroModal from '../../components/CobroModal';
 
 const mesaStyles = {
   libre: { bg: 'bg-white', border: 'border-ink-200', text: 'text-ink-400', label: 'Libre', glyph: '○' },
@@ -13,6 +15,8 @@ const mesaStyles = {
 export default function TableSelect() {
   const [mesas, setMesas] = useState([]);
   const [mesaPanel, setMesaPanel] = useState(null);
+  const [quickSale, setQuickSale] = useState(false);
+  const [cobrando, setCobrando] = useState(null);
   const socket = useSocket();
 
   const load = () => mesasApi.getAll().then(setMesas).catch(console.error);
@@ -60,8 +64,18 @@ export default function TableSelect() {
         })}
       </div>
 
+      <button onClick={() => setQuickSale(true)} className="mt-4 w-full bg-ink-800 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-ink-900 transition shadow-sm flex items-center justify-center gap-2">
+        ⚡ Venta Rápida
+      </button>
+
       {mesaPanel && (
         <MesaPanel mesa={mesaPanel} onClose={() => setMesaPanel(null)} onUpdate={load} />
+      )}
+      {quickSale && (
+        <QuickSaleModal onClose={() => setQuickSale(false)} onCreated={(order) => { setQuickSale(false); load(); setCobrando(order); }} />
+      )}
+      {cobrando && (
+        <CobroModal order={cobrando} onClose={() => setCobrando(null)} onPaid={load} />
       )}
     </div>
   );
