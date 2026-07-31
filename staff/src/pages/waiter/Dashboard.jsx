@@ -29,8 +29,14 @@ function ElapsedTime({ created }) {
 }
 
 function numberQueue(list) {
+  const todayStr = new Date().toDateString();
   let n = 0;
-  return list.map(order => ({ order, num: order.status === 'completado' ? null : ++n }));
+  return list.map(order => {
+    const isToday = new Date(order.created_at).toDateString() === todayStr;
+    if (order.status === 'completado' || !isToday) return { order, num: null };
+    n++;
+    return { order, num: ((n - 1) % 100) + 1 };
+  });
 }
 
 const statusConfig = {
