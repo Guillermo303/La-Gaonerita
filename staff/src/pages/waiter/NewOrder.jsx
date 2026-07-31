@@ -239,6 +239,7 @@ export default function NewOrder() {
 
       return (
         <div className="max-w-6xl mx-auto px-4 py-8 pb-36">
+          <StepBar current={3} />
           <button onClick={() => setSelectedCategory(null)} className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 transition mb-4">
             ← Todas las categorías
           </button>
@@ -341,6 +342,7 @@ export default function NewOrder() {
     const categories = menuData.filter(cat => cat.items.length > 0);
     return (
       <div className="max-w-5xl mx-auto px-4 py-14 pb-32">
+        <StepBar current={3} />
         <div className="flex items-center justify-between mb-8">
           <button onClick={goBackFromMenu} className="shrink-0 px-4 py-2 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-sm hover:bg-cream-50 transition">
             ← Atrás
