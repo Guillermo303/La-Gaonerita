@@ -100,11 +100,82 @@ function OrderCard({ order, expanded, onToggle, onUpdateStatus, onCobrar, queueN
   );
 }
 
+function OrderRow({ order, queueNumber, selected, onSelect }) {
+  const cfg = statusConfig[order.status] || statusConfig.pendiente;
+  return (
+    <button onClick={() => onSelect(order.id)}
+      className={`w-full flex items-center gap-2 gap-y-1 p-3 rounded-xl border-2 shadow-sm text-left flex-wrap transition ${cfg.bg} ${selected ? 'ring-2 ring-ink-900' : ''}`}>
+      {queueNumber != null && (
+        <span className="shrink-0 w-7 h-7 rounded-full bg-ink-900 text-white text-sm font-black flex items-center justify-center">{queueNumber}</span>
+      )}
+      <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
+      <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+      <span className="text-sm font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
+      {order.mesa && <span className="text-xs text-ink-400 font-medium shrink-0">{order.mesa}</span>}
+      <span className="font-bold text-ink-900 shrink-0 ml-auto text-sm">{formatPrice(order.total)}</span>
+      <span className="text-xs text-ink-400 shrink-0 w-14 text-right"><ElapsedTime created={order.created_at} /></span>
+    </button>
+  );
+}
+
+function OrderDetailPanel({ order, onUpdateStatus, onCobrar }) {
+  if (!order) {
+    return (
+      <div className="bg-white rounded-b-xl shadow-sm p-10 text-center text-ink-400 min-h-[16rem] flex flex-col items-center justify-center">
+        <div className="text-4xl mb-2">👈</div>
+        <p className="font-semibold text-sm">Selecciona una orden para ver su contenido</p>
+      </div>
+    );
+  }
+  const cfg = statusConfig[order.status] || statusConfig.pendiente;
+  return (
+    <div className={`rounded-b-xl shadow-sm border-2 p-4 space-y-3 min-h-[16rem] ${cfg.bg}`}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-black text-2xl text-ink-900">#{order.id}</span>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
+      </div>
+      <div className="bg-white/70 rounded-lg p-3 space-y-1 text-sm">
+        {order.items?.map(item => (
+          <div key={item.id} className="flex justify-between">
+            <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
+            <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between items-center pt-2 border-t border-ink-900/10">
+        <span className="text-xs font-semibold uppercase tracking-widest text-ink-400">Total</span>
+        <span className="font-black text-xl text-ink-900">{formatPrice(order.total)}</span>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-500">
+        <span className="font-semibold text-ink-700">{order.customer_name}</span>
+        {order.customer_phone && <span>📞 {order.customer_phone}</span>}
+        {order.mesa && <span>📍 {order.mesa}</span>}
+        {order.order_type === 'domicilio' && order.customer_address && <span className="w-full">📍 {order.customer_address}</span>}
+      </div>
+      {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">📝 {order.notes}</div>}
+      <div className="flex items-center justify-between gap-2 pt-1">
+        {order.status === 'pendiente' && (
+          <button onClick={() => onUpdateStatus(order.id, 'cancelado')} className="text-xs text-red-600 bg-red-50 px-2.5 py-1.5 rounded hover:bg-red-100 font-semibold">Cancelar</button>
+        )}
+        {order.status === 'completado' && order.payment_status !== 'pagado' && (
+          <button onClick={() => onCobrar(order)} className="text-sm text-white bg-green-600 px-4 py-2 rounded-lg font-bold hover:bg-green-700">💰 Cobrar</button>
+        )}
+        {cfg.nextStatus && (
+          <button onClick={() => onUpdateStatus(order.id, cfg.nextStatus)}
+            className={`text-white px-4 py-2 rounded-lg font-bold text-sm ${cfg.nextBg} transition ml-auto`}>{cfg.nextLabel}</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function WaiterDashboard() {
   const [orders, setOrders] = useState([]);
   const [mesas, setMesas] = useState([]);
   const [filter, setFilter] = useState('todas');
   const [expanded, setExpanded] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [cobrando, setCobrando] = useState(null);
   const [mesaPanel, setMesaPanel] = useState(null);
   const [quickSale, setQuickSale] = useState(false);
@@ -114,6 +185,10 @@ export default function WaiterDashboard() {
 
   const loadData = () => { ordersApi.getAll().then(setOrders).catch(console.error); mesasApi.getAll().then(setMesas).catch(console.error); };
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (selectedOrderId != null && !orders.some(o => o.id === selectedOrderId)) setSelectedOrderId(null);
+  }, [orders, selectedOrderId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -130,9 +205,9 @@ export default function WaiterDashboard() {
   const counts = `🟡${contar('pendiente')}  🔵${contar('preparando')}  🟢${contar('listo')}`;
 
   const sortByCreated = (a, b) => new Date(a.created_at) - new Date(b.created_at);
-  const enTurno = orders.filter(o => o.status === 'pendiente' || o.status === 'preparando').sort(sortByCreated);
   const localOrders = orders.filter(o => o.order_type === 'local').sort(sortByCreated);
   const deliveryOrders = orders.filter(o => o.order_type === 'domicilio').sort(sortByCreated);
+  const selectedOrder = orders.find(o => o.id === selectedOrderId) || null;
 
   const mesaCounts = { libre: 0, ocupada: 0, 'pendiente-pago': 0 };
   mesas.forEach(m => { mesaCounts[m.state] = (mesaCounts[m.state] || 0) + 1; });
@@ -208,14 +283,16 @@ export default function WaiterDashboard() {
           <p className="text-xs text-ink-400">{counts}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <select value={filter} onChange={e => setFilter(e.target.value)}
-            className="text-sm border border-ink-200 rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400">
-            <option value="todas">Todas</option>
-            <option value="listo">Listas</option>
-            <option value="preparando">Preparando</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="domicilio">Domicilio</option>
-          </select>
+          {!isAdmin && (
+            <select value={filter} onChange={e => setFilter(e.target.value)}
+              className="text-sm border border-ink-200 rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400">
+              <option value="todas">Todas</option>
+              <option value="listo">Listas</option>
+              <option value="preparando">Preparando</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="domicilio">Domicilio</option>
+            </select>
+          )}
           {!isAdmin && <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>}
           {!isAdmin && (
             <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
@@ -231,19 +308,8 @@ export default function WaiterDashboard() {
       ) : isAdmin ? (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 items-start">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-3 rounded-t-xl text-center">🔥 En Turno</h2>
-            {enTurno.length === 0 ? (
-              <div className="bg-white rounded-b-xl shadow-sm p-10 text-center text-ink-400 min-h-[10rem] flex flex-col items-center justify-center">
-                <div className="text-4xl mb-2">🍃</div>
-                <p className="font-semibold text-sm">Nada en producción</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-b-xl shadow-sm border-2 border-purple-200 p-3 space-y-3 min-h-[10rem]">
-                {enTurno.map(order => (
-                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
-                ))}
-              </div>
-            )}
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-3 rounded-t-xl text-center">📋 Detalle</h2>
+            <OrderDetailPanel order={selectedOrder} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
           </div>
           <div>
             <h2 className="text-sm font-bold uppercase tracking-widest text-green-700 bg-green-100 p-3 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
@@ -252,7 +318,7 @@ export default function WaiterDashboard() {
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de local</div>
               ) : (
                 numberQueue(localOrders).map(({ order, num }) => (
-                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} queueNumber={num} />
+                  <OrderRow key={order.id} order={order} queueNumber={num} selected={selectedOrderId === order.id} onSelect={setSelectedOrderId} />
                 ))
               )}
             </div>
@@ -264,7 +330,7 @@ export default function WaiterDashboard() {
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de domicilio</div>
               ) : (
                 numberQueue(deliveryOrders).map(({ order, num }) => (
-                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} queueNumber={num} />
+                  <OrderRow key={order.id} order={order} queueNumber={num} selected={selectedOrderId === order.id} onSelect={setSelectedOrderId} />
                 ))
               )}
             </div>
