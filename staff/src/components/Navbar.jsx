@@ -25,8 +25,6 @@ export default function Navbar() {
     { to: '/pending-bills', label: 'Cuentas' }
   ] : [
     user.role === 'mesero' && { to: '/waiter/tables', label: 'Mesas' },
-    user.role === 'mesero' && { to: '/waiter', label: 'Órdenes' },
-    user.role === 'mesero' && { to: '/pending-bills', label: 'Cuentas' },
     user.role === 'cocina' && { to: '/kitchen', label: 'Cocina' },
     (user.role === 'mesero' || user.role === 'cocina') && { to: '/tv', label: 'TV' },
     (user.role === 'mesero' || user.role === 'cocina') && { to: '/menu-board', label: 'Cartelera' }
