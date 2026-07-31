@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 import { orders as ordersApi } from '../api';
 
 const STATUSES = [
@@ -11,6 +12,14 @@ const STATUSES = [
 
 const CURRENT_STEP = { pendiente: 0, preparando: 1, listo: 3, completado: 4 };
 
+async function fetchStatus(orderId, setStatus, setOrdersAhead) {
+  try {
+    const updated = await ordersApi.getStatus(orderId);
+    if (updated?.status) setStatus(updated.status);
+    if (typeof updated?.orders_ahead === 'number') setOrdersAhead(updated.orders_ahead);
+  } catch {}
+}
+
 export default function TrackOrder({ order, onBack }) {
   const [status, setStatus] = useState(order?.status || 'pendiente');
   const [ordersAhead, setOrdersAhead] = useState(order?.orders_ahead ?? null);
@@ -18,14 +27,17 @@ export default function TrackOrder({ order, onBack }) {
 
   useEffect(() => {
     if (!order?.id) return;
-    const interval = setInterval(async () => {
-      try {
-        const updated = await ordersApi.getStatus(order.id);
-        if (updated?.status) setStatus(updated.status);
-        if (typeof updated?.orders_ahead === 'number') setOrdersAhead(updated.orders_ahead);
-      } catch {}
-    }, 10000);
-    return () => clearInterval(interval);
+    const socket = io(import.meta.env.VITE_API_URL || '/', { transports: ['websocket', 'polling'] });
+    socket.on('order:update', (updated) => {
+      if (updated?.id !== order.id) return;
+      if (updated.status) setStatus(updated.status);
+      fetchStatus(order.id, setStatus, setOrdersAhead);
+    });
+    const interval = setInterval(() => fetchStatus(order.id, setStatus, setOrdersAhead), 15000);
+    return () => {
+      socket.close();
+      clearInterval(interval);
+    };
   }, [order?.id]);
 
   if (!order) {
