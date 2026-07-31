@@ -4,7 +4,7 @@ import { freshApp } from './helpers.js';
 import { get } from '../db.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 
@@ -81,7 +81,7 @@ describe('Registro de activos', () => {
     expect(cocina.body.length).toBe(2);
   });
 
-  it('permite al socio ver el listado de activos (solo lectura)', async () => {
+  it('permite al socio ver el listado de activos', async () => {
     await request(app).post('/api/assets').set('Authorization', `Bearer ${token}`).send({ name: 'Refrigerador' });
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
@@ -89,9 +89,16 @@ describe('Registro de activos', () => {
     expect(res.status).toBe(200);
   });
 
-  it('rechaza que el socio cree un activo', async () => {
+  it('permite que el socio cree un activo', async () => {
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
+    const res = await request(app).post('/api/assets').set('Authorization', `Bearer ${login.body.token}`).send({ name: 'Refrigerador' });
+    expect(res.status).toBe(201);
+  });
+
+  it('rechaza que un mesero cree un activo', async () => {
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({ name: 'Mesero', email: 'mesero@test.com', password: 'secreto123', role: 'mesero' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'mesero@test.com', password: 'secreto123' });
     const res = await request(app).post('/api/assets').set('Authorization', `Bearer ${login.body.token}`).send({ name: 'Refrigerador' });
     expect(res.status).toBe(403);
   });

@@ -21,7 +21,7 @@ describe('GET /api/menu', () => {
   });
 
   it('esconde un item marcado como agotado (stock 0) aunque esté disponible', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
     const all = await request(app).get('/api/menu/all').set('Authorization', `Bearer ${login.body.token}`);
     const item = all.body.flatMap(c => c.items).find(i => i.name === 'Taco de asada');
     await request(app).put(`/api/menu/items/${item.id}/stock`).set('Authorization', `Bearer ${login.body.token}`).send({ stock: 0 });
@@ -46,7 +46,7 @@ describe('Marcar un platillo como agotado hoy', () => {
     if (role === 'cliente' || role === 'mesero') {
       await request(app).post('/api/auth/register').send({ name: 'Trabajador', email, password: 'secreto123', role });
     } else {
-      const adminLogin = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+      const adminLogin = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
       await request(app).post('/api/employees').set('Authorization', `Bearer ${adminLogin.body.token}`).send({ name: 'Trabajador', email, password: 'secreto123', role });
     }
     const login = await request(app).post('/api/auth/login').send({ email, password: 'secreto123' });
@@ -107,7 +107,7 @@ describe('POST /api/menu/items', () => {
   });
 
   it('allows the admin account', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
     const cat = await run('INSERT INTO categories (name) VALUES (?)', ['Tacos']);
     const res = await request(app).post('/api/menu/items').set('Authorization', `Bearer ${login.body.token}`).send({
       category_id: cat.lastInsertRowid, name: 'Nuevo', price: 10

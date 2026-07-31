@@ -5,7 +5,7 @@ import { run, get, query } from '../db.js';
 import { checkWeeklyReset, decrementSuppliesForOrder } from '../supplies.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 
@@ -61,7 +61,7 @@ describe('Gestión de insumos', () => {
     expect(res.status).toBe(400);
   });
 
-  it('permite al socio ver el listado de insumos (solo lectura)', async () => {
+  it('permite al socio ver el listado de insumos', async () => {
     await request(app).post('/api/supplies').set('Authorization', `Bearer ${token}`).send({ name: 'Tortillas', unit: 'pieza', purchased: 500 });
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
@@ -70,10 +70,18 @@ describe('Gestión de insumos', () => {
     expect(res.body.length).toBe(1);
   });
 
-  it('rechaza que el socio registre una compra', async () => {
+  it('permite que el socio registre una compra', async () => {
     const created = await request(app).post('/api/supplies').set('Authorization', `Bearer ${token}`).send({ name: 'Tortillas', unit: 'pieza' });
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
+    const res = await request(app).put(`/api/supplies/${created.body.id}/purchase`).set('Authorization', `Bearer ${login.body.token}`).send({ purchased: 100 });
+    expect(res.status).toBe(200);
+  });
+
+  it('rechaza que un mesero registre una compra', async () => {
+    const created = await request(app).post('/api/supplies').set('Authorization', `Bearer ${token}`).send({ name: 'Tortillas', unit: 'pieza' });
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({ name: 'Mesero', email: 'mesero@test.com', password: 'secreto123', role: 'mesero' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'mesero@test.com', password: 'secreto123' });
     const res = await request(app).put(`/api/supplies/${created.body.id}/purchase`).set('Authorization', `Bearer ${login.body.token}`).send({ purchased: 100 });
     expect(res.status).toBe(403);
   });

@@ -29,8 +29,7 @@ export default function Navbar() {
     user.role === 'mesero' && { to: '/pending-bills', label: 'Cuentas' },
     user.role === 'cocina' && { to: '/kitchen', label: 'Cocina' },
     (user.role === 'mesero' || user.role === 'cocina') && { to: '/tv', label: 'TV' },
-    (user.role === 'mesero' || user.role === 'cocina') && { to: '/menu-board', label: 'Cartelera' },
-    (user.role === 'mesero' || user.role === 'cocina') && { to: '/disponibilidad', label: 'Disponibilidad' }
+    (user.role === 'mesero' || user.role === 'cocina') && { to: '/menu-board', label: 'Cartelera' }
   ].filter(Boolean);
 
   return (

@@ -10,7 +10,7 @@ import ImageEditorModal from '../components/ImageEditor';
 import {
   FinanzasTab, MenuTab, PersonalizacionTab, MesasTab, ReservacionesTab,
   GastosTab, InsumosTab, ActivosTab, OrdenesTab, HistorialTab,
-  EmpleadosTab, SociosAccountsTab
+  EmpleadosTab, SociosAccountsTab, DisponibilidadTab
 } from './AdminTools';
 
 function fmtHour(h) {
@@ -268,7 +268,7 @@ export default function Dashboard() {
             ['promociones', 'Promociones'], ['menu', 'Menú'], ['personalizacion', 'Personalización'],
             ['mesas', 'Mesas'], ['reservaciones', 'Reservaciones'], ['gastos', 'Gastos'],
             ['insumos', 'Insumos'], ['activos', 'Activos'], ['ordenes', 'Órdenes'], ['historial', 'Historial'],
-            ['empleados', 'Empleados'], ['socios', 'Socios']
+            ['disponibilidad', 'Disponibilidad'], ['empleados', 'Empleados'], ['socios', 'Socios']
           ].map(([key, label]) => (
             <button key={key} onClick={() => setView(key)} className={`card-glow px-4 py-1.5 rounded-md text-xs font-bold transition ${view === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
           ))}
@@ -286,6 +286,7 @@ export default function Dashboard() {
           : view === 'activos' ? <ActivosTab />
           : view === 'ordenes' ? <OrdenesTab />
           : view === 'historial' ? <HistorialTab />
+          : view === 'disponibilidad' ? <DisponibilidadTab />
           : view === 'empleados' ? <EmpleadosTab />
           : view === 'socios' ? <SociosAccountsTab />
           : (

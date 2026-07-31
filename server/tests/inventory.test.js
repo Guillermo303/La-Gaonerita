@@ -5,7 +5,7 @@ import { run, get } from '../db.js';
 import { resetStockIfNewDay, decrementStock } from '../inventory.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 

@@ -35,6 +35,57 @@ const statusConfig = {
   completado: { label: 'Entregado', bg: 'bg-purple-50 border-purple-400', badge: 'bg-purple-100 text-purple-800' }
 };
 
+function OrderCard({ order, expanded, onToggle, onUpdateStatus, onCobrar }) {
+  const cfg = statusConfig[order.status] || statusConfig.pendiente;
+  const isExpanded = expanded === order.id;
+  return (
+    <div className={`rounded-xl border-2 shadow-sm ${cfg.bg} transition`}>
+      <button onClick={() => onToggle(order.id)}
+        className="w-full flex items-center gap-2 gap-y-1 p-3 text-left flex-wrap">
+        <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
+        <span className="text-sm font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
+        {order.mesa && <span className="text-xs text-ink-400 font-medium shrink-0">{order.mesa}</span>}
+        <span className="font-bold text-ink-900 shrink-0 ml-auto text-sm">{formatPrice(order.total)}</span>
+        <span className="text-xs text-ink-400 shrink-0 w-14 text-right"><ElapsedTime created={order.created_at} /></span>
+        <span className="text-ink-300 text-xs shrink-0">{isExpanded ? '▲' : '▼'}</span>
+      </button>
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-2">
+          <div className="bg-white/70 rounded-lg p-2 space-y-0.5 text-sm">
+            {order.items?.map(item => (
+              <div key={item.id} className="flex justify-between">
+                <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
+                <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-ink-500">
+            <span className="font-semibold text-ink-700">{order.customer_name}</span>
+            {order.customer_phone && <span>📞 {order.customer_phone}</span>}
+            {order.mesa && <span>📍 {order.mesa}</span>}
+            {order.order_type === 'domicilio' && order.customer_address && <span className="w-full">📍 {order.customer_address}</span>}
+          </div>
+          {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-1.5 rounded">📝 {order.notes}</div>}
+          <div className="flex items-center justify-between gap-2">
+            {order.status === 'pendiente' && (
+              <button onClick={() => onUpdateStatus(order.id, 'cancelado')} className="text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded hover:bg-red-100 font-semibold">Cancelar</button>
+            )}
+            {order.status === 'completado' && order.payment_status !== 'pagado' && (
+              <button onClick={() => onCobrar(order)} className="text-xs text-white bg-green-600 px-3 py-1.5 rounded-lg font-bold hover:bg-green-700">💰 Cobrar</button>
+            )}
+            {cfg.nextStatus && (
+              <button onClick={() => onUpdateStatus(order.id, cfg.nextStatus)}
+                className={`text-white px-4 py-1.5 rounded-lg font-bold text-xs ${cfg.nextBg} transition ml-auto`}>{cfg.nextLabel}</button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WaiterDashboard() {
   const [orders, setOrders] = useState([]);
   const [mesas, setMesas] = useState([]);
@@ -63,6 +114,11 @@ export default function WaiterDashboard() {
 
   const contar = (s) => orders.filter(o => o.status === s).length;
   const counts = `🟡${contar('pendiente')}  🔵${contar('preparando')}  🟢${contar('listo')}`;
+
+  const sortByCreated = (a, b) => new Date(a.created_at) - new Date(b.created_at);
+  const enTurno = orders.filter(o => o.status === 'pendiente' || o.status === 'preparando').sort(sortByCreated);
+  const localOrders = orders.filter(o => o.order_type === 'local').sort(sortByCreated);
+  const deliveryOrders = orders.filter(o => o.order_type === 'domicilio').sort(sortByCreated);
 
   const mesaCounts = { libre: 0, ocupada: 0, 'pendiente-pago': 0 };
   mesas.forEach(m => { mesaCounts[m.state] = (mesaCounts[m.state] || 0) + 1; });
@@ -158,58 +214,53 @@ export default function WaiterDashboard() {
           <div className="text-4xl mb-3">🍃</div>
           <p className="font-semibold">No hay órdenes activas</p>
         </div>
+      ) : isAdmin ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 items-start">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-3 rounded-t-xl text-center">🔥 En Turno</h2>
+            {enTurno.length === 0 ? (
+              <div className="bg-white rounded-b-xl shadow-sm p-10 text-center text-ink-400 min-h-[10rem] flex flex-col items-center justify-center">
+                <div className="text-4xl mb-2">🍃</div>
+                <p className="font-semibold text-sm">Nada en producción</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-b-xl shadow-sm border-2 border-purple-200 p-3 space-y-3 min-h-[10rem]">
+                {enTurno.map(order => (
+                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-green-700 bg-green-100 p-3 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
+            <div className="space-y-2 mt-2">
+              {localOrders.length === 0 ? (
+                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de local</div>
+              ) : (
+                localOrders.map(order => (
+                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+                ))
+              )}
+            </div>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-blue-700 bg-blue-100 p-3 rounded-t-xl text-center">🛵 Domicilio ({deliveryOrders.length})</h2>
+            <div className="space-y-2 mt-2">
+              {deliveryOrders.length === 0 ? (
+                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de domicilio</div>
+              ) : (
+                deliveryOrders.map(order => (
+                  <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map(order => {
-            const cfg = statusConfig[order.status] || statusConfig.pendiente;
-            const isExpanded = expanded === order.id;
-            return (
-              <div key={order.id} className={`rounded-xl border-2 shadow-sm ${cfg.bg} transition`}>
-                <button onClick={() => setExpanded(isExpanded ? null : order.id)}
-                  className="w-full flex items-center gap-2 gap-y-1 p-3 text-left flex-wrap">
-                  <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
-                  <span className="text-sm font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
-                  {order.mesa && <span className="text-xs text-ink-400 font-medium shrink-0">{order.mesa}</span>}
-                  <span className="font-bold text-ink-900 shrink-0 ml-auto text-sm">{formatPrice(order.total)}</span>
-                  <span className="text-xs text-ink-400 shrink-0 w-14 text-right"><ElapsedTime created={order.created_at} /></span>
-                  <span className="text-ink-300 text-xs shrink-0">{isExpanded ? '▲' : '▼'}</span>
-                </button>
-                {isExpanded && (
-                  <div className="px-3 pb-3 space-y-2">
-                    <div className="bg-white/70 rounded-lg p-2 space-y-0.5 text-sm">
-                      {order.items?.map(item => (
-                        <div key={item.id} className="flex justify-between">
-                          <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
-                          <span className="text-ink-500">{formatPrice(item.price * item.quantity)}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-ink-500">
-                      <span className="font-semibold text-ink-700">{order.customer_name}</span>
-                      {order.customer_phone && <span>📞 {order.customer_phone}</span>}
-                      {order.mesa && <span>📍 {order.mesa}</span>}
-                      {order.order_type === 'domicilio' && order.customer_address && <span className="w-full">📍 {order.customer_address}</span>}
-                    </div>
-                    {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-1.5 rounded">📝 {order.notes}</div>}
-                    <div className="flex items-center justify-between gap-2">
-                      {order.status === 'pendiente' && (
-                        <button onClick={() => updateStatus(order.id, 'cancelado')} className="text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded hover:bg-red-100 font-semibold">Cancelar</button>
-                      )}
-                      {order.status === 'completado' && order.payment_status !== 'pagado' && (
-                        <button onClick={() => setCobrando(order)} className="text-xs text-white bg-green-600 px-3 py-1.5 rounded-lg font-bold hover:bg-green-700">💰 Cobrar</button>
-                      )}
-                      {cfg.nextStatus && (
-                        <button onClick={() => updateStatus(order.id, cfg.nextStatus)}
-                          className={`text-white px-4 py-1.5 rounded-lg font-bold text-xs ${cfg.nextBg} transition ml-auto`}>{cfg.nextLabel}</button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {filtered.map(order => (
+            <OrderCard key={order.id} order={order} expanded={expanded} onToggle={id => setExpanded(expanded === id ? null : id)} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
+          ))}
         </div>
       )}
       {mesaPanel && (

@@ -344,6 +344,10 @@ async function seedDefaults() {
   if (Number(userCount.count) === 0) {
     const hash = bcrypt.hashSync('admin123', 10);
     await run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Admin', 'admin@laganerita.com', hash, 'admin']);
+    // Cuenta socio semilla: sin ella nadie podría crear al primer socio, ya
+    // que crear socios ahora requiere ya ser socio (bootstrap).
+    const socioHash = bcrypt.hashSync('socio123', 10);
+    await run('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', ['Socio', 'socio@laganerita.com', socioHash, 'socio']);
   }
 
   const groupCount = await get('SELECT COUNT(*) as count FROM customization_groups');

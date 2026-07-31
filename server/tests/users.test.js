@@ -4,7 +4,7 @@ import { freshApp } from './helpers.js';
 import { get, run } from '../db.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 

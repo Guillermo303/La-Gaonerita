@@ -4,7 +4,7 @@ import { freshApp } from './helpers.js';
 import { run, get } from '../db.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 
@@ -50,8 +50,10 @@ describe('Gestión de socios', () => {
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const res = await request(app).get('/api/socios').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
-    expect(res.body.length).toBe(1);
-    expect(res.body[0].name).toBe('Socio');
+    // +1 por la cuenta socio semilla que ya existe (necesaria para poder
+    // crear al primer socio real sin depender de admin).
+    expect(res.body.length).toBe(2);
+    expect(res.body.some(s => s.name === 'Socio')).toBe(true);
   });
 
   it('el socio puede iniciar sesión y el token refleja su rol', async () => {
@@ -81,7 +83,10 @@ describe('Gestión de socios', () => {
   });
 });
 
-describe('Acceso de socios a reportes de solo lectura', () => {
+// Ya no hay distinción de "socio de solo lectura": cualquier cuenta con rol
+// socio tiene acceso completo a reportes, empleados y gestión de otros
+// socios (la administración del negocio se movió por completo a socios).
+describe('Acceso completo de socios a reportes y gestión', () => {
   let app, adminTok, socioTok;
   beforeEach(async () => {
     app = await freshApp();
@@ -108,24 +113,42 @@ describe('Acceso de socios a reportes de solo lectura', () => {
     expect(res.status).toBe(200);
   });
 
-  it('rechaza que el socio guarde un reporte (solo lectura)', async () => {
+  it('permite que el socio guarde un reporte', async () => {
     const res = await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${socioTok}`).send({ period: 'day' });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(201);
   });
 
-  it('rechaza que el socio elimine un reporte guardado', async () => {
+  it('permite que el socio elimine un reporte guardado', async () => {
     const save = await request(app).post('/api/reports/sales/save').set('Authorization', `Bearer ${adminTok}`).send({ period: 'day' });
     const res = await request(app).delete(`/api/reports/saved/${save.body.id}`).set('Authorization', `Bearer ${socioTok}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
-  it('rechaza que el socio acceda a la gestión de empleados', async () => {
+  it('permite que el socio acceda a la gestión de empleados', async () => {
     const res = await request(app).get('/api/employees').set('Authorization', `Bearer ${socioTok}`);
+    expect(res.status).toBe(200);
+  });
+
+  it('permite que el socio cree otros socios', async () => {
+    const res = await request(app).post('/api/socios').set('Authorization', `Bearer ${socioTok}`).send({ name: 'Otro', email: 'otro@test.com', password: 'secreto123' });
+    expect(res.status).toBe(201);
+  });
+
+  it('rechaza que un mesero acceda a la gestión de empleados', async () => {
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${adminTok}`).send({
+      name: 'Mesero', email: 'mesero@test.com', password: 'secreto123', role: 'mesero'
+    });
+    const login = await request(app).post('/api/auth/login').send({ email: 'mesero@test.com', password: 'secreto123' });
+    const res = await request(app).get('/api/employees').set('Authorization', `Bearer ${login.body.token}`);
     expect(res.status).toBe(403);
   });
 
-  it('rechaza que el socio cree otros socios', async () => {
-    const res = await request(app).post('/api/socios').set('Authorization', `Bearer ${socioTok}`).send({ name: 'Otro', email: 'otro@test.com', password: 'secreto123' });
+  it('rechaza que un mesero cree socios', async () => {
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${adminTok}`).send({
+      name: 'Mesero', email: 'mesero2@test.com', password: 'secreto123', role: 'mesero'
+    });
+    const login = await request(app).post('/api/auth/login').send({ email: 'mesero2@test.com', password: 'secreto123' });
+    const res = await request(app).post('/api/socios').set('Authorization', `Bearer ${login.body.token}`).send({ name: 'Otro', email: 'otro2@test.com', password: 'secreto123' });
     expect(res.status).toBe(403);
   });
 });

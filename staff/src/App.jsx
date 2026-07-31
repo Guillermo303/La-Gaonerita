@@ -9,7 +9,6 @@ import KitchenDisplay from './pages/kitchen/Display';
 import TVDisplay from './pages/TVDisplay';
 import MenuBoard from './pages/MenuBoard';
 import PendingBills from './pages/PendingBills';
-import Disponibilidad from './pages/Disponibilidad';
 
 function StaffLayout() {
   return (
@@ -35,7 +34,6 @@ export default function App() {
           <Route path="/waiter/tables" element={<ProtectedRoute roles={['mesero']}><TableSelect /></ProtectedRoute>} />
           <Route path="/waiter/new-order" element={<ProtectedRoute roles={['mesero']}><NewOrder /></ProtectedRoute>} />
           <Route path="/pending-bills" element={<ProtectedRoute roles={['admin', 'mesero']}><PendingBills /></ProtectedRoute>} />
-          <Route path="/disponibilidad" element={<ProtectedRoute roles={['mesero', 'cocina']}><Disponibilidad /></ProtectedRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

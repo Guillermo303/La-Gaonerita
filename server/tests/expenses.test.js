@@ -4,7 +4,7 @@ import { freshApp } from './helpers.js';
 import { run, get } from '../db.js';
 
 async function adminToken(app) {
-  const res = await request(app).post('/api/auth/login').send({ email: 'admin@laganerita.com', password: 'admin123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'socio@laganerita.com', password: 'socio123' });
   return res.body.token;
 }
 
@@ -71,16 +71,23 @@ describe('Registro de gastos', () => {
     expect(insumosOnly.body.length).toBe(2);
   });
 
-  it('permite al socio ver la lista de gastos (solo lectura)', async () => {
+  it('permite al socio ver la lista de gastos', async () => {
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
     const res = await request(app).get('/api/expenses').set('Authorization', `Bearer ${login.body.token}`);
     expect(res.status).toBe(200);
   });
 
-  it('rechaza que el socio cree un gasto', async () => {
+  it('permite que el socio cree un gasto', async () => {
     await request(app).post('/api/socios').set('Authorization', `Bearer ${token}`).send({ name: 'Socio', email: 'socio@test.com', password: 'secreto123' });
     const login = await request(app).post('/api/auth/login').send({ email: 'socio@test.com', password: 'secreto123' });
+    const res = await request(app).post('/api/expenses').set('Authorization', `Bearer ${login.body.token}`).send({ category: 'renta', amount: 100, date: '2026-07-01' });
+    expect(res.status).toBe(201);
+  });
+
+  it('rechaza que un mesero cree un gasto', async () => {
+    await request(app).post('/api/employees').set('Authorization', `Bearer ${token}`).send({ name: 'Mesero', email: 'mesero@test.com', password: 'secreto123', role: 'mesero' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'mesero@test.com', password: 'secreto123' });
     const res = await request(app).post('/api/expenses').set('Authorization', `Bearer ${login.body.token}`).send({ category: 'renta', amount: 100, date: '2026-07-01' });
     expect(res.status).toBe(403);
   });
