@@ -76,13 +76,18 @@ export default function TrackOrder({ order, onBack }) {
               <div className="pt-0.5">
                 <p className={`font-bold ${isReached ? 'text-ink-900' : 'text-ink-300'}`}>{s.icon} {s.label}</p>
                 {s.key === 'ahead' && (
-                  <p className="text-sm text-ink-400 mt-1">
-                    {ordersAhead !== null
-                      ? ordersAhead === 0
-                        ? '¡Eres el siguiente!'
-                        : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
-                      : 'Calculando fila…'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${ordersAhead !== null && ordersAhead === 0 ? 'bg-green-500 text-white' : 'bg-brand-500 text-white'}`}>
+                      {ordersAhead !== null ? ordersAhead : '…'}
+                    </span>
+                    <span className="text-sm text-ink-400">
+                      {ordersAhead !== null
+                        ? ordersAhead === 0
+                          ? '¡Eres el siguiente!'
+                          : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
+                        : 'Calculando fila…'}
+                    </span>
+                  </div>
                 )}
                 {s.key !== 'ahead' && isCurrent && (
                   <p className="text-sm text-ink-400 mt-1">
