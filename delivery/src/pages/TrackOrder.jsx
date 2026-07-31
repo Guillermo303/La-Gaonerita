@@ -76,17 +76,19 @@ export default function TrackOrder({ order, onBack }) {
               <div className="pt-0.5">
                 <p className={`font-bold ${isReached ? 'text-ink-900' : 'text-ink-300'}`}>{s.icon} {s.label}</p>
                 {s.key === 'ahead' && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${ordersAhead !== null && ordersAhead === 0 ? 'bg-green-500 text-white' : 'bg-brand-500 text-white'}`}>
+                  <div className="flex items-center justify-between gap-3 mt-1 w-full">
+                    <div className="pt-0.5">
+                      <p className="text-sm text-ink-400">
+                        {ordersAhead !== null
+                          ? ordersAhead === 0
+                            ? '¡Eres el siguiente!'
+                            : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
+                          : 'Calculando fila…'}
+                      </p>
+                    </div>
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl font-black font-display shrink-0 shadow-lg ring-4 ${ordersAhead !== null && ordersAhead === 0 ? 'bg-green-500 text-white ring-green-100' : 'bg-brand-500 text-white ring-brand-100'}`}>
                       {ordersAhead !== null ? ordersAhead : '…'}
-                    </span>
-                    <span className="text-sm text-ink-400">
-                      {ordersAhead !== null
-                        ? ordersAhead === 0
-                          ? '¡Eres el siguiente!'
-                          : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
-                        : 'Calculando fila…'}
-                    </span>
+                    </div>
                   </div>
                 )}
                 {s.key !== 'ahead' && isCurrent && (
