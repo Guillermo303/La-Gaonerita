@@ -209,9 +209,7 @@ export default function KitchenDisplay() {
 
   const updateStatus = (id, status) => ordersApi.updateStatus(id, status).catch(console.error);
 
-  const pendingOrders = orders.filter(o => o.status === 'pendiente');
   const preparingOrders = orders.filter(o => o.status === 'preparando');
-  const readyOrders = orders.filter(o => o.status === 'listo');
 
   const OrderCard = ({ order, compact }) => (
     <div className={`bg-white rounded-xl shadow-lg p-4 border-l-4 ${order.order_type === 'domicilio' ? 'border-l-blue-500' : 'border-l-green-500'}`}>
@@ -251,6 +249,11 @@ export default function KitchenDisplay() {
   const handleAdvance = (id, status) => updateStatus(id, status);
   const handleDeliver = (id) => ordersApi.updateStatus(id, 'completado').catch(console.error);
 
+  const productionOrder = [...preparingOrders].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0] || null;
+  const sortByCreated = (a, b) => new Date(a.created_at) - new Date(b.created_at);
+  const localOrders = orders.filter(o => o.order_type === 'local').sort(sortByCreated);
+  const deliveryOrders = orders.filter(o => o.order_type === 'domicilio').sort(sortByCreated);
+
   if (bigMode) {
     return (
       <div className="min-h-screen bg-cream-50 p-4 sm:p-8">
@@ -286,23 +289,67 @@ export default function KitchenDisplay() {
       {view === 'historial' ? (
         <HistorialActivas orders={orders} onDeliver={handleDeliver} />
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-yellow-700 bg-yellow-100 p-3 rounded-t-lg text-center">Pendientes ({pendingOrders.length})</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-1">
+          <h2 className="text-xl font-bold text-blue-700 bg-blue-100 p-3 rounded-t-lg text-center">En Producción</h2>
+          {productionOrder ? (
+            <div className="bg-white rounded-b-xl shadow-lg p-5 border-4 border-blue-400">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-4xl font-black text-ink-900">#{productionOrder.id}</span>
+                <ElapsedTimer created={productionOrder.created_at} status={productionOrder.status} />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${productionOrder.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                  {productionOrder.order_type === 'domicilio' ? '🛵' : '🏠'} {typeLabels[productionOrder.order_type]}
+                </span>
+                <span className="text-xl font-bold text-ink-900">{productionOrder.customer_name}</span>
+              </div>
+              {productionOrder.order_type === 'domicilio' && productionOrder.customer_address && (
+                <div className="text-sm text-gray-500 mb-3">📍 {productionOrder.customer_address}</div>
+              )}
+              <div className="space-y-2 my-4">
+                {productionOrder.items?.map(item => (
+                  <div key={item.id} className="flex justify-between text-xl border-b border-gray-100 pb-2">
+                    <span>{item.quantity}x {item.name}</span>
+                    <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center mt-3 pt-3 border-t-2 border-gray-200">
+                <span className="text-sm font-semibold uppercase tracking-widest text-gray-400">Total</span>
+                <span className="text-2xl font-black text-ink-900">{formatPrice(productionOrder.total)}</span>
+              </div>
+              {productionOrder.notes && <div className="text-sm text-yellow-700 bg-yellow-50 p-2 rounded mt-3">📝 {productionOrder.notes}</div>}
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => updateStatus(productionOrder.id, 'listo')} className="flex-1 bg-green-500 text-white py-3 rounded-xl text-lg font-bold hover:bg-green-600 transition shadow">✅ Listo</button>
+                <button onClick={() => updateStatus(productionOrder.id, 'cancelado')} className="bg-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-200">Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-b-xl shadow-lg p-10 text-center text-gray-400">
+              <div className="text-6xl mb-4">🍃</div>
+              <p className="text-lg font-semibold">No hay órdenes en producción</p>
+            </div>
+          )}
+        </div>
+        <div className="lg:col-span-1">
+          <h2 className="text-xl font-bold text-green-700 bg-green-100 p-3 rounded-t-lg text-center">Local ({localOrders.length})</h2>
           <div className="space-y-3 mt-3">
-            {pendingOrders.map(order => <OrderCard key={order.id} order={order} compact={false} />)}
+            {localOrders.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">Sin órdenes de local</div>
+            ) : (
+              localOrders.map(order => <OrderCard key={order.id} order={order} compact={false} />)
+            )}
           </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-blue-700 bg-blue-100 p-3 rounded-t-lg text-center">Preparando ({preparingOrders.length})</h2>
+        <div className="lg:col-span-1">
+          <h2 className="text-xl font-bold text-blue-700 bg-blue-100 p-3 rounded-t-lg text-center">Domicilio ({deliveryOrders.length})</h2>
           <div className="space-y-3 mt-3">
-            {preparingOrders.map(order => <OrderCard key={order.id} order={order} compact={false} />)}
-          </div>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-green-700 bg-green-100 p-3 rounded-t-lg text-center">Listos ({readyOrders.length})</h2>
-          <div className="space-y-3 mt-3">
-            {readyOrders.map(order => <OrderCard key={order.id} order={order} compact={true} />)}
+            {deliveryOrders.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">Sin órdenes de domicilio</div>
+            ) : (
+              deliveryOrders.map(order => <OrderCard key={order.id} order={order} compact={false} />)
+            )}
           </div>
         </div>
       </div>
