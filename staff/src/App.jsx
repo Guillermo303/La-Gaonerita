@@ -8,7 +8,6 @@ import KitchenDisplay from './pages/kitchen/Display';
 import TVDisplay from './pages/TVDisplay';
 import MenuBoard from './pages/MenuBoard';
 import PendingBills from './pages/PendingBills';
-import AdminPanel from './pages/AdminPanel';
 import Disponibilidad from './pages/Disponibilidad';
 
 function StaffLayout() {
@@ -27,10 +26,9 @@ export default function App() {
     <div className="min-h-screen bg-cream-50">
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/kitchen" element={<ProtectedRoute roles={['admin', 'cocina']}><KitchenDisplay /></ProtectedRoute>} />
+        <Route path="/kitchen" element={<ProtectedRoute roles={['cocina']}><KitchenDisplay /></ProtectedRoute>} />
         <Route path="/tv" element={<ProtectedRoute roles={['cocina', 'mesero']}><TVDisplay /></ProtectedRoute>} />
         <Route path="/menu-board" element={<ProtectedRoute roles={['cocina', 'mesero']}><MenuBoard /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute roles={[]}><AdminPanel /></ProtectedRoute>} />
         <Route element={<StaffLayout />}>
           <Route path="/waiter" element={<ProtectedRoute roles={['mesero']}><WaiterDashboard /></ProtectedRoute>} />
           <Route path="/waiter/new-order" element={<ProtectedRoute roles={['mesero']}><NewOrder /></ProtectedRoute>} />

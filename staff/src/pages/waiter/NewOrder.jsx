@@ -48,16 +48,46 @@ const FALLBACK_MENU = [
   ]},
 ];
 
+const STEPS = [
+  { num: 1, label: 'Inicio' },
+  { num: 2, label: 'Tipo' },
+  { num: 3, label: 'Menú' },
+  { num: 4, label: 'Conf.' },
+  { num: 5, label: 'Listo' },
+];
+
+function StepBar({ current }) {
+  return (
+    <div className="flex items-center justify-center gap-1 mb-6">
+      {STEPS.map((s, i) => (
+        <div key={s.num} className="flex items-center">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            s.num < current ? 'bg-brand-500 text-white' : s.num === current ? 'bg-brand-500 text-white ring-2 ring-brand-200' : 'bg-cream-100 text-ink-400'
+          }`}>
+            {s.num < current ? '✓' : s.num}
+          </div>
+          {i < STEPS.length - 1 && <div className={`w-4 sm:w-8 h-0.5 ${s.num < current ? 'bg-brand-300' : 'bg-cream-200'}`} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function NewOrder() {
   const [searchParams] = useSearchParams();
+  const mesaParam = searchParams.get('mesa') || '';
+  const [step, setStep] = useState(mesaParam ? 3 : 1);
   const [menuData] = useState(FALLBACK_MENU);
   const [columns] = useState(DEFAULT_COLUMNS);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
-  const [customer, setCustomer] = useState({ name: '', phone: '', address: '', type: 'local', notes: '' });
-  const [mesa, setMesa] = useState(searchParams.get('mesa') || '');
+  const [orderType, setOrderType] = useState(mesaParam ? 'local' : '');
+  const [mesa, setMesa] = useState(mesaParam);
+  const [customer, setCustomer] = useState({ name: '', phone: '', address: '', notes: '' });
+  const [payment, setPayment] = useState('efectivo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [placed, setPlaced] = useState(null);
 
   const navigate = useNavigate();
 
@@ -89,199 +119,341 @@ export default function NewOrder() {
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
+  const reset = () => {
+    setCart([]);
+    setSelectedCategory(null);
+    setCustomer({ name: '', phone: '', address: '', notes: '' });
+    setPayment('efectivo');
+    setPlaced(null);
+    setError('');
+    setStep(mesaParam ? 3 : 1);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!customer.name || cart.length === 0) { setError('Nombre y al menos un producto requerido'); return; }
-    setLoading(true);
     setError('');
+    if (!customer.name.trim()) { setError('Escribe el nombre del cliente'); return; }
+    if (orderType === 'local' && !mesa) { setError('Selecciona una mesa'); return; }
+    if (orderType === 'domicilio' && !customer.address.trim()) { setError('Escribe la dirección de entrega'); return; }
+    setLoading(true);
     try {
       const order = await ordersApi.create({
-        customer_name: customer.name,
-        customer_phone: customer.phone || null,
-        customer_address: customer.type === 'domicilio' ? customer.address : null,
-        mesa: customer.type === 'local' ? mesa : null,
-        order_type: customer.type,
-        notes: customer.notes || null,
-        payment_method: 'efectivo',
+        customer_name: customer.name.trim(),
+        customer_phone: customer.phone.trim() || null,
+        customer_address: orderType === 'domicilio' ? customer.address.trim() : null,
+        mesa: orderType === 'local' ? mesa : null,
+        order_type: orderType || 'local',
+        notes: customer.notes.trim() || null,
+        payment_method: payment,
         items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, notes: i.variant || null }))
       });
-      navigate('/waiter');
+      setPlaced(order);
+      setStep(5);
     } catch (err) {
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="grid lg:grid-cols-2 gap-6 pb-20 lg:pb-0">
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate('/waiter')} className="text-ink-400 hover:text-ink-600 text-lg">←</button>
-          <h1 className="text-2xl font-bold">Nueva Orden</h1>
-          {mesa && <span className="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-0.5 rounded-full">{mesa}</span>}
-        </div>
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
-        <form onSubmit={handleSubmit} className="bg-white p-4 rounded-xl shadow-md space-y-3">
-          <div>
-            <label className="block text-sm font-medium">Cliente</label>
-            <input type="text" value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} className="w-full mt-1 p-2 border rounded" required />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-sm font-medium">Teléfono</label>
-              <input type="tel" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} className="w-full mt-1 p-2 border rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Tipo</label>
-              <select value={customer.type} onChange={e => {
-                setCustomer({ ...customer, type: e.target.value });
-                if (e.target.value !== 'local') setMesa('');
-              }} className="w-full mt-1 p-2 border rounded">
-                <option value="local">Local</option>
-                <option value="domicilio">Domicilio</option>
-              </select>
-            </div>
-          </div>
-          {customer.type === 'local' && (
-            <div className="pt-1">
-              <MesaSelector selected={mesa} onSelect={setMesa} showLabel={true} />
-            </div>
-          )}
-          {customer.type === 'domicilio' && (
-            <div>
-              <label className="block text-sm font-medium">Dirección</label>
-              <textarea value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} className="w-full mt-1 p-2 border rounded" rows="2" required />
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium">Notas</label>
-            <textarea value={customer.notes} onChange={e => setCustomer({ ...customer, notes: e.target.value })} className="w-full mt-1 p-2 border rounded" rows="2" />
-          </div>
-        </form>
-
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-3">Menú</h2>
-          {selectedCategory ? (
-            <div>
-              <button onClick={() => setSelectedCategory(null)} className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 transition mb-3">
-                ← Todas las categorías
-              </button>
-              <h3 className="font-bold text-brand-700 mb-2">{selectedCategory.name}</h3>
-              {FOOD_CATS.includes(selectedCategory.name) ? (
-                <div className="overflow-x-auto no-scrollbar">
-                  <table className="w-full min-w-[420px] border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="text-left text-xs font-bold uppercase tracking-widest text-ink-400 pb-2 pr-3 w-1/4"></th>
-                        {columns.map(col => (
-                          <th key={col} className="text-center text-xs font-bold uppercase tracking-widest text-brand-600 pb-2 px-1">{col}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedCategory.items.map(item => (
-                        <tr key={item.id} className="border-t border-cream-200">
-                          <td className="py-2 pr-3">
-                            <div className="font-bold text-ink-900 text-sm">{item.name}</div>
-                            <div className="text-brand-600 font-extrabold text-xs mt-0.5">{formatPrice(item.price)}</div>
-                          </td>
-                          {columns.map(col => {
-                            const qty = getQty(item.id, col);
-                            return (
-                              <td key={col} className="py-1.5 px-1 text-center">
-                                <div className="inline-flex items-center gap-1 bg-cream-50 rounded-lg border border-ink-200 px-1 py-0.5">
-                                  <button onClick={() => updateQty(item.id, -1, col)} className="w-6 h-6 rounded-md bg-white text-ink-700 font-bold text-xs hover:bg-cream-100 transition flex items-center justify-center">−</button>
-                                  <span className="w-5 text-center font-bold text-ink-900 text-xs">{qty}</span>
-                                  <button onClick={() => addItem(item, col)} className="w-6 h-6 rounded-md bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition flex items-center justify-center">+</button>
-                                </div>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {selectedCategory.items.map(item => {
-                    const qty = getQty(item.id, '');
-                    return (
-                      <div key={item.id} className="bg-white rounded-xl shadow-sm border border-ink-900/5 p-3 flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-ink-900 text-sm">{item.name}</div>
-                          <div className="text-brand-600 font-extrabold text-xs">{formatPrice(item.price)}</div>
-                        </div>
-                        <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
-                          <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
-                          <span className="w-5 text-center font-bold text-ink-900 text-sm">{qty}</span>
-                          <button onClick={() => addItem(item)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {menuData.filter(cat => cat.items.length > 0).map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat)}
-                  className="card-glow bg-white rounded-xl shadow-sm border border-ink-900/5 p-5 text-center hover:border-brand-400 hover:shadow-lg transition"
-                >
-                  <h3 className="font-bold text-ink-900">{cat.name}</h3>
-                  <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-1">{cat.items.length} platillos</p>
-                </button>
-              ))}
-            </div>
-          )}
+  // ----- Paso 1: Inicio -----
+  if (step === 1) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16">
+        <StepBar current={1} />
+        <div className="text-center">
+          <div className="pop-in text-6xl mb-4">🌮</div>
+          <h1 className="font-display text-4xl font-extrabold text-ink-900 mb-3">Nueva Orden</h1>
+          <p className="text-ink-400 mb-10">Toma el pedido de tus clientes, igual que en la app de domicilio.</p>
+          <button onClick={() => setStep(2)} className="btn-grow w-full bg-brand-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition">
+            🛎️ Comenzar Pedido
+          </button>
         </div>
       </div>
+    );
+  }
 
-      <div>
-        <div id="cart-section" className="bg-white p-4 rounded-xl shadow-md lg:sticky lg:top-20 scroll-mt-20">
-          <h2 className="text-xl font-bold mb-4">Carrito</h2>
-          {cart.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Selecciona productos del menú</p>
+  // ----- Paso 2: Tipo -----
+  if (step === 2) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16">
+        <StepBar current={2} />
+        <div className="text-center mb-8">
+          <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-3">PASO 2 DE 5</p>
+          <h1 className="font-display text-3xl font-extrabold text-ink-900">¿Dónde se sirve?</h1>
+        </div>
+        <div className="flex flex-col gap-4">
+          <button onClick={() => { setOrderType('local'); setStep(3); }}
+            className="btn-grow bg-white border-2 border-ink-900/10 text-ink-900 py-6 rounded-2xl font-bold text-lg hover:border-brand-400 hover:shadow-lg transition flex items-center justify-center gap-3">
+            <span className="text-3xl">🏪</span> En el local
+          </button>
+          <button onClick={() => { setOrderType('domicilio'); setMesa(''); setStep(3); }}
+            className="btn-grow bg-brand-500 text-white py-6 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition flex items-center justify-center gap-3">
+            <span className="text-3xl">🛵</span> A domicilio
+          </button>
+        </div>
+        <button onClick={() => { setStep(1); }} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-6">← Atrás</button>
+      </div>
+    );
+  }
+
+  // ----- Paso 3: Menú -----
+  if (step === 3) {
+    if (selectedCategory) {
+      const cat = selectedCategory;
+      const isMatrix = FOOD_CATS.includes(cat.name);
+      const subtotal = isMatrix
+        ? cat.items.reduce((sum, item) => sum + columns.reduce((s, col) => s + getQty(item.id, col) * item.price, 0), 0)
+        : cat.items.reduce((sum, item) => sum + getQty(item.id, '') * item.price, 0);
+
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-8 pb-36">
+          <button onClick={() => setSelectedCategory(null)} className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 transition mb-4">
+            ← Todas las categorías
+          </button>
+          <h2 className="font-display text-2xl lg:text-3xl font-extrabold text-ink-900 mb-6">{cat.name}</h2>
+
+          {isMatrix ? (
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full min-w-[500px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left text-xs font-bold uppercase tracking-widest text-ink-400 pb-3 pr-4 w-1/4"></th>
+                    {columns.map(col => (
+                      <th key={col} className="text-center text-xs font-bold uppercase tracking-widest text-brand-600 pb-3 px-2">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cat.items.map(item => (
+                    <tr key={item.id} className="border-t border-cream-200">
+                      <td className="py-3 pr-4">
+                        <div className="font-bold text-ink-900 text-sm">{item.name}</div>
+                        <div className="text-brand-600 font-extrabold text-xs mt-0.5">{formatPrice(item.price)}</div>
+                      </td>
+                      {columns.map(col => {
+                        const qty = getQty(item.id, col);
+                        return (
+                          <td key={col} className="py-2 px-1 text-center">
+                            <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
+                              <button onClick={() => updateQty(item.id, -1, col)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                              <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
+                              <button onClick={() => addItem(item, col)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <>
+            <div className="flex flex-col gap-3">
+              {cat.items.map(item => {
+                const qty = getQty(item.id, '');
+                return (
+                  <div key={item.id} className="bg-white rounded-xl shadow-sm border border-ink-900/5 p-4 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-ink-900">{item.name}</div>
+                      <div className="text-brand-600 font-extrabold text-sm">{formatPrice(item.price)}</div>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 bg-cream-50 rounded-lg border border-ink-200 px-1.5 py-1">
+                      <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
+                      <span className="w-6 text-center font-bold text-ink-900 text-sm">{qty}</span>
+                      <button onClick={() => addItem(item)} className="w-7 h-7 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="fixed bottom-4 inset-x-4 z-40">
+            <div className="max-w-xl mx-auto">
+              <div className="bg-ink-900 text-cream-50 rounded-2xl shadow-2xl px-6 py-4 mb-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm">Subtotal {cat.name}</span>
+                  <span className="font-extrabold text-lg">{formatPrice(subtotal)}</span>
+                </div>
+                {cartCount > 0 && (
+                  <div className="flex items-center justify-between text-xs text-ink-300 mt-1">
+                    <span>Total del pedido: {cartCount} producto{cartCount !== 1 ? 's' : ''}</span>
+                    <span>{formatPrice(total)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedCategory(null)} className="shrink-0 px-5 py-4 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-lg hover:bg-cream-50 transition">
+                  ← Categorías
+                </button>
+                <button onClick={() => setSelectedCategory(null)} className="btn-grow w-full bg-brand-500 text-white rounded-full shadow-2xl px-6 py-4 hover:bg-brand-600 font-bold text-sm">
+                  Listo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const categories = menuData.filter(cat => cat.items.length > 0);
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-14 pb-32">
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={() => setStep(2)} className="shrink-0 px-4 py-2 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-sm hover:bg-cream-50 transition">
+            ← Atrás
+          </button>
+          <div className="text-center flex-1">
+            <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">PASO 3 DE 5</p>
+            <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Menú Principal</h1>
+          </div>
+          {orderType === 'local' && mesa && <span className="bg-brand-100 text-brand-700 text-xs font-bold px-2 py-1 rounded-full shrink-0">{mesa}</span>}
+        </div>
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6">{error}</div>}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat)}
+              className="card-glow bg-white rounded-2xl shadow-sm border border-ink-900/5 p-8 text-center hover:border-brand-400 hover:shadow-lg transition group"
+            >
+              <h2 className="font-display text-2xl font-extrabold text-ink-900 group-hover:text-brand-600 transition">{cat.name}</h2>
+              <p className="text-brand-500 text-xs font-bold uppercase tracking-wider mt-4">{cat.items.length} platillos</p>
+            </button>
+          ))}
+        </div>
+
+        <div className="fixed bottom-4 inset-x-4 z-40">
+          <div className="max-w-xl mx-auto flex items-center gap-3">
+            <button onClick={() => setStep(2)} className="shrink-0 px-5 py-4 rounded-full bg-white text-ink-700 font-bold text-sm border border-ink-200 shadow-lg hover:bg-cream-50 transition">
+              ← Atrás
+            </button>
+            <button onClick={() => setStep(4)} disabled={cartCount === 0}
+              className="btn-grow flex items-center justify-between gap-4 w-full bg-ink-900 text-cream-50 rounded-full shadow-2xl px-6 py-4 hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed">
+              <span className="flex items-center gap-3">
+                <span className="bg-brand-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{cartCount}</span>
+                <span className="font-semibold">{cartCount === 1 ? '1 producto' : `${cartCount} productos`}</span>
+              </span>
+              <span className="flex items-center gap-3">
+                <span className="font-extrabold text-lg">{formatPrice(total)}</span>
+                <span className="text-brand-300 font-bold uppercase tracking-wider text-sm">Confirmar →</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----- Paso 4: Confirmar -----
+  if (step === 4) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-14">
+        <StepBar current={4} />
+        <div className="text-center mb-8">
+          <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-1">PASO 4 DE 5</p>
+          <h1 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Confirmar Pedido</h1>
+        </div>
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6 max-w-2xl mx-auto">{error}</div>}
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 max-w-4xl mx-auto">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="font-display text-xl font-bold text-ink-900 mb-4">Productos ({cartCount})</h2>
               {cart.map(item => (
-                <div key={`${item.menu_item_id}-${item.variant || ''}`} className="flex justify-between items-center py-2 border-b gap-2">
+                <div key={`${item.menu_item_id}-${item.variant || ''}`} className="flex items-center justify-between py-2 border-b border-cream-200 last:border-0">
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{item.name}</div>
-                    <div className="text-sm text-gray-600">{formatPrice(item.price)} c/u</div>
+                    <div className="font-semibold text-ink-800 truncate text-sm">{item.name}</div>
+                    <div className="text-xs text-ink-400">{formatPrice(item.price)} c/u</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => updateQty(item.menu_item_id, -1, item.variant)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">-</button>
-                    <span className="w-6 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.menu_item_id, 1, item.variant)} className="w-9 h-9 bg-gray-100 rounded-full font-bold">+</button>
-                    <span className="w-20 text-right font-bold">{formatPrice(item.price * item.quantity)}</span>
+                    <button onClick={() => updateQty(item.menu_item_id, -1, item.variant)} className="w-7 h-7 rounded-full bg-cream-100 text-ink-700 font-bold text-xs hover:bg-cream-200 transition">−</button>
+                    <span className="w-5 text-center font-bold text-sm">{item.quantity}</span>
+                    <button onClick={() => updateQty(item.menu_item_id, 1, item.variant)} className="w-7 h-7 rounded-full bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition">+</button>
+                    <span className="w-16 text-right font-bold text-sm">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>
               ))}
-              <div className="flex justify-between items-center py-3 text-lg font-bold">
-                <span>Total</span>
-                <span>{formatPrice(total)}</span>
+              <div className="flex justify-between items-center pt-4 text-lg">
+                <span className="font-bold text-ink-900">Total</span>
+                <span className="font-extrabold text-brand-600">{formatPrice(total)}</span>
               </div>
-              <button onClick={handleSubmit} disabled={loading} className="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50">
-                {loading ? 'Creando...' : 'Crear Orden'}
-              </button>
-            </>
-          )}
+              <button onClick={() => setStep(3)} className="block w-full text-center text-sm text-brand-600 font-semibold hover:underline mt-3">+ Agregar más productos</button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="lg:col-span-3">
+            <div className="bg-white rounded-2xl shadow-md p-6 space-y-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Nombre del cliente</label>
+                <input type="text" value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })}
+                  className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Nombre y apellido" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono</label>
+                <input type="tel" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })}
+                  className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="55 1234 5678" />
+              </div>
+              {orderType === 'local' ? (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Mesa</label>
+                  <MesaSelector selected={mesa} onSelect={setMesa} showLabel={true} />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Dirección de entrega</label>
+                  <textarea value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} rows="2"
+                    className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Calle, número, colonia y referencias" />
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Notas para la cocina <span className="normal-case font-normal text-ink-300">(opcional)</span></label>
+                <textarea value={customer.notes} onChange={e => setCustomer({ ...customer, notes: e.target.value })} rows="2"
+                  className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Sin cebolla, salsa aparte…" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Forma de pago</label>
+                <select value={payment} onChange={e => setPayment(e.target.value)}
+                  className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white">
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep(3)} className="flex-1 px-6 py-3.5 rounded-lg font-bold border border-ink-200 text-ink-600 hover:bg-cream-50 transition">
+                  ← Atrás
+                </button>
+                <button type="submit" disabled={loading}
+                  className="flex-1 btn-grow bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 disabled:opacity-50">
+                  {loading ? 'Creando orden…' : `Crear Orden · ${formatPrice(total)}`}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
+    );
+  }
 
-      {cart.length > 0 && (
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-white border-t border-ink-100 shadow-2xl flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-ink-400 font-semibold uppercase tracking-wider">{cartCount} producto{cartCount !== 1 ? 's' : ''}</div>
-            <div className="font-black text-lg text-ink-900">{formatPrice(total)}</div>
-          </div>
-          <button onClick={() => document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth' })} className="bg-brand-500 text-white px-5 py-3 rounded-lg font-bold text-sm hover:bg-brand-600 transition">Ver Carrito →</button>
-        </div>
-      )}
+  // ----- Paso 5: Listo -----
+  return (
+    <div className="max-w-md mx-auto px-4 py-20 text-center">
+      <StepBar current={5} />
+      <div className="pop-in text-6xl mb-4">✅</div>
+      <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">¡Pedido creado!</h1>
+      {placed && <p className="text-ink-500 mb-2">Orden <span className="font-bold text-brand-600">#{placed.id}</span> registrada.</p>}
+      <p className="text-ink-400 text-sm mb-8">Enviada a cocina. Puedes ver su progreso desde el tablero.</p>
+      <div className="flex flex-col gap-3">
+        <button onClick={reset} className="w-full bg-brand-500 text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600 transition">
+          Nueva Orden
+        </button>
+        <button onClick={() => navigate('/waiter')} className="w-full bg-ink-900 text-cream-50 py-3 rounded-lg font-bold text-sm hover:bg-ink-800 transition">
+          Ver Pedidos
+        </button>
+      </div>
     </div>
   );
 }

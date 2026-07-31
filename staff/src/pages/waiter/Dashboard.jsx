@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { orders as ordersApi, mesas as mesasApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatPrice, typeLabels } from '../../lib/utils';
 import CobroModal from '../../components/CobroModal';
 import MesaPanel from '../../components/MesaPanel';
@@ -43,6 +44,8 @@ export default function WaiterDashboard() {
   const [mesaPanel, setMesaPanel] = useState(null);
   const [quickSale, setQuickSale] = useState(false);
   const socket = useSocket();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const loadData = () => { ordersApi.getAll().then(setOrders).catch(console.error); mesasApi.getAll().then(setMesas).catch(console.error); };
   useEffect(() => { loadData(); }, []);
@@ -67,6 +70,7 @@ export default function WaiterDashboard() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Mesa status grid */}
+      {!isAdmin && (
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold uppercase tracking-widest text-ink-500">Mesas</h2>
@@ -98,6 +102,7 @@ export default function WaiterDashboard() {
           <div className="mt-2 text-xs text-green-600 font-semibold text-center">💰 Hay mesas listas para cobrar</div>
         )}
       </div>
+      )}
 
       {/* Delivery orders summary */}
       {orders.some(o => o.order_type === 'domicilio' && o.status !== 'completado' && o.status !== 'cancelado') && (
@@ -141,8 +146,10 @@ export default function WaiterDashboard() {
             <option value="pendiente">Pendientes</option>
             <option value="domicilio">Domicilio</option>
           </select>
-          <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>
-          <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
+          {!isAdmin && <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>}
+          {!isAdmin && (
+            <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
+          )}
         </div>
       </div>
 

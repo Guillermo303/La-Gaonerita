@@ -18,11 +18,10 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  // La cuenta admin ahora es la version de cocina/caja del dia a dia: solo
-  // ve el tablero de ordenes y la pantalla de cobro, sin el resto del panel
-  // de administracion.
+  // La cuenta admin solo ve las listas de pedidos y el cobro, sin el resto
+  // del panel de administracion ni la pantalla de cocina.
   const links = user.role === 'admin' ? [
-    { to: '/kitchen', label: 'Cocina' },
+    { to: '/waiter', label: 'Órdenes' },
     { to: '/pending-bills', label: 'Cuentas' }
   ] : [
     user.role === 'mesero' && { to: '/waiter', label: 'Mesero' },
