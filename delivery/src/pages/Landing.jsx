@@ -35,7 +35,7 @@ function FullMenu({ onClose }) {
   );
 }
 
-export default function Landing({ onStartOrder }) {
+export default function Landing({ onStartOrder, hasOrder, onTrackOrder }) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -67,6 +67,15 @@ export default function Landing({ onStartOrder }) {
               <span className="text-2xl">🛵</span>
               Pedir a Domicilio
             </button>
+            {hasOrder && (
+              <button
+                onClick={onTrackOrder}
+                className="btn-grow w-full bg-ink-900 text-cream-50 py-4 rounded-2xl font-bold text-base hover:bg-ink-800 transition flex items-center justify-center gap-3"
+              >
+                <span className="text-xl">📍</span>
+                Seguir Pedido
+              </button>
+            )}
           </div>
 
           <p className="text-ink-300 text-xs mt-12">(55) 1234-5678 · Lun – Dom · 12:00 – 23:00</p>
