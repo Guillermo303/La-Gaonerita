@@ -284,20 +284,18 @@ export default function NewOrder() {
               </table>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {cat.items.map(item => {
                 const qty = getQty(item.id, '');
                 return (
-                  <div key={item.id} className="bg-white rounded-xl shadow-sm border border-ink-900/5 px-3 py-2.5 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-bold text-ink-900 text-sm truncate">{item.name}</div>
-                      <div className="text-brand-600 font-extrabold text-xs">{formatPrice(item.price)}</div>
-                    </div>
+                  <div key={item.id} className="bg-white rounded-lg shadow-sm border border-ink-900/5 p-2">
+                    <div className="font-bold text-ink-900 text-xs truncate mb-1" title={item.name}>{item.name}</div>
+                    <div className="text-brand-600 font-extrabold text-xs mb-1.5">{formatPrice(item.price)}</div>
                     {browsing ? null : (
-                      <div className="inline-flex items-center gap-1 bg-cream-50 rounded-lg border border-ink-200 px-1 py-0.5 shrink-0">
-                        <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 rounded-md bg-white text-ink-700 font-bold text-sm hover:bg-cream-100 transition flex items-center justify-center">−</button>
-                        <span className="w-5 text-center font-bold text-ink-900 text-sm">{qty}</span>
-                        <button onClick={() => addItem(item)} className="w-6 h-6 rounded-md bg-brand-500 text-white font-bold text-sm hover:bg-brand-600 transition flex items-center justify-center">+</button>
+                      <div className="flex items-center justify-between gap-1">
+                        <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 rounded-md bg-white text-ink-700 font-bold text-xs hover:bg-cream-100 transition flex items-center justify-center border border-ink-200">−</button>
+                        <span className="flex-1 text-center font-bold text-ink-900 text-xs">{qty}</span>
+                        <button onClick={() => addItem(item)} className="w-6 h-6 rounded-md bg-brand-500 text-white font-bold text-xs hover:bg-brand-600 transition flex items-center justify-center">+</button>
                       </div>
                     )}
                   </div>
