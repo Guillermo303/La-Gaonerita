@@ -1,8 +1,10 @@
 const API = `${import.meta.env.VITE_API_URL || ''}/api`;
 
 const TIMEOUT_MS = 45000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 3000;
 
-async function request(path, options = {}) {
+async function request(path, options = {}, attempt = 0) {
   let res;
   try {
     const controller = new AbortController();
@@ -14,9 +16,17 @@ async function request(path, options = {}) {
     });
     clearTimeout(timer);
   } catch {
+    if (attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+      return request(path, options, attempt + 1);
+    }
     throw new Error('Error de conexión: no se pudo contactar el servidor, intenta de nuevo');
   }
   if (!res.ok) {
+    if (res.status >= 500 && attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+      return request(path, options, attempt + 1);
+    }
     const err = await res.json().catch(() => ({ error: `Error ${res.status}: el servidor no respondió correctamente` }));
     throw new Error(err.error || 'Error desconocido');
   }
