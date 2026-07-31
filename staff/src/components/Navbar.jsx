@@ -18,14 +18,19 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  const links = [
-    (user.role === 'admin' || user.role === 'mesero') && { to: '/waiter', label: 'Mesero' },
-    (user.role === 'admin' || user.role === 'mesero') && { to: '/pending-bills', label: 'Cuentas' },
-    (user.role === 'admin' || user.role === 'cocina') && { to: '/kitchen', label: 'Cocina' },
-    (user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && { to: '/tv', label: 'TV' },
-    (user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && { to: '/menu-board', label: 'Cartelera' },
-    (user.role === 'admin' || user.role === 'mesero' || user.role === 'cocina') && { to: '/disponibilidad', label: 'Disponibilidad' },
-    user.role === 'admin' && { to: '/admin', label: 'Admin' }
+  // La cuenta admin ahora es la version de cocina/caja del dia a dia: solo
+  // ve el tablero de ordenes y la pantalla de cobro, sin el resto del panel
+  // de administracion.
+  const links = user.role === 'admin' ? [
+    { to: '/kitchen', label: 'Cocina' },
+    { to: '/pending-bills', label: 'Cuentas' }
+  ] : [
+    user.role === 'mesero' && { to: '/waiter', label: 'Mesero' },
+    user.role === 'mesero' && { to: '/pending-bills', label: 'Cuentas' },
+    user.role === 'cocina' && { to: '/kitchen', label: 'Cocina' },
+    (user.role === 'mesero' || user.role === 'cocina') && { to: '/tv', label: 'TV' },
+    (user.role === 'mesero' || user.role === 'cocina') && { to: '/menu-board', label: 'Cartelera' },
+    (user.role === 'mesero' || user.role === 'cocina') && { to: '/disponibilidad', label: 'Disponibilidad' }
   ].filter(Boolean);
 
   return (

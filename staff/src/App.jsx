@@ -28,14 +28,14 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/kitchen" element={<ProtectedRoute roles={['admin', 'cocina']}><KitchenDisplay /></ProtectedRoute>} />
-        <Route path="/tv" element={<ProtectedRoute roles={['admin', 'cocina', 'mesero']}><TVDisplay /></ProtectedRoute>} />
-        <Route path="/menu-board" element={<ProtectedRoute roles={['admin', 'cocina', 'mesero']}><MenuBoard /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>} />
+        <Route path="/tv" element={<ProtectedRoute roles={['cocina', 'mesero']}><TVDisplay /></ProtectedRoute>} />
+        <Route path="/menu-board" element={<ProtectedRoute roles={['cocina', 'mesero']}><MenuBoard /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute roles={[]}><AdminPanel /></ProtectedRoute>} />
         <Route element={<StaffLayout />}>
-          <Route path="/waiter" element={<ProtectedRoute roles={['admin', 'mesero']}><WaiterDashboard /></ProtectedRoute>} />
-          <Route path="/waiter/new-order" element={<ProtectedRoute roles={['admin', 'mesero']}><NewOrder /></ProtectedRoute>} />
+          <Route path="/waiter" element={<ProtectedRoute roles={['mesero']}><WaiterDashboard /></ProtectedRoute>} />
+          <Route path="/waiter/new-order" element={<ProtectedRoute roles={['mesero']}><NewOrder /></ProtectedRoute>} />
           <Route path="/pending-bills" element={<ProtectedRoute roles={['admin', 'mesero']}><PendingBills /></ProtectedRoute>} />
-          <Route path="/disponibilidad" element={<ProtectedRoute roles={['admin', 'mesero', 'cocina']}><Disponibilidad /></ProtectedRoute>} />
+          <Route path="/disponibilidad" element={<ProtectedRoute roles={['mesero', 'cocina']}><Disponibilidad /></ProtectedRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

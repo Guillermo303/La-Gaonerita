@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { orders as ordersApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
 
 function ElapsedTimer({ created, status }) {
@@ -167,6 +169,13 @@ export default function KitchenDisplay() {
   const [view, setView] = useState('tablero');
   const socket = useSocket();
   const audioRef = useRef(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const playNotification = () => {
     try {
@@ -264,6 +273,14 @@ export default function KitchenDisplay() {
           <button onClick={() => setBigMode(true)} className="bg-ink-900 text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-sm sm:text-lg font-bold hover:bg-ink-800 transition shadow-lg flex items-center gap-2">
             <span className="text-xl sm:text-2xl">🔘</span> Botón Físico
           </button>
+          {user?.role === 'admin' && (
+            <>
+              <Link to="/pending-bills" className="bg-green-600 text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-sm sm:text-lg font-bold hover:bg-green-700 transition shadow-lg flex items-center gap-2">
+                💰 Cuentas
+              </Link>
+              <button onClick={handleLogout} className="text-sm font-semibold uppercase tracking-widest border border-gray-300 text-gray-600 px-4 py-2.5 rounded-xl hover:bg-gray-100 transition">Salir</button>
+            </>
+          )}
         </div>
       </div>
       {view === 'historial' ? (
