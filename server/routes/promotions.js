@@ -22,12 +22,12 @@ router.get('/', async (req, res) => {
   res.json(promotions.filter(isValidToday));
 });
 
-router.get('/all', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/all', authenticate, authorize('socio'), async (req, res) => {
   const promotions = await query('SELECT * FROM promotions ORDER BY created_at DESC');
   res.json(promotions);
 });
 
-router.post('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name, description, schedule_type, start_date, end_date, days_of_week } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   if (schedule_type && !['date_range', 'weekly'].includes(schedule_type)) return res.status(400).json({ error: 'Tipo de vigencia inválido' });
@@ -38,7 +38,7 @@ router.post('/', authenticate, authorize('admin', 'socio'), async (req, res) => 
   res.status(201).json({ id: result.lastInsertRowid, name });
 });
 
-router.put('/:id', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, description, image, image_shape, image_zoom, image_pos_x, image_pos_y, active, schedule_type, start_date, end_date, days_of_week } = req.body;
   if (schedule_type && !['date_range', 'weekly'].includes(schedule_type)) return res.status(400).json({ error: 'Tipo de vigencia inválido' });
   await run(
@@ -61,7 +61,7 @@ router.put('/:id', authenticate, authorize('admin', 'socio'), async (req, res) =
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM promotions WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

@@ -12,7 +12,7 @@ function parseAnchor(period, date) {
   return { anchor };
 }
 
-router.get('/sales', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/sales', authenticate, authorize('socio'), async (req, res) => {
   const { period = 'day', date } = req.query;
   const { anchor, error } = parseAnchor(period, date);
   if (error) return res.status(400).json({ error });
@@ -22,7 +22,7 @@ router.get('/sales', authenticate, authorize('admin', 'socio'), async (req, res)
   res.json(report);
 });
 
-router.get('/health', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/health', authenticate, authorize('socio'), async (req, res) => {
   const { period = 'day', date } = req.query;
   const { anchor, error } = parseAnchor(period, date);
   if (error) return res.status(400).json({ error });
@@ -32,7 +32,7 @@ router.get('/health', authenticate, authorize('admin', 'socio'), async (req, res
   res.json(health);
 });
 
-router.get('/finance', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/finance', authenticate, authorize('socio'), async (req, res) => {
   const { period = 'day', date } = req.query;
   const { anchor, error } = parseAnchor(period, date);
   if (error) return res.status(400).json({ error });
@@ -42,7 +42,7 @@ router.get('/finance', authenticate, authorize('admin', 'socio'), async (req, re
   res.json(overview);
 });
 
-router.post('/sales/save', authenticate, authorize('admin'), async (req, res) => {
+router.post('/sales/save', authenticate, authorize('socio'), async (req, res) => {
   const { period = 'day', date } = req.body;
   const { anchor, error } = parseAnchor(period, date);
   if (error) return res.status(400).json({ error });
@@ -52,7 +52,7 @@ router.post('/sales/save', authenticate, authorize('admin'), async (req, res) =>
   res.status(201).json({ success: true, id: saved.id, period: saved.period, date: saved.date });
 });
 
-router.get('/saved', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/saved', authenticate, authorize('socio'), async (req, res) => {
   const { period } = req.query;
   const rows = period
     ? await query('SELECT id, period, date, range_start, range_end, total_revenue, order_count, auto, generated_by, created_at FROM sales_reports WHERE period = ? ORDER BY created_at DESC LIMIT 100', [period])
@@ -60,13 +60,13 @@ router.get('/saved', authenticate, authorize('admin', 'socio'), async (req, res)
   res.json(rows);
 });
 
-router.get('/saved/:id', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/saved/:id', authenticate, authorize('socio'), async (req, res) => {
   const row = await get('SELECT * FROM sales_reports WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ error: 'Reporte no encontrado' });
   res.json({ ...row, data: JSON.parse(row.data) });
 });
 
-router.delete('/saved/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/saved/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM sales_reports WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

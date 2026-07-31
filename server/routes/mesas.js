@@ -45,20 +45,20 @@ router.get('/', async (req, res) => {
   res.json(result);
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   await run('INSERT INTO mesas (name) VALUES (?)', [name]);
   res.status(201).json({ success: true });
 });
 
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, sort_order } = req.body;
   await run('UPDATE mesas SET name = COALESCE(?, name), sort_order = COALESCE(?, sort_order) WHERE id = ?', [name, sort_order, req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM mesas WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

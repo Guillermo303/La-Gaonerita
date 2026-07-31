@@ -7,7 +7,7 @@ const router = Router();
 const CATEGORIES = ['cocina', 'mobiliario', 'electronica', 'punto_de_venta', 'otro'];
 const CONDITIONS = ['nuevo', 'bueno', 'regular', 'malo', 'fuera_de_servicio'];
 
-router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/', authenticate, authorize('socio'), async (req, res) => {
   const { category } = req.query;
   const rows = category
     ? await query('SELECT * FROM assets WHERE category = ? ORDER BY category, name', [category])
@@ -15,7 +15,7 @@ router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
   res.json(rows);
 });
 
-router.get('/summary', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/summary', authenticate, authorize('socio'), async (req, res) => {
   const rows = await query('SELECT * FROM assets');
   const totalValue = rows.reduce((s, a) => s + a.purchase_price * a.quantity, 0);
   const totalItems = rows.reduce((s, a) => s + a.quantity, 0);
@@ -40,7 +40,7 @@ router.get('/summary', authenticate, authorize('admin', 'socio'), async (req, re
   res.json({ totalValue, totalItems, assetCount: rows.length, byCategory, byCondition });
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name, category, quantity, purchase_price, purchase_date, condition, location, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   if (category && !CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoría inválida' });
@@ -59,7 +59,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json(row);
 });
 
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Activo no encontrado' });
 
@@ -89,7 +89,7 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json(row);
 });
 
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM assets WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Activo no encontrado' });
   await run('DELETE FROM assets WHERE id = ?', [req.params.id]);

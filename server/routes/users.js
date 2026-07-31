@@ -11,7 +11,7 @@ async function hasHistory(userId) {
   return false;
 }
 
-router.get('/lookup', authenticate, authorize('admin'), async (req, res) => {
+router.get('/lookup', authenticate, authorize('socio'), async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
   // El mismo email puede tener varias cuentas (una por rol), así que se
@@ -22,7 +22,7 @@ router.get('/lookup', authenticate, authorize('admin'), async (req, res) => {
   res.json(withHistory);
 });
 
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   const id = Number(req.params.id);
   if (id === req.user.id) return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
   const user = await get('SELECT id FROM users WHERE id = ?', [id]);

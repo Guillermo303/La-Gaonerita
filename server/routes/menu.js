@@ -11,27 +11,27 @@ router.get('/', async (req, res) => {
   res.json(menu);
 });
 
-router.get('/all', authenticate, authorize('admin', 'mesero', 'cocina'), async (req, res) => {
+router.get('/all', authenticate, authorize('socio', 'mesero', 'cocina'), async (req, res) => {
   const categories = await query('SELECT * FROM categories ORDER BY sort_order');
   const items = await query('SELECT * FROM menu_items ORDER BY sort_order');
   const menu = categories.map(cat => ({ ...cat, items: items.filter(i => i.category_id === cat.id) }));
   res.json(menu);
 });
 
-router.post('/categories', authenticate, authorize('admin'), async (req, res) => {
+router.post('/categories', authenticate, authorize('socio'), async (req, res) => {
   const { name, description } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   const result = await run('INSERT INTO categories (name, description) VALUES (?, ?)', [name, description || null]);
   res.status(201).json({ id: result.lastInsertRowid, name, description });
 });
 
-router.put('/categories/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/categories/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, description, sort_order } = req.body;
   await run('UPDATE categories SET name = COALESCE(?, name), description = COALESCE(?, description), sort_order = COALESCE(?, sort_order) WHERE id = ?', [name, description, sort_order, req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/categories/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/categories/:id', authenticate, authorize('socio'), async (req, res) => {
   const items = await query('SELECT id FROM menu_items WHERE category_id = ?', [req.params.id]);
 
   // Cada producto conserva su historial de ventas aunque se elimine: los
@@ -49,7 +49,7 @@ router.delete('/categories/:id', authenticate, authorize('admin'), async (req, r
   res.json({ success: true, deletedItems: items.length });
 });
 
-router.post('/items', authenticate, authorize('admin'), async (req, res) => {
+router.post('/items', authenticate, authorize('socio'), async (req, res) => {
   const { category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, max_stock, ready_to_serve } = req.body;
   if (!category_id || !name || !price) return res.status(400).json({ error: 'Categoría, nombre y precio requeridos' });
   const capacity = Number.isFinite(Number(max_stock)) && max_stock !== undefined ? Math.max(0, Math.round(max_stock)) : 20;
@@ -58,21 +58,21 @@ router.post('/items', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid, category_id, name, price, stock: capacity, max_stock: capacity, ready_to_serve: ready_to_serve ? 1 : 0 });
 });
 
-router.put('/items/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/items/:id', authenticate, authorize('socio'), async (req, res) => {
   const { category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, available, max_stock, ready_to_serve } = req.body;
   await run('UPDATE menu_items SET category_id = COALESCE(?, category_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), image = COALESCE(?, image), image_shape = COALESCE(?, image_shape), image_zoom = COALESCE(?, image_zoom), image_pos_x = COALESCE(?, image_pos_x), image_pos_y = COALESCE(?, image_pos_y), available = COALESCE(?, available), max_stock = COALESCE(?, max_stock), ready_to_serve = COALESCE(?, ready_to_serve) WHERE id = ?',
     [category_id, name, description, price, image, image_shape, image_zoom, image_pos_x, image_pos_y, available, max_stock, ready_to_serve !== undefined ? (ready_to_serve ? 1 : 0) : undefined, req.params.id]);
   res.json({ success: true });
 });
 
-router.put('/items/:id/stock', authenticate, authorize('admin', 'mesero', 'cocina'), async (req, res) => {
+router.put('/items/:id/stock', authenticate, authorize('socio', 'mesero', 'cocina'), async (req, res) => {
   const { stock } = req.body;
   if (!Number.isFinite(Number(stock)) || stock < 0) return res.status(400).json({ error: 'Cantidad inválida' });
   await run('UPDATE menu_items SET stock = ? WHERE id = ?', [Math.round(stock), req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/items/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/items/:id', authenticate, authorize('socio'), async (req, res) => {
   // order_items guarda su propia copia de nombre/precio, así que borrar el
   // producto no afecta el historial ya mostrado — solo se desliga.
   await run('DELETE FROM menu_item_supplies WHERE menu_item_id = ?', [req.params.id]);

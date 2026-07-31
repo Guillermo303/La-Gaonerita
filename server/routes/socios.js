@@ -9,12 +9,12 @@ function parseSocio(row) {
   return { id: row.id, name: row.name, email: row.email, phone: row.phone, active: row.active, created_at: row.created_at };
 }
 
-router.get('/', authenticate, authorize('admin'), async (req, res) => {
+router.get('/', authenticate, authorize('socio'), async (req, res) => {
   const rows = await query("SELECT id, name, email, phone, active, created_at FROM users WHERE role = 'socio' ORDER BY active DESC, name ASC");
   res.json(rows.map(parseSocio));
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name, email, password, phone } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
   if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
@@ -28,7 +28,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json(parseSocio(row));
 });
 
-router.put('/:id/status', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id/status', authenticate, authorize('socio'), async (req, res) => {
   const { active } = req.body;
   if (typeof active !== 'boolean') return res.status(400).json({ error: 'Estado inválido' });
   const id = Number(req.params.id);

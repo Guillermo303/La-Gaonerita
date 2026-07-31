@@ -9,12 +9,12 @@ function parseSupply(row) {
   return { ...row, remaining: row.purchased - row.consumed };
 }
 
-router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/', authenticate, authorize('socio'), async (req, res) => {
   const rows = await query('SELECT * FROM supply_items ORDER BY sort_order, name');
   res.json(rows.map(parseSupply));
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name, unit, purchased } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   const existing = await get('SELECT id FROM supply_items WHERE name = ?', [name]);
@@ -31,7 +31,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json(parseSupply(row));
 });
 
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM supply_items WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Insumo no encontrado' });
   const { name, unit, sort_order } = req.body;
@@ -40,7 +40,7 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json(parseSupply(row));
 });
 
-router.put('/:id/purchase', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id/purchase', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM supply_items WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Insumo no encontrado' });
   const { purchased } = req.body;
@@ -52,13 +52,13 @@ router.put('/:id/purchase', authenticate, authorize('admin'), async (req, res) =
   res.json(parseSupply(row));
 });
 
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM menu_item_supplies WHERE supply_item_id = ?', [req.params.id]);
   await run('DELETE FROM supply_items WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
 
-router.get('/recipes', authenticate, authorize('admin'), async (req, res) => {
+router.get('/recipes', authenticate, authorize('socio'), async (req, res) => {
   const { menu_item_id } = req.query;
   const rows = menu_item_id
     ? await query(`SELECT r.*, s.name as supply_name, s.unit as supply_unit FROM menu_item_supplies r JOIN supply_items s ON s.id = r.supply_item_id WHERE r.menu_item_id = ?`, [menu_item_id])
@@ -66,7 +66,7 @@ router.get('/recipes', authenticate, authorize('admin'), async (req, res) => {
   res.json(rows);
 });
 
-router.post('/recipes', authenticate, authorize('admin'), async (req, res) => {
+router.post('/recipes', authenticate, authorize('socio'), async (req, res) => {
   const { menu_item_id, supply_item_id, quantity_per_unit } = req.body;
   if (!menu_item_id || !supply_item_id) return res.status(400).json({ error: 'Producto e insumo requeridos' });
   const qty = quantity_per_unit !== undefined ? Number(quantity_per_unit) : 1;
@@ -87,12 +87,12 @@ router.post('/recipes', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid, menu_item_id, supply_item_id, quantity_per_unit: qty });
 });
 
-router.delete('/recipes/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/recipes/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM menu_item_supplies WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
 
-router.get('/history', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/history', authenticate, authorize('socio'), async (req, res) => {
   const { supply_item_id } = req.query;
   const rows = supply_item_id
     ? await query('SELECT * FROM supply_week_history WHERE supply_item_id = ? ORDER BY week_start DESC', [supply_item_id])

@@ -38,12 +38,12 @@ const SELECT_EMPLOYEES = `
   WHERE u.role != 'cliente'
 `;
 
-router.get('/', authenticate, authorize('admin'), async (req, res) => {
+router.get('/', authenticate, authorize('socio'), async (req, res) => {
   const rows = await query(`${SELECT_EMPLOYEES} ORDER BY u.active DESC, u.name ASC`);
   res.json(rows.map(parseEmployee));
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { name, email, password, phone, role, puesto, salario, periodo_pago, prestaciones, dias_laborales } = req.body;
 
   if (!name || !email || !password) return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
@@ -66,7 +66,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json(parseEmployee(row));
 });
 
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, phone, role, puesto, salario, periodo_pago, prestaciones, dias_laborales } = req.body;
   const id = Number(req.params.id);
   const target = await get('SELECT id FROM users WHERE id = ? AND role != \'cliente\'', [id]);
@@ -98,7 +98,7 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json(parseEmployee(row));
 });
 
-router.put('/:id/status', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id/status', authenticate, authorize('socio'), async (req, res) => {
   const { active } = req.body;
   if (typeof active !== 'boolean') return res.status(400).json({ error: 'Estado inválido' });
   const id = Number(req.params.id);

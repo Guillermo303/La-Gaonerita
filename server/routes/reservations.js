@@ -21,7 +21,7 @@ function todayStr() {
   return new Date().toLocaleDateString('en-CA');
 }
 
-router.get('/', authenticate, authorize('admin', 'mesero'), async (req, res) => {
+router.get('/', authenticate, authorize('socio', 'mesero'), async (req, res) => {
   const { date } = req.query;
   const rows = date
     ? await query('SELECT r.*, m.name as mesa_name FROM reservations r JOIN mesas m ON m.id = r.mesa_id WHERE r.date = ? ORDER BY r.time', [date])
@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({ success: true, id: lastInsertRowid, mesa: mesa.name });
 });
 
-router.put('/:id/status', authenticate, authorize('admin', 'mesero'), async (req, res) => {
+router.put('/:id/status', authenticate, authorize('socio', 'mesero'), async (req, res) => {
   const { status } = req.body;
   if (!['confirmada', 'ocupada', 'completada', 'cancelada'].includes(status)) {
     return res.status(400).json({ error: 'Estado inválido' });
@@ -83,7 +83,7 @@ router.put('/:id/status', authenticate, authorize('admin', 'mesero'), async (req
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, authorize('admin', 'mesero'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio', 'mesero'), async (req, res) => {
   await run('DELETE FROM reservations WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

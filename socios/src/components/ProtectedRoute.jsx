@@ -7,7 +7,7 @@ export default function ProtectedRoute({ children }) {
   if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div></div>;
 
   if (!user) return <Navigate to="/login" replace />;
-  if (!['socio', 'admin'].includes(user.role)) return <Navigate to="/login" replace />;
+  if (user.role !== 'socio') return <Navigate to="/login" replace />;
 
   return children;
 }

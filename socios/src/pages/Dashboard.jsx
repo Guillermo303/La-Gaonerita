@@ -7,6 +7,11 @@ import GrowthLottie from '../components/GrowthLottie';
 import CountUp from '../components/CountUp';
 import StyledImage from '../components/StyledImage';
 import ImageEditorModal from '../components/ImageEditor';
+import {
+  FinanzasTab, MenuTab, PersonalizacionTab, MesasTab, ReservacionesTab,
+  GastosTab, InsumosTab, ActivosTab, OrdenesTab, HistorialTab,
+  EmpleadosTab, SociosAccountsTab
+} from './AdminTools';
 
 function fmtHour(h) {
   const period = h < 12 ? 'AM' : 'PM';
@@ -257,13 +262,33 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-6">
-        <div className="flex gap-1 bg-ink-100 rounded-lg p-1 mb-6 w-fit">
-          {[['actual', 'Salud del Negocio'], ['guardados', 'Reportes Guardados'], ['promociones', 'Promociones']].map(([key, label]) => (
+        <div className="flex gap-1 bg-ink-100 rounded-lg p-1 mb-6 w-fit flex-wrap">
+          {[
+            ['actual', 'Salud del Negocio'], ['guardados', 'Reportes Guardados'], ['finanzas', 'Finanzas'],
+            ['promociones', 'Promociones'], ['menu', 'Menú'], ['personalizacion', 'Personalización'],
+            ['mesas', 'Mesas'], ['reservaciones', 'Reservaciones'], ['gastos', 'Gastos'],
+            ['insumos', 'Insumos'], ['activos', 'Activos'], ['ordenes', 'Órdenes'], ['historial', 'Historial'],
+            ['empleados', 'Empleados'], ['socios', 'Socios']
+          ].map(([key, label]) => (
             <button key={key} onClick={() => setView(key)} className={`card-glow px-4 py-1.5 rounded-md text-xs font-bold transition ${view === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
           ))}
         </div>
 
-        {view === 'guardados' ? <SavedReports /> : view === 'promociones' ? <PromocionesAdmin /> : (
+        {view === 'guardados' ? <SavedReports />
+          : view === 'promociones' ? <PromocionesAdmin />
+          : view === 'finanzas' ? <FinanzasTab />
+          : view === 'menu' ? <MenuTab />
+          : view === 'personalizacion' ? <PersonalizacionTab />
+          : view === 'mesas' ? <MesasTab />
+          : view === 'reservaciones' ? <ReservacionesTab />
+          : view === 'gastos' ? <GastosTab />
+          : view === 'insumos' ? <InsumosTab />
+          : view === 'activos' ? <ActivosTab />
+          : view === 'ordenes' ? <OrdenesTab />
+          : view === 'historial' ? <HistorialTab />
+          : view === 'empleados' ? <EmpleadosTab />
+          : view === 'socios' ? <SociosAccountsTab />
+          : (
           <>
             <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
               <div className="flex gap-1 bg-ink-100 rounded-lg p-1">

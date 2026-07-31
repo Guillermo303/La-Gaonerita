@@ -8,7 +8,7 @@ const router = Router();
 const CATEGORIES = ['renta', 'servicios', 'insumos', 'mantenimiento', 'marketing', 'impuestos', 'otro'];
 const PAYMENT_METHODS = ['efectivo', 'transferencia', 'tarjeta'];
 
-router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/', authenticate, authorize('socio'), async (req, res) => {
   const { from, to, category } = req.query;
   const clauses = [];
   const params = [];
@@ -20,7 +20,7 @@ router.get('/', authenticate, authorize('admin', 'socio'), async (req, res) => {
   res.json(rows);
 });
 
-router.get('/summary', authenticate, authorize('admin', 'socio'), async (req, res) => {
+router.get('/summary', authenticate, authorize('socio'), async (req, res) => {
   const { period = 'day', date } = req.query;
   if (!['day', 'week', 'month'].includes(period)) return res.status(400).json({ error: 'Periodo inválido' });
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Formato de fecha inválido' });
@@ -45,7 +45,7 @@ router.get('/summary', authenticate, authorize('admin', 'socio'), async (req, re
   res.json({ period, range: { start: startStr, end: endStr }, total, count: rows.length, byCategory });
 });
 
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+router.post('/', authenticate, authorize('socio'), async (req, res) => {
   const { category, description, amount, date, payment_method } = req.body;
   if (!category || !CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoría inválida' });
   const numAmount = Number(amount);
@@ -61,7 +61,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json(row);
 });
 
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM expenses WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Gasto no encontrado' });
 
@@ -79,7 +79,7 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   res.json(row);
 });
 
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('socio'), async (req, res) => {
   const existing = await get('SELECT id FROM expenses WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ error: 'Gasto no encontrado' });
   await run('DELETE FROM expenses WHERE id = ?', [req.params.id]);

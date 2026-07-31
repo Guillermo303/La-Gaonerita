@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   res.json(groups.map(g => ({ ...g, options: options.filter(o => o.group_id === g.id) })));
 });
 
-router.post('/groups', authenticate, authorize('admin'), async (req, res) => {
+router.post('/groups', authenticate, authorize('socio'), async (req, res) => {
   const { name, selection_type } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   if (selection_type && !['single', 'multiple'].includes(selection_type)) return res.status(400).json({ error: 'Tipo de selección inválido' });
@@ -18,20 +18,20 @@ router.post('/groups', authenticate, authorize('admin'), async (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid, name, selection_type: selection_type || 'single', options: [] });
 });
 
-router.put('/groups/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/groups/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, selection_type, sort_order } = req.body;
   if (selection_type && !['single', 'multiple'].includes(selection_type)) return res.status(400).json({ error: 'Tipo de selección inválido' });
   await run('UPDATE customization_groups SET name = COALESCE(?, name), selection_type = COALESCE(?, selection_type), sort_order = COALESCE(?, sort_order) WHERE id = ?', [name, selection_type, sort_order, req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/groups/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/groups/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM customization_options WHERE group_id = ?', [req.params.id]);
   await run('DELETE FROM customization_groups WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
 
-router.post('/groups/:groupId/options', authenticate, authorize('admin'), async (req, res) => {
+router.post('/groups/:groupId/options', authenticate, authorize('socio'), async (req, res) => {
   const { name, image, image_shape, image_zoom, image_pos_x, image_pos_y } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });
   const result = await run('INSERT INTO customization_options (group_id, name, image, image_shape, image_zoom, image_pos_x, image_pos_y) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -39,14 +39,14 @@ router.post('/groups/:groupId/options', authenticate, authorize('admin'), async 
   res.status(201).json({ id: result.lastInsertRowid, group_id: Number(req.params.groupId), name });
 });
 
-router.put('/options/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/options/:id', authenticate, authorize('socio'), async (req, res) => {
   const { name, sort_order, image, image_shape, image_zoom, image_pos_x, image_pos_y } = req.body;
   await run('UPDATE customization_options SET name = COALESCE(?, name), sort_order = COALESCE(?, sort_order), image = COALESCE(?, image), image_shape = COALESCE(?, image_shape), image_zoom = COALESCE(?, image_zoom), image_pos_x = COALESCE(?, image_pos_x), image_pos_y = COALESCE(?, image_pos_y) WHERE id = ?',
     [name, sort_order, image, image_shape, image_zoom, image_pos_x, image_pos_y, req.params.id]);
   res.json({ success: true });
 });
 
-router.delete('/options/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/options/:id', authenticate, authorize('socio'), async (req, res) => {
   await run('DELETE FROM customization_options WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });
