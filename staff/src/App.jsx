@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import WaiterDashboard from './pages/waiter/Dashboard';
+import TableSelect from './pages/waiter/TableSelect';
 import NewOrder from './pages/waiter/NewOrder';
 import KitchenDisplay from './pages/kitchen/Display';
 import TVDisplay from './pages/TVDisplay';
@@ -30,7 +31,8 @@ export default function App() {
         <Route path="/tv" element={<ProtectedRoute roles={['cocina', 'mesero']}><TVDisplay /></ProtectedRoute>} />
         <Route path="/menu-board" element={<ProtectedRoute roles={['cocina', 'mesero']}><MenuBoard /></ProtectedRoute>} />
         <Route element={<StaffLayout />}>
-          <Route path="/waiter" element={<ProtectedRoute roles={['mesero']}><WaiterDashboard /></ProtectedRoute>} />
+          <Route path="/waiter" element={<ProtectedRoute roles={['admin', 'mesero']}><WaiterDashboard /></ProtectedRoute>} />
+          <Route path="/waiter/tables" element={<ProtectedRoute roles={['mesero']}><TableSelect /></ProtectedRoute>} />
           <Route path="/waiter/new-order" element={<ProtectedRoute roles={['mesero']}><NewOrder /></ProtectedRoute>} />
           <Route path="/pending-bills" element={<ProtectedRoute roles={['admin', 'mesero']}><PendingBills /></ProtectedRoute>} />
           <Route path="/disponibilidad" element={<ProtectedRoute roles={['mesero', 'cocina']}><Disponibilidad /></ProtectedRoute>} />

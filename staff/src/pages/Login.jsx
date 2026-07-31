@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-  const destinoPorRol = { admin: '/waiter', cocina: '/kitchen', mesero: '/waiter' };
+  const destinoPorRol = { admin: '/waiter', cocina: '/kitchen', mesero: '/waiter/tables' };
 
 export default function Login() {
   const [email, setEmail] = useState('');
