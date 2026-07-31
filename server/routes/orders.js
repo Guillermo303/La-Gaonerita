@@ -83,6 +83,21 @@ router.get('/recommendations', authenticate, async (req, res) => {
   res.json({ eligible: true, items });
 });
 
+// Publico: numero de orden que se muestra en el cartel de turno (cocina,
+// cartelera de TV y la app de domicilio). Prioriza la orden que ya está
+// "preparando" (lo que se ve en el mostrador); si ninguna está en
+// preparación todavía, cae al siguiente pendiente para nunca quedar en
+// blanco. A diferencia del "Boton Fisico" de cocina (que prioriza vaciar
+// pendientes primero), aqui el orden de prioridad es al reves porque el
+// cartel representa "que estan haciendo ahorita", no "que sigue".
+router.get('/queue/current', async (req, res) => {
+  const active = await query(
+    "SELECT id, status, order_type FROM orders WHERE status IN ('pendiente','preparando') ORDER BY created_at ASC"
+  );
+  const target = active.find(o => o.status === 'preparando') || active.find(o => o.status === 'pendiente') || null;
+  res.json({ number: target?.id ?? null, status: target?.status ?? null, order_type: target?.order_type ?? null });
+});
+
 router.get('/:id/status', async (req, res) => {
   const order = await get('SELECT id, status, created_at FROM orders WHERE id = ?', [req.params.id]);
   if (!order) return res.status(404).json({ error: 'Orden no encontrada' });

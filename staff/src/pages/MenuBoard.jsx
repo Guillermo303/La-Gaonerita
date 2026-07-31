@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { menu as menuApi, promotions as promotionsApi } from '../api';
+import { menu as menuApi, promotions as promotionsApi, orders as ordersApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import StyledImage from '../components/StyledImage';
+import { useSocket } from '../context/SocketContext';
 
 const SLIDE_MS = 9000;
 const REFRESH_MS = 60000;
@@ -11,6 +12,36 @@ function chunk(arr, size) {
   const out = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
+}
+
+function QueueBanner() {
+  const [queue, setQueue] = useState(null);
+  const socket = useSocket();
+
+  useEffect(() => {
+    const load = () => ordersApi.getQueueCurrent().then(setQueue).catch(console.error);
+    load();
+    if (socket) socket.on('order:update', load);
+    return () => { if (socket) socket.off('order:update', load); };
+  }, [socket]);
+
+  if (!queue) return null;
+
+  return (
+    <div className="shrink-0 bg-brand-500 px-10 py-4 flex items-center justify-center gap-4">
+      {queue.number ? (
+        <>
+          <span className="text-2xl">{queue.status === 'preparando' ? '👨‍🍳' : '⏭️'}</span>
+          <span className="text-2xl font-bold uppercase tracking-widest">
+            {queue.status === 'preparando' ? 'Preparando ahora' : 'Siguiente turno'}
+          </span>
+          <span className="text-4xl font-black font-display">#{queue.number}</span>
+        </>
+      ) : (
+        <span className="text-xl font-bold uppercase tracking-widest">🍃 Sin pedidos en fila</span>
+      )}
+    </div>
+  );
 }
 
 export default function MenuBoard() {
@@ -72,6 +103,7 @@ export default function MenuBoard() {
         <h1 className="text-3xl font-black font-display">🌮 La Gaonerita</h1>
         <div className="text-2xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
       </div>
+      <QueueBanner />
 
       <div key={slide} className="menuboard-slide flex-1 px-14 pb-10 flex flex-col justify-center">
         {current.intro ? (
