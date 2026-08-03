@@ -25,7 +25,7 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-
 .serape-line {
   height: 4px;
   background: repeating-linear-gradient(90deg,
-    #D6431F 0, #D6431F 48px,
+    #BD4A26 0, #BD4A26 48px,
     #E2A33F 48px, #E2A33F 96px,
     #2F7D4F 96px, #2F7D4F 144px,
     #8C4A2F 144px, #8C4A2F 192px);
@@ -44,7 +44,7 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-
 
 /* Botones sólidos: crecen y levantan una sombra cálida */
 .btn-grow { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.btn-grow:hover { transform: scale(1.06); box-shadow: 0 12px 28px -8px rgba(214, 67, 31, 0.5); }
+.btn-grow:hover { transform: scale(1.06); box-shadow: 0 12px 28px -8px rgba(189, 74, 38, 0.5); }
 .btn-grow:active { transform: scale(0.97); }
 
 /* Botones de contorno: el color de marca entra en diagonal, con un destello
@@ -57,7 +57,7 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-
   left: -120%;
   width: 120%;
   height: 100%;
-  background: #D6431F;
+  background: #BD4A26;
   transform: skewX(-20deg);
   transition: left 0.4s ease-in-out;
   z-index: -1;
@@ -94,7 +94,7 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-
 
 /* Tarjetas: resplandor cálido y ligero levantamiento */
 .card-glow { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.card-glow:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(214, 67, 31, 0.35); }
+.card-glow:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(189, 74, 38, 0.35); }
 
 /* Ícono que flota suavemente cuando se pasa el mouse sobre la tarjeta que lo contiene */
 @keyframes icon-float {

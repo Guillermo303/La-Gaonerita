@@ -16,7 +16,7 @@ export default defineConfig({
         name: 'La Gaonerita - Personal',
         short_name: 'La Gaonerita',
         description: 'App interna para meseros, cocina y administración de La Gaonerita',
-        theme_color: '#D6431F',
+        theme_color: '#BD4A26',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/login',

@@ -12,7 +12,7 @@ export default defineConfig({
         name: 'La Gaonerita - Socios',
         short_name: 'La Gaonerita',
         description: 'Panel de socios y dueños: reportes de ventas y salud del negocio de La Gaonerita',
-        theme_color: '#D6431F',
+        theme_color: '#BD4A26',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/login',

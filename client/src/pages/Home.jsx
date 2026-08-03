@@ -257,7 +257,7 @@ export default function Home() {
             </div>
           </Reveal>
         </div>
-        <Zigzag fill="#FBF7EF" className="absolute bottom-0 left-0" />
+        <Zigzag fill="#FFF8F2" className="absolute bottom-0 left-0" />
       </section>
 
       {/* Historia */}
@@ -330,7 +330,7 @@ export default function Home() {
 
       {/* Favoritos */}
       <section className="bg-cream-100 relative">
-        <Zigzag fill="#FBF7EF" className="absolute top-0 left-0" />
+        <Zigzag fill="#FFF8F2" className="absolute top-0 left-0" />
         <div className="max-w-7xl mx-auto px-4 py-20 pt-24">
           <Reveal>
             <div className="text-center mb-12">
@@ -371,7 +371,7 @@ export default function Home() {
       <section className="relative bg-ink-900 overflow-hidden">
         <img src={IMG.interior} alt="Interior del restaurante" className="absolute inset-0 w-full h-full object-cover opacity-30 animate-kenburns" />
         <div className="absolute inset-0 bg-ink-950/40" />
-        <Zigzag fill="#F5EDDF" className="absolute top-0 left-0 z-10" />
+        <Zigzag fill="#F7ECDC" className="absolute top-0 left-0 z-10" />
         <div className="relative max-w-7xl mx-auto px-4 py-20 lg:py-28">
           <Reveal variant="reveal-left">
             <div className="bg-cream-50 rounded-2xl shadow-2xl p-8 max-w-md">
