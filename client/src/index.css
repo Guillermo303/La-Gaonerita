@@ -7,7 +7,8 @@
    móvil puede dejar la página entera con scroll/zoom horizontal mientras
    anima, mostrando el fondo por el borde. */
 html { overflow-x: hidden; }
-body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+body { overflow-x: hidden; font-family: 'Work Sans', 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFF8F2; color: #1D1A13; }
+::selection { background: #BD4A26; color: #FFF8F2; }
 
 /* Zoom lento tipo Ken Burns para fotos de fondo */
 @keyframes kenburns {

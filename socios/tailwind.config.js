@@ -4,13 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { 50: '#FDF1EE', 100: '#FADCD5', 200: '#F4B7A8', 300: '#EC8D75', 400: '#E2603F', 500: '#D6431F', 600: '#B8371A', 700: '#962D18', 800: '#772517', 900: '#4E1810' },
-        ink: { 50: '#F6F1EA', 100: '#E9DFD2', 200: '#CDBCA6', 300: '#A8927A', 400: '#7C6A56', 500: '#5A4B3C', 600: '#42362B', 700: '#31271E', 800: '#251C14', 900: '#1B130C', 950: '#140D08' },
-        cream: { 50: '#FBF7EF', 100: '#F5EDDF', 200: '#EADFCA', 300: '#DECCAD' }
+        brand: { 50: '#FDF1EC', 100: '#F8DCD2', 200: '#F2B9A6', 300: '#E48C70', 400: '#CF6246', 500: '#BD4A26', 600: '#A03A1A', 700: '#682B14', 800: '#4A200F', 900: '#33160A' },
+        ink: { 50: '#F4EFE6', 100: '#E8DECF', 200: '#D0C2AC', 300: '#B09E83', 400: '#8A7155', 500: '#665949', 600: '#4A3F33', 700: '#35302A', 800: '#282621', 900: '#1D1A13', 950: '#110F0A' },
+        cream: { 50: '#FFF8F2', 100: '#F7ECDC', 200: '#EDE1D1', 300: '#DFC0B7' }
       },
       fontFamily: {
-        sans: ['"Work Sans"', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['Bitter', 'Georgia', 'serif']
+        sans: ['"Work Sans"', '"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Anton', 'Bitter', 'Georgia', 'serif']
+      },
+      boxShadow: {
+        block: '4px 4px 0 0 #665949',
+        blockSm: '3px 3px 0 0 #665949',
+        blockBrand: '4px 4px 0 0 #BD4A26'
       }
     }
   },
