@@ -104,16 +104,16 @@ function OrderRow({ order, queueNumber, selected, onSelect }) {
   const cfg = statusConfig[order.status] || statusConfig.pendiente;
   return (
     <button onClick={() => onSelect(order.id)}
-      className={`w-full flex items-center gap-2 gap-y-1 p-3 rounded-xl border-2 shadow-sm text-left flex-wrap transition ${cfg.bg} ${selected ? 'ring-2 ring-ink-900' : ''}`}>
+      className={`w-full flex items-center gap-3 gap-y-1.5 p-4 rounded-xl border-2 shadow-sm text-left flex-wrap transition ${cfg.bg} ${selected ? 'ring-2 ring-ink-900' : ''}`}>
       {queueNumber != null && (
-        <span className="shrink-0 w-7 h-7 rounded-full bg-ink-900 text-white text-sm font-black flex items-center justify-center">{queueNumber}</span>
+        <span className="shrink-0 w-9 h-9 rounded-full bg-ink-900 text-white text-base font-black flex items-center justify-center">{queueNumber}</span>
       )}
-      <span className="font-black text-base text-ink-900 shrink-0">#{order.id}</span>
-      <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
-      <span className="text-sm font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
-      {order.mesa && <span className="text-xs text-ink-400 font-medium shrink-0">{order.mesa}</span>}
-      <span className="font-bold text-ink-900 shrink-0 ml-auto text-sm">{formatPrice(order.total)}</span>
-      <span className="text-xs text-ink-400 shrink-0 w-14 text-right"><ElapsedTime created={order.created_at} /></span>
+      <span className="font-black text-lg text-ink-900 shrink-0">#{order.id}</span>
+      <span className={`text-sm font-bold px-2.5 py-1 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+      <span className="text-base font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
+      {order.mesa && <span className="text-sm text-ink-400 font-medium shrink-0">{order.mesa}</span>}
+      <span className="font-bold text-ink-900 shrink-0 ml-auto text-base">{formatPrice(order.total)}</span>
+      <span className="text-sm text-ink-400 shrink-0 w-16 text-right"><ElapsedTime created={order.created_at} /></span>
     </button>
   );
 }
@@ -121,21 +121,21 @@ function OrderRow({ order, queueNumber, selected, onSelect }) {
 function OrderDetailPanel({ order, onUpdateStatus, onCobrar }) {
   if (!order) {
     return (
-      <div className="bg-white rounded-b-xl shadow-sm p-10 text-center text-ink-400 min-h-[16rem] flex flex-col items-center justify-center">
-        <div className="text-4xl mb-2">👈</div>
-        <p className="font-semibold text-sm">Selecciona una orden para ver su contenido</p>
+      <div className="bg-white rounded-b-xl shadow-sm p-10 text-center text-ink-400 min-h-[24rem] flex flex-col items-center justify-center">
+        <div className="text-5xl mb-3">👈</div>
+        <p className="font-semibold text-base">Selecciona una orden para ver su contenido</p>
       </div>
     );
   }
   const cfg = statusConfig[order.status] || statusConfig.pendiente;
   return (
-    <div className={`rounded-b-xl shadow-sm border-2 p-4 space-y-3 min-h-[16rem] ${cfg.bg}`}>
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-black text-2xl text-ink-900">#{order.id}</span>
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
+    <div className={`rounded-b-xl shadow-sm border-2 p-6 space-y-4 min-h-[24rem] ${cfg.bg}`}>
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <span className="font-black text-3xl text-ink-900">#{order.id}</span>
+        <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>{cfg.label}</span>
+        <span className={`text-sm font-semibold px-2.5 py-1 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type]}</span>
       </div>
-      <div className="bg-white/70 rounded-lg p-3 space-y-1 text-sm">
+      <div className="bg-white/70 rounded-lg p-4 space-y-2 text-base">
         {order.items?.map(item => (
           <div key={item.id} className="flex justify-between">
             <span className="text-ink-800 font-medium">{item.quantity}x {item.name}</span>
@@ -143,27 +143,27 @@ function OrderDetailPanel({ order, onUpdateStatus, onCobrar }) {
           </div>
         ))}
       </div>
-      <div className="flex justify-between items-center pt-2 border-t border-ink-900/10">
-        <span className="text-xs font-semibold uppercase tracking-widest text-ink-400">Total</span>
-        <span className="font-black text-xl text-ink-900">{formatPrice(order.total)}</span>
+      <div className="flex justify-between items-center pt-3 border-t border-ink-900/10">
+        <span className="text-sm font-semibold uppercase tracking-widest text-ink-400">Total</span>
+        <span className="font-black text-2xl text-ink-900">{formatPrice(order.total)}</span>
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-500">
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-500">
         <span className="font-semibold text-ink-700">{order.customer_name}</span>
         {order.customer_phone && <span>📞 {order.customer_phone}</span>}
         {order.mesa && <span>📍 {order.mesa}</span>}
         {order.order_type === 'domicilio' && order.customer_address && <span className="w-full">📍 {order.customer_address}</span>}
       </div>
-      {order.notes && <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">📝 {order.notes}</div>}
+      {order.notes && <div className="text-sm text-yellow-700 bg-yellow-50 p-3 rounded">📝 {order.notes}</div>}
       <div className="flex items-center justify-between gap-2 pt-1">
         {order.status === 'pendiente' && (
-          <button onClick={() => onUpdateStatus(order.id, 'cancelado')} className="text-xs text-red-600 bg-red-50 px-2.5 py-1.5 rounded hover:bg-red-100 font-semibold">Cancelar</button>
+          <button onClick={() => onUpdateStatus(order.id, 'cancelado')} className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 font-semibold">Cancelar</button>
         )}
         {order.status === 'completado' && order.payment_status !== 'pagado' && (
-          <button onClick={() => onCobrar(order)} className="text-sm text-white bg-green-600 px-4 py-2 rounded-lg font-bold hover:bg-green-700">💰 Cobrar</button>
+          <button onClick={() => onCobrar(order)} className="text-base text-white bg-green-600 px-5 py-2.5 rounded-lg font-bold hover:bg-green-700">💰 Cobrar</button>
         )}
         {cfg.nextStatus && (
           <button onClick={() => onUpdateStatus(order.id, cfg.nextStatus)}
-            className={`text-white px-4 py-2 rounded-lg font-bold text-sm ${cfg.nextBg} transition ml-auto`}>{cfg.nextLabel}</button>
+            className={`text-white px-5 py-2.5 rounded-lg font-bold text-base ${cfg.nextBg} transition ml-auto`}>{cfg.nextLabel}</button>
         )}
       </div>
     </div>
@@ -213,7 +213,7 @@ export default function WaiterDashboard() {
   mesas.forEach(m => { mesaCounts[m.state] = (mesaCounts[m.state] || 0) + 1; });
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className={isAdmin ? 'max-w-[100rem] mx-auto' : 'max-w-5xl mx-auto'}>
       {/* Mesa status grid */}
       {!isAdmin && (
       <div className="mb-6">
@@ -306,16 +306,16 @@ export default function WaiterDashboard() {
           <p className="font-semibold">No hay órdenes activas</p>
         </div>
       ) : isAdmin ? (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-3 rounded-t-xl text-center">📋 Detalle</h2>
+            <h2 className="text-base font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-4 rounded-t-xl text-center">📋 Detalle</h2>
             <OrderDetailPanel order={selectedOrder} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
           </div>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-green-700 bg-green-100 p-3 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
-            <div className="space-y-2 mt-2">
+            <h2 className="text-base font-bold uppercase tracking-widest text-green-700 bg-green-100 p-4 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
+            <div className="space-y-3 mt-3">
               {localOrders.length === 0 ? (
-                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de local</div>
+                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-base">Sin órdenes de local</div>
               ) : (
                 numberQueue(localOrders).map(({ order, num }) => (
                   <OrderRow key={order.id} order={order} queueNumber={num} selected={selectedOrderId === order.id} onSelect={setSelectedOrderId} />
@@ -324,10 +324,10 @@ export default function WaiterDashboard() {
             </div>
           </div>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-blue-700 bg-blue-100 p-3 rounded-t-xl text-center">🛵 Domicilio ({deliveryOrders.length})</h2>
-            <div className="space-y-2 mt-2">
+            <h2 className="text-base font-bold uppercase tracking-widest text-blue-700 bg-blue-100 p-4 rounded-t-xl text-center">🛵 Domicilio ({deliveryOrders.length})</h2>
+            <div className="space-y-3 mt-3">
               {deliveryOrders.length === 0 ? (
-                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-sm">Sin órdenes de domicilio</div>
+                <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-base">Sin órdenes de domicilio</div>
               ) : (
                 numberQueue(deliveryOrders).map(({ order, num }) => (
                   <OrderRow key={order.id} order={order} queueNumber={num} selected={selectedOrderId === order.id} onSelect={setSelectedOrderId} />
