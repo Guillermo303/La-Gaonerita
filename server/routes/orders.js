@@ -116,11 +116,13 @@ router.post('/', optionalAuth, async (req, res) => {
   const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, quick_sale, payment_status } = req.body;
   if (!customer_name || !order_type || !items || !items.length) return res.status(400).json({ error: 'Nombre, tipo de orden y al menos un producto requeridos' });
   if (!req.user) {
-    // Los pedidos sin cuenta (app de domicilio) solo se aceptan para
-    // domicilio — las órdenes locales/de mesa las captura el personal
-    // autenticado desde el panel de meseros.
-    if (order_type !== 'domicilio') return res.status(401).json({ error: 'Token requerido' });
-    if (!customer_phone || !customer_address) return res.status(400).json({ error: 'Teléfono y dirección requeridos para pedidos a domicilio' });
+    // Los pedidos sin cuenta son de la app de delivery (domicilio o recoger
+    // en el local, ambos con checkout de invitado); las órdenes de mesa las
+    // sigue capturando el personal autenticado desde el panel de meseros.
+    if (!['domicilio', 'local'].includes(order_type)) return res.status(401).json({ error: 'Token requerido' });
+    if (mesa) return res.status(401).json({ error: 'Token requerido' });
+    if (!customer_phone) return res.status(400).json({ error: 'Teléfono requerido' });
+    if (order_type === 'domicilio' && !customer_address) return res.status(400).json({ error: 'Dirección requerida para pedidos a domicilio' });
   }
 
   try {

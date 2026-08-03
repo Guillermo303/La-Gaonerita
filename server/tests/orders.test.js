@@ -57,11 +57,41 @@ describe('POST /api/orders', () => {
     token = await registerAndLogin(app);
   });
 
-  it('rejects an unauthenticated request', async () => {
+  it('rejects an unauthenticated request for a mesa order (solo personal autenticado)', async () => {
     const res = await request(app).post('/api/orders').send({
-      customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 2 }]
+      customer_name: 'Ana', order_type: 'local', mesa: 'Mesa 1', items: [{ menu_item_id: menuItemId, quantity: 2 }]
     });
     expect(res.status).toBe(401);
+  });
+
+  it('permite un pedido de recoger en el local sin cuenta (app de delivery)', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.order_type).toBe('local');
+  });
+
+  it('rechaza un pedido de recoger en el local sin cuenta si falta el teléfono', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('permite un pedido a domicilio sin cuenta con teléfono y dirección', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', customer_phone: '5511112222', customer_address: 'Calle Falsa 123', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.order_type).toBe('domicilio');
+  });
+
+  it('rechaza un pedido a domicilio sin cuenta si falta la dirección', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(400);
   });
 
   it('creates an order and computes the total from the menu price', async () => {

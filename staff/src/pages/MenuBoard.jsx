@@ -58,7 +58,11 @@ function QueueList() {
     return () => { if (socket) socket.off('order:update', load); };
   }, [socket]);
 
-  const queued = orders.filter(o => o.status === 'pendiente' || o.status === 'preparando');
+  const todayStr = new Date().toDateString();
+  const queued = orders.filter(o =>
+    (o.status === 'pendiente' || o.status === 'preparando') &&
+    new Date(o.created_at).toDateString() === todayStr
+  );
   const byType = (type) => queued
     .filter(o => o.order_type === type)
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
