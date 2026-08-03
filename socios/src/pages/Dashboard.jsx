@@ -253,7 +253,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-cream-50">
       <div className="bg-ink-900 text-cream-50 py-4 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-black font-display">🌮 La Gaonerita · Socios</h1>
+          <h1 className="heading-editorial text-2xl text-cream-50">🌮 La Gaonerita · Socios</h1>
           <div className="flex items-center gap-3">
             <span className="text-sm text-cream-100/80">{user?.name}</span>
             <button onClick={logout} className="btn-grow text-xs bg-white/10 px-3 py-1.5 rounded-lg font-bold hover:bg-white/20">Salir</button>
@@ -314,7 +314,7 @@ export default function Dashboard() {
               <div className="text-center py-12 text-ink-400">Cargando...</div>
             ) : (
               <div className="space-y-6">
-                <div className="relative bg-gradient-to-br from-ink-900 to-ink-800 rounded-2xl overflow-hidden p-6">
+                <div className="drop relative bg-gradient-to-br from-ink-900 to-ink-800 border-2 border-ink-900 overflow-hidden p-6">
                   <GrowthLottie positive={health.profitEstimate >= 0} className="absolute inset-0 opacity-60" />
                   <div className="relative">
                     <div className="text-cream-100/70 text-xs font-bold uppercase tracking-widest mb-1">Ingresos · {periodLabels[period]}</div>
@@ -325,27 +325,27 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Ingresos</div>
                     <div className="text-xl font-black text-brand-600 mt-1">{formatPrice(health.totalRevenue)}</div>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Órdenes</div>
                     <div className="text-xl font-black text-ink-900 mt-1">{health.orderCount}</div>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Ticket Prom.</div>
                     <div className="text-xl font-black text-ink-900 mt-1">{formatPrice(health.avgTicket)}</div>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Nómina Est.</div>
                     <div className="text-xl font-black text-ink-900 mt-1">{formatPrice(health.payrollEstimate)}</div>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-ink-100">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Gastos</div>
                     <div className="text-xl font-black text-ink-900 mt-1">{formatPrice(health.expensesTotal)}</div>
                   </div>
-                  <div className={`rounded-xl p-4 shadow-sm border ${health.profitEstimate >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div className={`drop-sm rounded-none p-4 border-2 ${health.profitEstimate >= 0 ? 'bg-green-50 border-green-700' : 'bg-red-50 border-red-700'}`}>
                     <div className="text-xs text-ink-400 font-medium uppercase tracking-wider">Utilidad Est.</div>
                     <div className={`text-xl font-black mt-1 ${health.profitEstimate >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatPrice(health.profitEstimate)}</div>
                   </div>
@@ -353,7 +353,7 @@ export default function Dashboard() {
                 <p className="text-xs text-ink-400 italic -mt-3">{health.estimateNote} · {health.activeEmployees} empleado(s) activo(s) considerado(s).</p>
 
                 {health.expensesByCategory.length > 0 && (
-                  <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <h3 className="font-bold text-ink-900 mb-3">Gastos por categoría</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {health.expensesByCategory.map(c => (
@@ -368,14 +368,14 @@ export default function Dashboard() {
                 )}
 
                 {health.peakHour ? (
-                  <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 text-brand-800 text-sm font-semibold">
+                  <div className="drop-sm bg-brand-50 border-2 border-brand-500 p-4 text-brand-800 text-sm font-semibold">
                     🕐 La hora con más ventas fue las <span className="font-black">{fmtHour(health.peakHour.hour)}</span>, con {health.peakHour.orders} órdenes y {formatPrice(health.peakHour.revenue)}.
                   </div>
                 ) : (
-                  <div className="bg-ink-50 border border-ink-200 rounded-xl p-4 text-ink-500 text-sm">Sin ventas registradas en este periodo.</div>
+                  <div className="drop-sm bg-ink-50 border-2 border-ink-300 p-4 text-ink-500 text-sm">Sin ventas registradas en este periodo.</div>
                 )}
 
-                <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+                <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                   <h3 className="font-bold text-ink-900 mb-3">Productos más vendidos</h3>
                   {health.topProducts.length === 0 ? (
                     <div className="text-center py-6 text-ink-400 text-sm">Sin ventas en este periodo</div>
@@ -395,7 +395,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+                <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                   <h3 className="font-bold text-ink-900 mb-3">Ventas por hora</h3>
                   <div className="flex items-end gap-1 h-32">
                     {health.hourly.map(h => (
@@ -412,7 +412,7 @@ export default function Dashboard() {
                 </div>
 
                 {health.daily.length > 0 && (
-                  <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+                  <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                     <h3 className="font-bold text-ink-900 mb-3">Ventas por día</h3>
                     <div className="space-y-1">
                       {health.daily.map(d => (
@@ -426,7 +426,7 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+                <div className="drop-sm bg-white border-2 border-ink-900 p-4">
                   <h3 className="font-bold text-ink-900 mb-3">Ventas por método de pago</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {health.paymentBreakdown.length === 0 ? (

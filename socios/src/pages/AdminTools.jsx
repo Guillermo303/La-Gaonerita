@@ -119,7 +119,7 @@ export function DisponibilidadTab() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
       <div className="space-y-6">
         {menuData.filter(cat => cat.items.some(i => i.available)).map(cat => (
-          <div key={cat.id} className="bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div key={cat.id} className="drop-sm bg-white border-2 border-ink-900 overflow-hidden">
             <div className="bg-cream-50 px-4 py-3 border-b border-ink-100 font-bold text-ink-900">{cat.name}</div>
             <div className="divide-y divide-ink-100">
               {cat.items.filter(i => i.available).map(item => (
@@ -291,7 +291,7 @@ export function MenuTab() {
       </div>
       <div className="space-y-6">
         {menuData.map(cat => (
-          <div key={cat.id} className="card-glow bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div key={cat.id} className="card-glow drop-sm bg-white border-2 border-ink-900 overflow-hidden">
             <div className="flex items-center justify-between bg-cream-50 px-4 py-3 border-b border-ink-100">
               <h3 className="font-bold text-ink-900">{cat.name} <span className="text-ink-400 font-normal">({cat.items.length} items)</span></h3>
               <button onClick={() => {
@@ -395,7 +395,7 @@ export function PersonalizacionTab() {
       </div>
       <div className="space-y-6">
         {groups.map(group => (
-          <div key={group.id} className="card-glow bg-white rounded-xl border border-ink-100 shadow-sm overflow-hidden">
+          <div key={group.id} className="card-glow drop-sm bg-white border-2 border-ink-900 overflow-hidden">
             <div className="flex items-center justify-between bg-cream-50 px-4 py-3 border-b border-ink-100">
               <div className="flex items-center gap-3">
                 {editingGroup === group.id ? (
@@ -862,7 +862,7 @@ function RecetasAdmin() {
       </select>
 
       {selectedItem && (
-        <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+        <div className="drop-sm bg-white border-2 border-ink-900 p-4">
           <div className="space-y-2 mb-4">
             {links.length === 0 ? (
               <div className="text-center py-4 text-ink-400 text-sm">Sin insumos vinculados a este platillo</div>
@@ -910,7 +910,7 @@ function HistorialInsumosAdmin() {
         <div className="text-center py-12 text-ink-400">Aún no hay semanas cerradas para mostrar recuento</div>
       ) : (
         weeks.map(([key, rows]) => (
-          <div key={key} className="bg-white rounded-xl border border-ink-100 shadow-sm p-4">
+          <div key={key} className="drop-sm bg-white border-2 border-ink-900 p-4">
             <h3 className="font-bold text-ink-900 mb-3">Semana {rows[0].week_start} — {rows[0].week_end}</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1180,7 +1180,7 @@ export function FinanzasTab() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
 
       <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
+        <div className="drop-sm bg-white border-2 border-ink-900 p-5">
           <h3 className="font-bold text-ink-900 mb-4">Estado de Resultados</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between py-2 border-b border-ink-50">
@@ -1213,7 +1213,7 @@ export function FinanzasTab() {
           <p className="text-xs text-ink-400 italic mt-4">{overview.estimateNote}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
+        <div className="drop-sm bg-white border-2 border-ink-900 p-5">
           <h3 className="font-bold text-ink-900 mb-4">Patrimonio (Activos)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-cream-50 rounded-lg p-3">
@@ -1231,7 +1231,7 @@ export function FinanzasTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
+        <div className="drop-sm bg-white border-2 border-ink-900 p-5">
           <h3 className="font-bold text-ink-900 mb-4">Gastos Operativos por Categoría</h3>
           {overview.expensesByCategory.length === 0 ? (
             <div className="text-center py-6 text-ink-400 text-sm">Sin gastos registrados en este periodo</div>
@@ -1250,7 +1250,7 @@ export function FinanzasTab() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5 overflow-x-auto">
+        <div className="drop-sm bg-white border-2 border-ink-900 p-5 overflow-x-auto">
           <h3 className="font-bold text-ink-900 mb-4">Comparación con Periodo Anterior</h3>
           <table className="w-full text-sm">
             <thead>
@@ -1606,7 +1606,7 @@ function CuentasPruebaAdmin() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-ink-100 shadow-sm p-5">
+    <div className="drop-sm bg-white border-2 border-ink-900 p-5">
       <h3 className="font-bold text-ink-900 mb-1">Cuentas de Prueba</h3>
       <p className="text-xs text-ink-400 mb-4">Busca por email para eliminar una cuenta y poder reutilizar ese correo en pruebas. Un mismo correo puede tener varias cuentas (una por rol, ej. cliente y mesero) — aquí aparecen todas. Un empleado desactivado (despedido) sigue bloqueando su email en ese rol aunque no lo elimines aquí.</p>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}

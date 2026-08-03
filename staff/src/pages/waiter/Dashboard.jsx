@@ -279,7 +279,7 @@ export default function WaiterDashboard() {
       {/* Orders header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-xl font-extrabold text-ink-900">Órdenes</h1>
+          <h1 className="heading-editorial text-xl text-ink-900">Órdenes</h1>
           <p className="text-xs text-ink-400">{counts}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -293,9 +293,9 @@ export default function WaiterDashboard() {
               <option value="domicilio">Domicilio</option>
             </select>
           )}
-          {!isAdmin && <Link to="/waiter/new-order" className="bg-brand-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>}
+          {!isAdmin && <Link to="/waiter/new-order" className="drop-sm bg-brand-500 text-white px-4 py-2 border border-black font-bold text-sm hover:bg-brand-600 transition whitespace-nowrap">+ Nueva</Link>}
           {!isAdmin && (
-            <button onClick={() => setQuickSale(true)} className="bg-ink-800 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
+            <button onClick={() => setQuickSale(true)} className="drop-sm bg-ink-800 text-white px-4 py-2 border border-black font-bold text-sm hover:bg-ink-900 transition whitespace-nowrap">⚡ Venta Rápida</button>
           )}
         </div>
       </div>
@@ -308,11 +308,11 @@ export default function WaiterDashboard() {
       ) : isAdmin ? (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start">
           <div>
-            <h2 className="text-base font-bold uppercase tracking-widest text-purple-700 bg-purple-100 p-4 rounded-t-xl text-center">📋 Detalle</h2>
+            <h2 className="heading-editorial text-base text-purple-700 bg-purple-100 p-4 rounded-t-xl text-center">📋 Detalle</h2>
             <OrderDetailPanel order={selectedOrder} onUpdateStatus={updateStatus} onCobrar={setCobrando} />
           </div>
           <div>
-            <h2 className="text-base font-bold uppercase tracking-widest text-green-700 bg-green-100 p-4 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
+            <h2 className="heading-editorial text-base text-green-700 bg-green-100 p-4 rounded-t-xl text-center">🏠 Local ({localOrders.length})</h2>
             <div className="space-y-3 mt-3">
               {localOrders.length === 0 ? (
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-base">Sin órdenes de local</div>
@@ -324,7 +324,7 @@ export default function WaiterDashboard() {
             </div>
           </div>
           <div>
-            <h2 className="text-base font-bold uppercase tracking-widest text-blue-700 bg-blue-100 p-4 rounded-t-xl text-center">🛵 Domicilio ({deliveryOrders.length})</h2>
+            <h2 className="heading-editorial text-base text-blue-700 bg-blue-100 p-4 rounded-t-xl text-center">🛵 Domicilio ({deliveryOrders.length})</h2>
             <div className="space-y-3 mt-3">
               {deliveryOrders.length === 0 ? (
                 <div className="text-center py-10 text-ink-400 bg-white rounded-xl shadow-sm text-base">Sin órdenes de domicilio</div>

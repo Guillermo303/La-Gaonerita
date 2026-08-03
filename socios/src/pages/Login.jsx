@@ -34,7 +34,7 @@ export default function Login() {
           <p className="text-ink-400 mt-1">Panel de Socios</p>
         </div>
         {error && <div className="bg-brand-50 border border-brand-200 text-brand-700 p-3 rounded-lg mb-4">{error}</div>}
-        <form onSubmit={handleSubmit} className="bg-white p-7 rounded-2xl shadow-md space-y-5">
+        <form onSubmit={handleSubmit} className="drop bg-white p-7 border-2 border-ink-900 space-y-5">
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" required />
@@ -43,7 +43,7 @@ export default function Login() {
             <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Contraseña</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" required />
           </div>
-          <button type="submit" className="btn-grow w-full bg-brand-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Entrar</button>
+          <button type="submit" className="drop-sm w-full bg-brand-500 text-white py-3 border border-black font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Entrar</button>
         </form>
       </div>
     </div>
