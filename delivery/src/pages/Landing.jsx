@@ -44,7 +44,6 @@ export default function Landing({ onStartOrder, hasOrder, onTrackOrder }) {
       {showMenu && <FullMenu onClose={() => setShowMenu(false)} />}
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
         <div className="text-center max-w-lg">
-          <QueueBanner />
           <img src="/logo.jpeg" alt="La Gaonerita" className="mx-auto mb-6 h-28 lg:h-36 w-auto" />
           <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-4">Hecho al momento</p>
           <div className="flex items-center justify-center gap-3 mt-5" aria-hidden="true">
@@ -54,30 +53,33 @@ export default function Landing({ onStartOrder, hasOrder, onTrackOrder }) {
           </div>
           <p className="text-ink-400 mt-5 text-lg">Tacos, tortas y más — todo hecho al momento.</p>
 
-          <div className="mt-12 flex flex-col gap-4">
-            <button
-              onClick={() => setShowMenu(true)}
-              className="btn-grow w-full bg-white border-2 border-ink-900/10 text-ink-900 py-5 rounded-2xl font-bold text-lg hover:border-brand-400 hover:shadow-lg transition flex items-center justify-center gap-3"
-            >
-              <span className="text-2xl">📋</span>
-              Ver Menú Completo
-            </button>
-            <button
-              onClick={onStartOrder}
-              className="btn-grow w-full bg-brand-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition flex items-center justify-center gap-3"
-            >
-              <span className="text-2xl">🛵</span>
-              Pedir a Domicilio
-            </button>
-            {hasOrder && (
+          <div className="mt-12 flex items-center gap-4">
+            <QueueBanner />
+            <div className="flex-1 flex flex-col gap-4">
               <button
-                onClick={onTrackOrder}
-                className="btn-grow w-full bg-ink-900 text-cream-50 py-4 rounded-2xl font-bold text-base hover:bg-ink-800 transition flex items-center justify-center gap-3"
+                onClick={() => setShowMenu(true)}
+                className="btn-grow w-full bg-white border-2 border-ink-900/10 text-ink-900 py-5 rounded-2xl font-bold text-lg hover:border-brand-400 hover:shadow-lg transition flex items-center justify-center gap-3"
               >
-                <span className="text-xl">📍</span>
-                Seguir Pedido
+                <span className="text-2xl">📋</span>
+                Ver Menú Completo
               </button>
-            )}
+              <button
+                onClick={onStartOrder}
+                className="btn-grow w-full bg-brand-500 text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-600 hover:shadow-xl transition flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">🛵</span>
+                Pedir a Domicilio
+              </button>
+              {hasOrder && (
+                <button
+                  onClick={onTrackOrder}
+                  className="btn-grow w-full bg-ink-900 text-cream-50 py-4 rounded-2xl font-bold text-base hover:bg-ink-800 transition flex items-center justify-center gap-3"
+                >
+                  <span className="text-xl">📍</span>
+                  Seguir Pedido
+                </button>
+              )}
+            </div>
           </div>
 
           <p className="text-ink-300 text-xs mt-12">(55) 1234-5678 · Lun – Dom · 12:00 – 23:00</p>
