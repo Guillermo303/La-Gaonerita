@@ -92,10 +92,22 @@ router.get('/recommendations', authenticate, async (req, res) => {
 // cartel representa "que estan haciendo ahorita", no "que sigue".
 router.get('/queue/current', async (req, res) => {
   const active = await query(
-    "SELECT id, status, order_type FROM orders WHERE status IN ('pendiente','preparando') ORDER BY created_at ASC"
+    "SELECT id, status, order_type, created_at FROM orders WHERE status IN ('pendiente','preparando') ORDER BY created_at ASC"
   );
   const target = active.find(o => o.status === 'preparando') || active.find(o => o.status === 'pendiente') || null;
-  res.json({ number: target?.id ?? null, status: target?.status ?? null, order_type: target?.order_type ?? null });
+  if (!target) return res.json({ number: null, status: null, order_type: null });
+
+  // Mismo turno (1-100, reinicia cada dia) que se ve en la caja y la
+  // Cartelera: posicion entre las ordenes activas de HOY del mismo tipo,
+  // no el id real de la orden (ese solo crece sin limite).
+  const todayStr = new Date().toDateString();
+  const sameTypeToday = active.filter(o =>
+    o.order_type === target.order_type && new Date(o.created_at).toDateString() === todayStr
+  );
+  const idx = sameTypeToday.findIndex(o => o.id === target.id);
+  const number = idx === -1 ? null : (idx % 100) + 1;
+
+  res.json({ number, status: target.status, order_type: target.order_type });
 });
 
 router.get('/:id/status', async (req, res) => {
