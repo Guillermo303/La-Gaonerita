@@ -168,13 +168,13 @@ function FavoritosCarousel({ items }) {
       <div ref={trackRef} onScroll={handleScroll} className="relative flex overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-3 pb-2">
         {items.map(fav => (
           <div key={fav.name} className="snap-start shrink-0 basis-full sm:basis-1/2 lg:basis-1/3 px-3">
-            <div className="card-glow bg-white rounded-2xl overflow-hidden shadow-md group h-full">
+            <div className="card-glow drop bg-white border-2 border-ink-900 overflow-hidden shadow-none group h-full">
               <div className="h-48 overflow-hidden bg-ink-100">
                 <img src={fav.img} alt={fav.name} className="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-1 transition duration-700" />
               </div>
               <div className="p-5">
                 <div className="flex items-baseline justify-between gap-2 mb-2">
-                  <h3 className="font-display text-xl font-bold text-ink-900">{fav.name}</h3>
+                  <h3 className="heading-editorial text-xl text-ink-900">{fav.name}</h3>
                   <span className="text-brand-600 font-extrabold">{formatPrice(fav.price)}</span>
                 </div>
                 <p className="text-sm text-ink-400 leading-relaxed">{fav.desc}</p>
@@ -240,7 +240,7 @@ export default function Home() {
             <SectionLabel light>Taquería Artesanal</SectionLabel>
           </Reveal>
           <Reveal delay={150}>
-            <h1 className="font-display text-5xl lg:text-7xl font-extrabold text-cream-50 leading-tight max-w-3xl">
+            <h1 className="heading-editorial text-5xl lg:text-7xl text-cream-50 leading-tight max-w-3xl">
               El Sabor de la Tradición
             </h1>
           </Reveal>
@@ -251,9 +251,9 @@ export default function Home() {
           </Reveal>
           <Reveal delay={450}>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link to="/menu" className="btn-grow bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
-              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Ordenar a Domicilio 🛵</a>
-              <button onClick={() => setReserving(true)} className="btn-sweep border border-cream-100/40 text-cream-50 px-8 py-3 rounded font-bold uppercase tracking-widest text-sm transition">Reservar Mesa 🍽️</button>
+              <Link to="/menu" className="drop bg-brand-500 text-white px-8 py-3 border-2 border-black font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú</Link>
+              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="drop bg-cream-50 text-ink-900 px-8 py-3 border-2 border-cream-50 font-bold uppercase tracking-widest text-sm hover:bg-brand-500 hover:text-white transition">Ordenar a Domicilio 🛵</a>
+              <button onClick={() => setReserving(true)} className="drop bg-transparent text-cream-50 px-8 py-3 border-2 border-cream-50 font-bold uppercase tracking-widest text-sm hover:bg-cream-50 hover:text-ink-900 transition">Reservar Mesa 🍽️</button>
             </div>
           </Reveal>
         </div>
@@ -274,7 +274,7 @@ export default function Home() {
               <span className="h-px w-8 bg-brand-500" />
               Nuestra Historia
             </p>
-            <h2 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900 leading-snug mb-5">
+            <h2 className="heading-editorial text-3xl lg:text-4xl text-ink-900 leading-snug mb-5">
               Recetas Tradicionales y Tortillas Hechas a Mano
             </h2>
             <p className="text-ink-500 leading-relaxed mb-6">
@@ -294,14 +294,14 @@ export default function Home() {
         <Reveal>
           <div className="text-center mb-14">
             <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-3">Nuestro Propósito</p>
-            <h2 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Misión y Visión</h2>
+            <h2 className="heading-editorial text-3xl lg:text-4xl text-ink-900">Misión y Visión</h2>
           </div>
         </Reveal>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Reveal variant="reveal-left">
-            <div className="bg-white rounded-2xl p-8 shadow-md border border-ink-100 h-full">
+            <div className="drop bg-white border-2 border-ink-900 p-8 h-full">
               <div className="text-4xl mb-4">🎯</div>
-              <h3 className="text-2xl font-bold font-display uppercase text-brand-600 mb-4">Misión</h3>
+              <h3 className="heading-editorial text-2xl text-brand-600 mb-4">Misión</h3>
               <p className="text-ink-600 leading-relaxed">
                 Ofrecer una experiencia gastronómica auténtica y de calidad, preservando el sabor tradicional
                 de la taquería mexicana con ingredientes frescos, atención cálida y un ambiente que haga sentir
@@ -310,9 +310,9 @@ export default function Home() {
             </div>
           </Reveal>
           <Reveal variant="reveal-right" delay={150}>
-            <div className="bg-white rounded-2xl p-8 shadow-md border border-ink-100 h-full">
+            <div className="drop bg-white border-2 border-ink-900 p-8 h-full">
               <div className="text-4xl mb-4">🔭</div>
-              <h3 className="text-2xl font-bold font-display uppercase text-brand-600 mb-4">Visión</h3>
+              <h3 className="heading-editorial text-2xl text-brand-600 mb-4">Visión</h3>
               <p className="text-ink-600 leading-relaxed">
                 Ser la taquería de referencia en la comunidad, reconocida por la excelencia de nuestros
                 tacos, la innovación en nuestro menú y el compromiso con nuestros clientes y colaboradores,
@@ -335,7 +335,7 @@ export default function Home() {
           <Reveal>
             <div className="text-center mb-12">
               <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-3">Platillos Estrella</p>
-              <h2 className="font-display text-3xl lg:text-4xl font-extrabold text-brand-600">Los Favoritos de la Casa</h2>
+              <h2 className="heading-editorial text-3xl lg:text-4xl text-brand-600">Los Favoritos de la Casa</h2>
               <div className="flex items-center justify-center gap-3 mt-4" aria-hidden="true">
                 <span className="h-px w-12 bg-brand-400" />
                 <span className="text-brand-500">✦</span>
@@ -348,7 +348,7 @@ export default function Home() {
           </Reveal>
           <Reveal delay={300}>
             <div className="text-center mt-10">
-              <Link to="/menu" className="btn-grow inline-block bg-brand-500 text-white px-8 py-3 rounded font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú Completo</Link>
+              <Link to="/menu" className="drop inline-block bg-brand-500 text-white px-8 py-3 border-2 border-black font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ver Menú Completo</Link>
             </div>
           </Reveal>
         </div>
@@ -359,7 +359,7 @@ export default function Home() {
         <Reveal>
           <div className="text-center mb-14">
             <p className="text-brand-600 text-xs font-bold uppercase tracking-[0.3em] mb-3">Opiniones</p>
-            <h2 className="font-display text-3xl lg:text-4xl font-extrabold text-ink-900">Lo Que Dicen de Nosotros</h2>
+            <h2 className="heading-editorial text-3xl lg:text-4xl text-ink-900">Lo Que Dicen de Nosotros</h2>
           </div>
         </Reveal>
         <Reveal delay={150}>
@@ -374,8 +374,8 @@ export default function Home() {
         <Zigzag fill="#F7ECDC" className="absolute top-0 left-0 z-10" />
         <div className="relative max-w-7xl mx-auto px-4 py-20 lg:py-28">
           <Reveal variant="reveal-left">
-            <div className="bg-cream-50 rounded-2xl shadow-2xl p-8 max-w-md">
-              <h2 className="font-display text-2xl lg:text-3xl font-extrabold text-ink-900 mb-6">Visítanos en el Barrio</h2>
+            <div className="drop bg-cream-50 border-2 border-black p-8 max-w-md">
+              <h2 className="heading-editorial text-2xl lg:text-3xl text-ink-900 mb-6">Visítanos en el Barrio</h2>
               <div className="space-y-5">
                 <div className="flex gap-4">
                   <span className="text-brand-500 text-xl">📍</span>
@@ -401,8 +401,8 @@ export default function Home() {
                 </div>
                 </div>
               </div>
-              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-grow mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ordenar a Domicilio 🛵</a>
-              <button onClick={() => setReserving(true)} className="btn-sweep mt-3 inline-block w-full text-center py-3 rounded-xl font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 transition">Reservar Mesa 🍽️</button>
+              <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="drop mt-6 inline-block bg-brand-500 text-white w-full text-center py-3 border-2 border-black font-bold uppercase tracking-widest text-sm hover:bg-brand-600">Ordenar a Domicilio 🛵</a>
+              <button onClick={() => setReserving(true)} className="drop mt-3 inline-block w-full text-center py-3 font-bold uppercase tracking-widest text-sm border-2 border-brand-500 text-brand-600 transition">Reservar Mesa 🍽️</button>
             </Reveal>
           </div>
         </section>

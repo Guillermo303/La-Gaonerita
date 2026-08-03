@@ -105,6 +105,18 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Space Grotesk', 'Inter', s
 }
 .group:hover .icon-float { animation: icon-float 1s ease-in-out infinite; }
 
+/* Estilo editorial taquería (inspirado en el sitio del compañero) */
+.drop { box-shadow: 4px 4px 0 0 #665949; }
+.drop-brand { box-shadow: 4px 4px 0 0 #BD4A26; }
+.drop-sm { box-shadow: 3px 3px 0 0 #665949; }
+.border-editorial { border: 2px solid #1D1A13; }
+
+/* Líder de puntos entre nombre y precio */
+.dot-lead { flex: 1; border-bottom: 2px dotted rgba(102, 89, 73, 0.45); margin: 0 0.5rem; min-width: 1rem; }
+
+/* Encabezados display estilo letrero */
+.heading-editorial { font-family: 'Anton', 'Bitter', Georgia, serif; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.05; }
+
 /* Aparición con rebote elástico, para insignias y confirmaciones */
 @keyframes pop-in {
   0% { transform: scale(0.5); opacity: 0; }

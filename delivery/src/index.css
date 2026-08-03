@@ -112,6 +112,14 @@ body { overflow-x: hidden; font-family: 'Work Sans', 'Inter', system-ui, -apple-
 }
 .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
+/* Estilo editorial taquería */
+.drop { box-shadow: 4px 4px 0 0 #665949; }
+.drop-brand { box-shadow: 4px 4px 0 0 #BD4A26; }
+.drop-sm { box-shadow: 3px 3px 0 0 #665949; }
+.border-editorial { border: 2px solid #1D1A13; }
+.dot-lead { flex: 1; border-bottom: 2px dotted rgba(102, 89, 73, 0.45); margin: 0 0.5rem; min-width: 1rem; }
+.heading-editorial { font-family: 'Anton', 'Bitter', Georgia, serif; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.05; }
+
 /* Transición entre pasos del formulario */
 .step-fade { animation: stepIn 0.35s ease-out both; }
 @keyframes stepIn {

@@ -21,7 +21,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-5">
             <Link to="/menu" className={linkCls}>Menú</Link>
             <Link to="/jobs" className={linkCls}>Trabajo</Link>
-            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="btn-grow bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded hover:bg-brand-600">Ordenar a Domicilio</a>
+            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" className="drop-sm bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 border border-black hover:bg-brand-600">Ordenar a Domicilio</a>
           </div>
 
           {/* Mobile hamburger */}
@@ -39,7 +39,7 @@ export default function Navbar() {
           <div className="md:hidden pb-4 border-t border-cream-100/10 pt-2">
             <Link to="/menu" onClick={() => setOpen(false)} className={mobileLinkCls}>Menú</Link>
             <Link to="/jobs" onClick={() => setOpen(false)} className={mobileLinkCls}>Trabajo</Link>
-            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="mt-2 block text-center bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded hover:bg-brand-600">Ordenar a Domicilio</a>
+            <a href={DELIVERY_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="mt-2 block text-center drop-sm bg-brand-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 border border-black hover:bg-brand-600">Ordenar a Domicilio</a>
           </div>
         )}
       </div>
