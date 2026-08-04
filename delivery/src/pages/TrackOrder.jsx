@@ -3,14 +3,13 @@ import { io } from 'socket.io-client';
 import { orders as ordersApi } from '../api';
 
 const STATUSES = [
-  { key: 'pendiente', label: 'Pedido recibido', icon: '📝' },
-  { key: 'preparando', label: 'Preparando', icon: '👨‍🍳' },
-  { key: 'ahead', label: 'Pedidos delante', icon: '🕐' },
-  { key: 'listo', label: 'Pedido listo', icon: '✅' },
-  { key: 'completado', label: 'Entregando', icon: '🛵' },
+  { key: 'pendiente', label: 'Nuevo', icon: '📝' },
+  { key: 'preparando', label: 'En preparación', icon: '👨‍🍳' },
+  { key: 'listo', label: 'Pedido terminado', icon: '✅' },
+  { key: 'completado', label: 'Enviado / Entregado', icon: '🛵' },
 ];
 
-const CURRENT_STEP = { pendiente: 0, preparando: 1, listo: 3, completado: 4 };
+const CURRENT_STEP = { pendiente: 0, preparando: 1, listo: 2, completado: 3 };
 
 async function fetchStatus(orderId, setStatus, setOrdersAhead) {
   try {
@@ -75,27 +74,11 @@ export default function TrackOrder({ order, onBack }) {
               </div>
               <div className="pt-0.5">
                 <p className={`font-bold ${isReached ? 'text-ink-900' : 'text-ink-300'}`}>{s.icon} {s.label}</p>
-                {s.key === 'ahead' && (
-                  <div className="flex items-center justify-between gap-3 mt-1 w-full">
-                    <div className="pt-0.5">
-                      <p className="text-sm text-ink-400">
-                        {ordersAhead !== null
-                          ? ordersAhead === 0
-                            ? '¡Eres el siguiente!'
-                            : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
-                          : 'Calculando fila…'}
-                      </p>
-                    </div>
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl font-black font-display shrink-0 shadow-lg ring-4 ${ordersAhead !== null && ordersAhead === 0 ? 'bg-green-500 text-white ring-green-100' : 'bg-brand-500 text-white ring-brand-100'}`}>
-                      {ordersAhead !== null ? ordersAhead : '…'}
-                    </div>
-                  </div>
-                )}
-                {s.key !== 'ahead' && isCurrent && (
+                {isCurrent && (
                   <p className="text-sm text-ink-400 mt-1">
-                    {status === 'pendiente' && 'Tu pedido está en espera para prepararse'}
+                    {status === 'pendiente' && 'Tu pedido fue recibido, ya se está revisando'}
                     {status === 'preparando' && 'Estamos preparando tu orden'}
-                    {status === 'listo' && '¡Tu pedido está listo!'}
+                    {status === 'listo' && '¡Tu pedido está terminado!'}
                     {status === 'completado' && '¡Gracias, disfruta tu pedido!'}
                   </p>
                 )}
@@ -104,6 +87,24 @@ export default function TrackOrder({ order, onBack }) {
           );
         })}
       </div>
+
+      {status !== 'completado' && status !== 'cancelado' && (
+        <div className="mt-2 bg-cream-50 border-2 border-ink-900 drop-sm p-5 flex items-center gap-4">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl font-black font-display shrink-0 shadow-lg ring-4 ${ordersAhead !== null && ordersAhead === 0 ? 'bg-green-500 text-white ring-green-100' : 'bg-brand-500 text-white ring-brand-100'}`}>
+            {ordersAhead !== null ? ordersAhead : '…'}
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-ink-400">Pedidos delante de ti</p>
+            <p className="text-sm text-ink-700 font-semibold mt-0.5">
+              {ordersAhead !== null
+                ? ordersAhead === 0
+                  ? '¡Eres el siguiente!'
+                  : `${ordersAhead} ${ordersAhead === 1 ? 'pedido por delante' : 'pedidos por delante'}`
+                : 'Calculando fila…'}
+            </p>
+          </div>
+        </div>
+      )}
 
       <button onClick={onBack} className="block w-full bg-ink-900 text-cream-50 py-3 rounded-lg font-bold text-sm hover:bg-ink-800 transition mt-4">
         ← Volver

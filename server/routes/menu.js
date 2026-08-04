@@ -18,6 +18,28 @@ router.get('/all', authenticate, authorize('socio', 'mesero', 'cocina'), async (
   res.json(menu);
 });
 
+// Desglose de recetas por platillo (cocina/chef): devuelve por cada producto
+// su descripcion y los insumos vinculados desde Socios -> Insumos -> Recetas,
+// para que la pantalla de cocina muestre ingredientes y cantidades.
+router.get('/recipes', authenticate, authorize('socio', 'cocina', 'mesero'), async (req, res) => {
+  const items = await query('SELECT id, name, description FROM menu_items');
+  const recipes = await query(
+    `SELECT r.menu_item_id, s.name as supply_name, s.unit as supply_unit, r.quantity_per_unit
+     FROM menu_item_supplies r JOIN supply_items s ON s.id = r.supply_item_id
+     ORDER BY s.name`
+  );
+  const map = {};
+  for (const it of items) {
+    map[it.id] = {
+      description: it.description,
+      ingredients: recipes.filter(r => r.menu_item_id === it.id).map(r => ({
+        name: r.supply_name, unit: r.supply_unit, quantity_per_unit: r.quantity_per_unit
+      }))
+    };
+  }
+  res.json(map);
+});
+
 router.post('/categories', authenticate, authorize('socio'), async (req, res) => {
   const { name, description } = req.body;
   if (!name) return res.status(400).json({ error: 'Nombre requerido' });

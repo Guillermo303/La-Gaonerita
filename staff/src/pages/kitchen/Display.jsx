@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { orders as ordersApi } from '../../api';
+import { orders as ordersApi, menu as menuApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
@@ -46,7 +46,7 @@ function BigButton({ orders, onAdvance }) {
 
   const isPendiente = target.status === 'pendiente';
   const nextStatus = isPendiente ? 'preparando' : 'listo';
-  const label = isPendiente ? 'Preparar' : 'Listo';
+  const label = isPendiente ? 'Preparar' : 'Terminar';
   const color = isPendiente ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600';
   const icon = isPendiente ? '👨‍🍳' : '✅';
 
@@ -84,6 +84,35 @@ const activeStatusBadge = {
   preparando: 'bg-blue-100 text-blue-800',
   listo: 'bg-green-100 text-green-800'
 };
+
+// Convierte la cantidad de la receta a un formato legible (ej: 0.07 -> "70g",
+// 2 -> "2 piezas", 1.5 -> "1.5 kg"). Multiplicada por las unidades pedidas.
+function fmtIngredient(qty, unit) {
+  const isKg = unit && /kg|kilogramo/i.test(unit);
+  const isGram = unit && /g|gr|gramo/i.test(unit);
+  if (isKg && qty < 5) return `~${Math.round(qty * 1000)} g`;
+  if (isGram && qty < 5) return `~${Math.round(qty * 1000)} g`;
+  if (isGram) return `~${Math.round(qty)} g`;
+  const value = Math.round(qty * 100) / 100;
+  return `${value} ${unit || ''}`;
+}
+
+function IngredientBreakdown({ item, recipesByItem }) {
+  const recipe = recipesByItem[item.menu_item_id];
+  if (!recipe || !recipe.ingredients?.length) return null;
+  const total = item.quantity || 1;
+  return (
+    <div className="mt-1 pl-4 border-l-2 border-ink-100 space-y-0.5">
+      {recipe.description && <p className="text-sm text-gray-500 italic">{recipe.description}</p>}
+      {recipe.ingredients.map((ing, i) => (
+        <div key={i} className="flex justify-between text-sm text-gray-500">
+          <span>{ing.name}</span>
+          <span className="font-medium text-gray-700">{fmtIngredient(ing.quantity_per_unit * total, ing.unit)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function HistorialActivas({ orders, onDeliver }) {
   const [delivering, setDelivering] = useState(null);
@@ -165,6 +194,7 @@ function HistorialActivas({ orders, onDeliver }) {
 
 export default function KitchenDisplay() {
   const [orders, setOrders] = useState([]);
+  const [recipesByItem, setRecipesByItem] = useState({});
   const [bigMode, setBigMode] = useState(false);
   const [view, setView] = useState('tablero');
   const socket = useSocket();
@@ -185,6 +215,7 @@ export default function KitchenDisplay() {
 
   useEffect(() => {
     ordersApi.getKitchen().then(setOrders).catch(console.error);
+    menuApi.getRecipes().then(setRecipesByItem).catch(console.error);
     if (socket) {
       socket.emit('join:kitchen');
       socket.on('order:update', (order) => {
@@ -229,9 +260,12 @@ export default function KitchenDisplay() {
       )}
       <div className="space-y-1 mb-3">
         {order.items?.map(item => (
-          <div key={item.id} className="flex justify-between text-lg">
-            <span>{item.quantity}x {item.name}</span>
-            <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+          <div key={item.id}>
+            <div className="flex justify-between text-lg">
+              <span>{item.quantity}x {item.name}</span>
+              <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+            </div>
+            <IngredientBreakdown item={item} recipesByItem={recipesByItem} />
           </div>
         ))}
       </div>
@@ -239,7 +273,7 @@ export default function KitchenDisplay() {
       {!compact && (
         <div className="flex gap-2 mt-2">
           {order.status === 'pendiente' && <button onClick={() => updateStatus(order.id, 'preparando')} className="flex-1 bg-blue-500 text-white py-2 rounded-lg text-lg font-semibold hover:bg-blue-600">Preparar</button>}
-          {order.status === 'preparando' && <button onClick={() => updateStatus(order.id, 'listo')} className="flex-1 bg-green-500 text-white py-2 rounded-lg text-lg font-semibold hover:bg-green-600">Listo</button>}
+          {order.status === 'preparando' && <button onClick={() => updateStatus(order.id, 'listo')} className="flex-1 bg-green-500 text-white py-2 rounded-lg text-lg font-semibold hover:bg-green-600">Terminar</button>}
           {order.status === 'pendiente' && <button onClick={() => updateStatus(order.id, 'cancelado')} className="bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200">Cancelar</button>}
         </div>
       )}
@@ -309,9 +343,12 @@ export default function KitchenDisplay() {
               )}
               <div className="space-y-2 my-4">
                 {productionOrder.items?.map(item => (
-                  <div key={item.id} className="flex justify-between text-xl border-b border-gray-100 pb-2">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+                  <div key={item.id}>
+                    <div className="flex justify-between text-xl border-b border-gray-100 pb-1">
+                      <span>{item.quantity}x {item.name}</span>
+                      <span className="text-gray-600">{formatPrice(item.price * item.quantity)}</span>
+                    </div>
+                    <IngredientBreakdown item={item} recipesByItem={recipesByItem} />
                   </div>
                 ))}
               </div>
@@ -321,7 +358,7 @@ export default function KitchenDisplay() {
               </div>
               {productionOrder.notes && <div className="text-sm text-yellow-700 bg-yellow-50 p-2 rounded mt-3">📝 {productionOrder.notes}</div>}
               <div className="flex gap-2 mt-4">
-                <button onClick={() => updateStatus(productionOrder.id, 'listo')} className="flex-1 bg-green-500 text-white py-3 rounded-xl text-lg font-bold hover:bg-green-600 transition shadow">✅ Listo</button>
+                <button onClick={() => updateStatus(productionOrder.id, 'listo')} className="flex-1 bg-green-500 text-white py-3 rounded-xl text-lg font-bold hover:bg-green-600 transition shadow">✅ Terminar</button>
                 <button onClick={() => updateStatus(productionOrder.id, 'cancelado')} className="bg-red-100 text-red-600 px-4 py-3 rounded-xl hover:bg-red-200">Cancelar</button>
               </div>
             </div>

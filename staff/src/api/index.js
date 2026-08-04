@@ -42,6 +42,7 @@ export const employees = {
 export const menu = {
   getAll: () => request('/menu'),
   getAllAdmin: () => request('/menu/all'),
+  getRecipes: () => request('/menu/recipes'),
   createCategory: (data) => request('/menu/categories', { method: 'POST', body: JSON.stringify(data) }),
   updateCategory: (id, data) => request(`/menu/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteCategory: (id) => request(`/menu/categories/${id}`, { method: 'DELETE' }),

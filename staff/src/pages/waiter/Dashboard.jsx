@@ -40,10 +40,10 @@ function numberQueue(list) {
 }
 
 const statusConfig = {
-  pendiente: { label: 'Pendiente', bg: 'bg-yellow-50 border-yellow-400', badge: 'bg-yellow-100 text-yellow-800', nextLabel: 'En Proceso', nextStatus: 'preparando', nextBg: 'bg-blue-500 hover:bg-blue-600' },
-  preparando: { label: 'Preparando', bg: 'bg-blue-50 border-blue-400', badge: 'bg-blue-100 text-blue-800', nextLabel: 'Marcar Listo', nextStatus: 'listo', nextBg: 'bg-green-500 hover:bg-green-600' },
-  listo: { label: 'Listo', bg: 'bg-green-50 border-green-400', badge: 'bg-green-100 text-green-800', nextLabel: 'Entregado', nextStatus: 'completado', nextBg: 'bg-brand-500 hover:bg-brand-600' },
-  completado: { label: 'Entregado', bg: 'bg-purple-50 border-purple-400', badge: 'bg-purple-100 text-purple-800' }
+  pendiente: { label: 'Nuevo', bg: 'bg-yellow-50 border-yellow-400', badge: 'bg-yellow-100 text-yellow-800', nextLabel: 'En preparación', nextStatus: 'preparando', nextBg: 'bg-blue-500 hover:bg-blue-600' },
+  preparando: { label: 'En preparación', bg: 'bg-blue-50 border-blue-400', badge: 'bg-blue-100 text-blue-800', nextLabel: 'Pedido terminado', nextStatus: 'listo', nextBg: 'bg-green-500 hover:bg-green-600' },
+  listo: { label: 'Pedido terminado', bg: 'bg-green-50 border-green-400', badge: 'bg-green-100 text-green-800', nextLabel: 'Enviado / Entregado', nextStatus: 'completado', nextBg: 'bg-brand-500 hover:bg-brand-600' },
+  completado: { label: 'Enviado / Entregado', bg: 'bg-purple-50 border-purple-400', badge: 'bg-purple-100 text-purple-800' }
 };
 
 function OrderCard({ order, expanded, onToggle, onUpdateStatus, onCobrar, queueNumber }) {
@@ -263,7 +263,7 @@ export default function WaiterDashboard() {
                 <div className="flex items-center gap-2">
                   <span className="font-black text-blue-800">#{order.id}</span>
                   <span className="text-sm font-semibold text-ink-700">{order.customer_name}</span>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${order.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : order.status === 'preparando' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{order.status === 'pendiente' ? 'Pendiente' : order.status === 'preparando' ? 'Preparando' : 'Listo'}</span>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${order.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : order.status === 'preparando' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{order.status === 'pendiente' ? 'Nuevo' : order.status === 'preparando' ? 'En preparación' : 'Terminado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {order.customer_address && <span className="text-xs text-ink-400 hidden sm:block truncate max-w-[120px]">{order.customer_address}</span>}
@@ -287,9 +287,9 @@ export default function WaiterDashboard() {
             <select value={filter} onChange={e => setFilter(e.target.value)}
               className="text-sm border border-ink-200 rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400">
               <option value="todas">Todas</option>
-              <option value="listo">Listas</option>
-              <option value="preparando">Preparando</option>
-              <option value="pendiente">Pendientes</option>
+              <option value="listo">Terminados</option>
+              <option value="preparando">En preparación</option>
+              <option value="pendiente">Nuevos</option>
               <option value="domicilio">Domicilio</option>
             </select>
           )}
