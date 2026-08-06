@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, run } from '../db.js';
+import { query, run, get } from '../db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
@@ -54,7 +54,19 @@ router.post('/', async (req, res) => {
     }
   }
 
-  const mesas = await query('SELECT * FROM mesas WHERE capacity >= ? ORDER BY capacity, sort_order', [size]);
+  let mesas = await query('SELECT * FROM mesas WHERE capacity >= ? ORDER BY capacity, sort_order', [size]);
+  if (!mesas.length) {
+    // Si no hay ninguna mesa configurada (p. ej. base recién migrada o todas
+    // borradas), crea las mesas por defecto para poder seguir tomando
+    // reservaciones y reintenta con ellas.
+    const mesaCount = await get('SELECT COUNT(*) as c FROM mesas');
+    if (Number(mesaCount.c) === 0) {
+      for (let i = 1; i <= 6; i++) {
+        await run('INSERT INTO mesas (name, sort_order) VALUES (?, ?)', [`Mesa ${i}`, i]);
+      }
+      mesas = await query('SELECT * FROM mesas WHERE capacity >= ? ORDER BY capacity, sort_order', [size]);
+    }
+  }
   const existing = await query("SELECT * FROM reservations WHERE date = ? AND status IN ('confirmada','ocupada')", [date]);
 
   const mesa = mesas.find(m => {
@@ -63,6 +75,9 @@ router.post('/', async (req, res) => {
   });
 
   if (!mesa) {
+    if (!mesas.length) {
+      return res.status(409).json({ error: `No hay mesas con capacidad para ${size} personas` });
+    }
     return res.status(409).json({ error: 'No hay mesas disponibles para esa fecha y hora, intenta con otro horario' });
   }
 

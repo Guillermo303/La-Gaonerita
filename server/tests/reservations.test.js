@@ -33,6 +33,19 @@ describe('Creación de reservaciones', () => {
     restore();
   });
 
+  it('crea las mesas por defecto y reserva si la tabla de mesas está vacía', async () => {
+    const restore = mockNow('2026-08-01', 10, 0);
+    await run('DELETE FROM mesas');
+    const res = await request(app).post('/api/reservations').send({
+      customer_name: 'Ana', customer_phone: '5512345678', party_size: 2, date: '2026-08-01', time: '14:00'
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.mesa).toBeTruthy();
+    const mesaCount = (await query('SELECT COUNT(*) as count FROM mesas'))[0].count;
+    expect(Number(mesaCount)).toBe(6);
+    restore();
+  });
+
   it('rechaza si faltan datos requeridos', async () => {
     const res = await request(app).post('/api/reservations').send({ date: '2026-08-01', time: '14:00' });
     expect(res.status).toBe(400);
