@@ -7,7 +7,9 @@ import { findCustomerByName, saveCustomer } from '../lib/customers';
 const DELIVERY_FEE = 15;
 
 export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
-  const { items, updateQty, clear, count, total, orderType, orderTime } = useCart();
+  const { items, updateQty, clear, count, total, orderType, orderTime, customizations } = useCart();
+  const tortillaGroup = Object.keys(customizations).find(k => k.toLowerCase().includes('tortilla'));
+  const tortillaType = tortillaGroup ? customizations[tortillaGroup] : null;
   const [form, setForm] = useState({ name: '', phone: '', address: '', notes: '', payment: 'efectivo' });
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
@@ -69,7 +71,7 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
         address: orderType === 'local' ? '' : form.address.trim(),
       });
       clear();
-      onPlaced(order);
+      onPlaced(order, tortillaType);
     } catch (err) {
       setError(err.message);
     } finally {

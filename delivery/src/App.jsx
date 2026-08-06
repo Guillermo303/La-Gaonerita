@@ -24,6 +24,7 @@ const STEPS = [
 export default function App() {
   const [step, setStep] = useState(1);
   const [placed, setPlaced] = useState(null);
+  const [placedTortilla, setPlacedTortilla] = useState(null);
   const [trackFrom, setTrackFrom] = useState(null);
   const { count } = useCart();
 
@@ -33,8 +34,9 @@ export default function App() {
     goToStep(2);
   }, [goToStep]);
 
-  const handleOrderPlaced = useCallback((order) => {
+  const handleOrderPlaced = useCallback((order, tortilla) => {
     setPlaced(order);
+    setPlacedTortilla(tortilla);
     goToStep(6);
   }, [goToStep]);
 
@@ -62,7 +64,7 @@ export default function App() {
           {step === 3 && <Horario onPrev={() => goToStep(2)} onNext={() => goToStep(4)} />}
           {step === 4 && <Menu onPrev={() => goToStep(3)} onNext={() => goToStep(5)} />}
           {step === 5 && <Checkout onPrev={() => goToStep(4)} onGoToMenu={() => goToStep(4)} onPlaced={handleOrderPlaced} />}
-          {step === 6 && <Confirmation order={placed} onReset={handleReset} onTrack={() => handleTrack('confirm')} />}
+          {step === 6 && <Confirmation order={placed} tortilla={placedTortilla} onReset={handleReset} onTrack={() => handleTrack('confirm')} />}
           {step === 7 && <TrackOrder order={placed} onBack={handleBackFromTrack} />}
         </div>
       </main>

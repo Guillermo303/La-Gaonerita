@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { orders as ordersApi } from '../api';
 
-export default function Confirmation({ order, onReset, onTrack }) {
+export default function Confirmation({ order, tortilla, onReset, onTrack }) {
   const [mpLink, setMpLink] = useState(null);
 
   useEffect(() => {
@@ -29,6 +29,12 @@ export default function Confirmation({ order, onReset, onTrack }) {
       <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-3">¡Pedido recibido!</h1>
       <p className="text-ink-500 mb-2">Tu orden <span className="font-bold text-brand-600">#{order.id}</span> ya está en la cocina.</p>
       <p className="text-ink-400 text-sm mb-8">Te lo llevamos a tu dirección en cuanto esté listo.</p>
+      {tortilla && (
+        <div className="bg-white border border-ink-900/10 rounded-xl p-4 mb-6 text-left">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-1">Tu pedido</p>
+          <p className="text-sm text-ink-700">🌽 Tipo de tortilla: <span className="font-semibold text-ink-900">{tortilla}</span></p>
+        </div>
+      )}
       {order.payment_method === 'transferencia' && (
         <div className="bg-cream-50 border border-brand-200 rounded-xl p-5 mb-6 text-left">
           <p className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-2">Pago por transferencia</p>
