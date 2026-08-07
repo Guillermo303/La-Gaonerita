@@ -10,6 +10,12 @@ import { isPhoneVerified } from '../lib/phone.js';
 
 const router = Router();
 
+// La taqueria solo abre viernes(5), sabado(6) y domingo(0). Esto ya se
+// valida en el cliente (delivery/src/pages/Horario.jsx), pero se repite
+// aqui para que un pedido de invitado hecho directo contra la API (sin
+// pasar por esa pantalla) no pueda saltarse la regla.
+const OPEN_WEEKDAYS = [5, 6, 0];
+
 function notifyOrderUpdate(io, order) {
   if (io) io.emit('order:update', order);
 }
@@ -134,6 +140,9 @@ router.post('/', optionalAuth, async (req, res) => {
     // sigue capturando el personal autenticado desde el panel de meseros.
     if (!['domicilio', 'local'].includes(order_type)) return res.status(401).json({ error: 'Token requerido' });
     if (mesa) return res.status(401).json({ error: 'Token requerido' });
+    if (!OPEN_WEEKDAYS.includes(new Date().getDay())) {
+      return res.status(400).json({ error: 'Hoy no abrimos. Solo recibimos pedidos viernes, sábado y domingo.' });
+    }
     if (!customer_phone) return res.status(400).json({ error: 'Teléfono requerido' });
     if (!isPhoneVerified(req.body.phone_verification_token, customer_phone)) {
       return res.status(403).json({ error: 'Verifica tu número de teléfono antes de continuar' });
