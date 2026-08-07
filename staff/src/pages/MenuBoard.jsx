@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { menu as menuApi, promotions as promotionsApi, orders as ordersApi } from '../api';
-import { formatPrice } from '../lib/utils';
+import { formatPrice, TIMEZONE } from '../lib/utils';
 import StyledImage from '../components/StyledImage';
 import { useSocket } from '../context/SocketContext';
 
@@ -58,10 +58,10 @@ function QueueList() {
     return () => { if (socket) socket.off('order:update', load); };
   }, [socket]);
 
-  const todayStr = new Date().toDateString();
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
   const queued = orders.filter(o =>
     (o.status === 'pendiente' || o.status === 'preparando') &&
-    new Date(o.created_at).toDateString() === todayStr
+    new Date(o.created_at).toLocaleDateString('en-CA', { timeZone: TIMEZONE }) === todayStr
   );
   const byType = (type) => queued
     .filter(o => o.order_type === type)
@@ -144,7 +144,7 @@ export default function MenuBoard() {
       <div className="serape-line" aria-hidden="true" />
       <div className="flex items-center justify-between px-10 py-6 shrink-0">
         <h1 className="text-3xl font-black font-display">🌮 La Gaonerita</h1>
-        <div className="text-2xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
+        <div className="text-2xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE })}</div>
       </div>
       <QueueList />
 

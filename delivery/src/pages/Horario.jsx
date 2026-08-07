@@ -7,6 +7,8 @@ const SLOT_MINUTES = 30;
 // La cocina necesita ~1.5h para preparar y despachar; los slots dentro de esa ventana se ocultan.
 // Ej.: si son las 8:00pm, la primera franja disponible es 9:30 - 10:00pm.
 const MIN_LEAD_MINUTES = 90;
+// La taqueria solo abre viernes(5), sabado(6) y domingo(0).
+const OPEN_WEEKDAYS = [5, 6, 0];
 
 const formatHour = (date) => {
   const h = date.getHours() % 12 || 12;
@@ -42,6 +44,7 @@ export default function Horario({ onPrev, onNext }) {
   }, []);
 
   const slots = useMemo(() => buildSlots(now), [now]);
+  const isOpenToday = OPEN_WEEKDAYS.includes(now.getDay());
 
   const handleSelect = (time) => {
     setOrderTime(time);
@@ -59,6 +62,13 @@ export default function Horario({ onPrev, onNext }) {
           {esLocal ? '¿A qué hora pasas por tu pedido?' : '¿A qué hora quieres que llegue?'}
         </p>
 
+        {!isOpenToday ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-ink-900/5 p-8">
+            <div className="text-5xl mb-4">🌮😴</div>
+            <p className="text-ink-900 font-bold text-lg mb-2">Hoy no abrimos</p>
+            <p className="text-ink-400 text-sm">Abrimos viernes, sábado y domingo de 20:00 a 23:00 hrs. ¡Te esperamos pronto!</p>
+          </div>
+        ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-ink-900/5 p-4">
           <button
             onClick={() => handleSelect('lo antes posible')}
@@ -92,6 +102,7 @@ export default function Horario({ onPrev, onNext }) {
             </p>
           )}
         </div>
+        )}
 
         <div className="flex justify-between mt-8">
           <button onClick={onPrev} className="px-6 py-3 rounded-lg font-bold text-ink-600 border border-ink-200 hover:bg-cream-100 transition">

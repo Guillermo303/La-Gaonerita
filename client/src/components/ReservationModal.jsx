@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { reservations as reservationsApi } from '../api';
+import { TIMEZONE } from '../lib/utils';
 
 function todayStr() {
-  return new Date().toLocaleDateString('en-CA');
+  return new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+}
+
+// La taqueria solo abre viernes, sabado y domingo.
+const OPEN_WEEKDAYS = [5, 6, 0];
+function isOpenDay(dateStr) {
+  if (!dateStr) return true;
+  return OPEN_WEEKDAYS.includes(new Date(`${dateStr}T12:00:00`).getDay());
 }
 
 export default function ReservationModal({ onClose }) {
@@ -16,6 +24,10 @@ export default function ReservationModal({ onClose }) {
     setError('');
     if (!form.customer_name || !form.customer_phone || !form.date || !form.time) {
       setError('Completa nombre, teléfono, fecha y hora');
+      return;
+    }
+    if (!isOpenDay(form.date)) {
+      setError('Solo recibimos reservaciones de viernes a domingo');
       return;
     }
     setLoading(true);
@@ -68,7 +80,7 @@ export default function ReservationModal({ onClose }) {
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-ink-500 mb-1 block">Hora</label>
-                  <input type="time" min="12:00" max="22:00" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })}
+                  <input type="time" min="20:00" max="22:30" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })}
                     className="w-full p-3 border border-ink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white" required />
                 </div>
               </div>
@@ -83,7 +95,10 @@ export default function ReservationModal({ onClose }) {
                   placeholder="Ej. celebración de cumpleaños, silla para bebé..." className="w-full p-3 border border-ink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white resize-none" />
               </div>
 
-              <p className="text-xs text-ink-400">Horario de reservaciones: 12:00 a 22:00 hrs.</p>
+              <p className="text-xs text-ink-400">Abrimos viernes a domingo, de 20:00 a 23:00 hrs. Última reservación: 22:30 hrs.</p>
+              {!isOpenDay(form.date) && (
+                <p className="text-xs text-red-500 -mt-2">Ese día no abrimos — elige un viernes, sábado o domingo.</p>
+              )}
 
               {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm">{error}</div>}
 

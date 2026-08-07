@@ -4,9 +4,11 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
-const OPEN_MINUTES = 12 * 60; // 12:00
-const CLOSE_MINUTES = 22 * 60; // última hora para reservar: 22:00
+const OPEN_MINUTES = 20 * 60; // 20:00
+const CLOSE_MINUTES = 22 * 60 + 30; // última hora para reservar: 22:30 (cierre 23:00)
 const DURATION_MINUTES = 90;
+// La taqueria solo abre viernes(5), sabado(6) y domingo(0).
+const OPEN_WEEKDAYS = [5, 6, 0];
 
 function toMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -40,9 +42,14 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Formato de fecha u hora inválido' });
   }
 
+  const requestedDay = new Date(`${date}T12:00:00`).getDay();
+  if (!OPEN_WEEKDAYS.includes(requestedDay)) {
+    return res.status(400).json({ error: 'Solo se reciben reservaciones de viernes a domingo' });
+  }
+
   const requestedMin = toMinutes(time);
   if (requestedMin < OPEN_MINUTES || requestedMin > CLOSE_MINUTES) {
-    return res.status(400).json({ error: 'Horario de reservaciones: 12:00 a 22:00' });
+    return res.status(400).json({ error: 'Horario de reservaciones: 20:00 a 22:30' });
   }
 
   const today = todayStr();

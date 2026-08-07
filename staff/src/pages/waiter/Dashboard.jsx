@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { orders as ordersApi, mesas as mesasApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
-import { formatPrice, typeLabels } from '../../lib/utils';
+import { formatPrice, typeLabels, TIMEZONE } from '../../lib/utils';
 import CobroModal from '../../components/CobroModal';
 import MesaPanel from '../../components/MesaPanel';
 import QuickSaleModal from '../../components/QuickSaleModal';
@@ -29,10 +29,10 @@ function ElapsedTime({ created }) {
 }
 
 function numberQueue(list) {
-  const todayStr = new Date().toDateString();
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
   let n = 0;
   return list.map(order => {
-    const isToday = new Date(order.created_at).toDateString() === todayStr;
+    const isToday = new Date(order.created_at).toLocaleDateString('en-CA', { timeZone: TIMEZONE }) === todayStr;
     if (order.status === 'completado' || !isToday) return { order, num: null };
     n++;
     return { order, num: ((n - 1) % 100) + 1 };
@@ -111,6 +111,7 @@ function OrderRow({ order, queueNumber, selected, onSelect }) {
       <span className="font-black text-lg text-ink-900 shrink-0">#{order.id}</span>
       <span className={`text-sm font-bold px-2.5 py-1 rounded-full shrink-0 ${cfg.badge}`}>{cfg.label}</span>
       <span className="text-base font-semibold text-ink-700 truncate min-w-[3rem]">{order.customer_name}</span>
+      {order.customer_phone && <span className="text-sm text-ink-400 shrink-0">📞 {order.customer_phone}</span>}
       {order.mesa && <span className="text-sm text-ink-400 font-medium shrink-0">{order.mesa}</span>}
       <span className="font-bold text-ink-900 shrink-0 ml-auto text-base">{formatPrice(order.total)}</span>
       <span className="text-sm text-ink-400 shrink-0 w-16 text-right"><ElapsedTime created={order.created_at} /></span>

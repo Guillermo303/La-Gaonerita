@@ -388,8 +388,8 @@ export default function Home() {
                   <span className="text-brand-500 text-xl">🕐</span>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-1">Horario</div>
-                    <div className="text-ink-700">Lunes a Domingo</div>
-                    <div className="text-ink-700">12:00 – 23:00</div>
+                    <div className="text-ink-700">Viernes a Domingo</div>
+                    <div className="text-ink-700">20:00 – 23:00</div>
                   </div>
                 </div>
                 <div className="flex gap-4">

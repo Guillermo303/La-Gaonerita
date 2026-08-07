@@ -24,7 +24,7 @@ export default function Footer() {
             <h4 className="text-xs font-bold uppercase tracking-widest text-ink-300 mb-3">Contacto</h4>
             <ul className="space-y-2 text-sm text-ink-200">
               <li>Av. Revolución #123, Col. Centro</li>
-              <li>Lun – Dom · 12:00 – 23:00</li>
+              <li>Vie – Dom · 20:00 – 23:00</li>
               <li>(55) 1234-5678</li>
             </ul>
           </div>

@@ -82,7 +82,7 @@ export default function Landing({ onStartOrder, hasOrder, onTrackOrder }) {
             </div>
           </div>
 
-          <p className="text-ink-300 text-xs mt-12">(55) 1234-5678 · Lun – Dom · 12:00 – 23:00</p>
+          <p className="text-ink-300 text-xs mt-12">(55) 1234-5678 · Vie – Dom · 20:00 – 23:00</p>
         </div>
       </div>
     </>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { orders as ordersApi, menu as menuApi, customizations as customizationsApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
-import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
+import { formatPrice, statusLabels, typeLabels, TIMEZONE } from '../../lib/utils';
 
 function ElapsedTimer({ created, status }) {
   const [elapsed, setElapsed] = useState(() => Date.now() - new Date(created).getTime());
@@ -363,8 +363,8 @@ function HistorialActivas({ orders, onDeliver }) {
 
   useEffect(() => {
     ordersApi.getHistory().then(all => {
-      const hoy = new Date().toDateString();
-      setEntregadosHoy(all.filter(o => o.status === 'completado' && new Date(o.created_at).toDateString() === hoy));
+      const hoy = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+      setEntregadosHoy(all.filter(o => o.status === 'completado' && new Date(o.created_at).toLocaleDateString('en-CA', { timeZone: TIMEZONE }) === hoy));
     }).catch(() => {});
   }, [orders]);
 

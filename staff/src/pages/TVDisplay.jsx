@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { orders as ordersApi } from '../api';
 import { useSocket } from '../context/SocketContext';
+import { TIMEZONE } from '../lib/utils';
 
 export default function TVDisplay() {
   const [orders, setOrders] = useState([]);
@@ -47,7 +48,7 @@ export default function TVDisplay() {
               <div className="text-sm uppercase tracking-widest text-cream-100/50 mt-2">PM – 11 PM</div>
             </div>
           </div>
-          <div className="mt-12 text-6xl font-mono text-cream-100/30">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
+          <div className="mt-12 text-6xl font-mono text-cream-100/30">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE })}</div>
         </div>
       </div>
     );
@@ -58,7 +59,7 @@ export default function TVDisplay() {
       <div className="min-h-screen bg-ink-900 text-cream-50 p-12 flex flex-col">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-black font-display">🌮 La Gaonerita</h1>
-          <div className="text-3xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
+          <div className="text-3xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE })}</div>
         </div>
         <h2 className="text-5xl font-bold text-center mb-12">Órdenes en Preparación</h2>
         <div className="flex-1 grid grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-max">
@@ -86,14 +87,14 @@ export default function TVDisplay() {
     <div className="min-h-screen bg-ink-900 text-cream-50 p-12 flex flex-col">
       <div className="flex items-center justify-between mb-10">
         <h1 className="text-4xl font-black font-display">🌮 La Gaonerita</h1>
-        <div className="text-3xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>
+        <div className="text-3xl font-mono text-cream-100/50">{time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE })}</div>
       </div>
-      <h2 className="text-5xl font-bold text-center mb-12">✅ Órdenes Listas para Recoger</h2>
+      <h2 className="text-5xl font-bold text-center mb-12">✅ Órdenes Terminadas para Recoger</h2>
       {readyOrders.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="text-8xl mb-6">🕐</div>
-            <p className="text-4xl text-cream-100/50">No hay órdenes listas en este momento</p>
+            <p className="text-4xl text-cream-100/50">No hay órdenes terminadas en este momento</p>
             <p className="text-2xl text-cream-100/30 mt-4">Tus tacos están siendo preparados con cariño</p>
           </div>
         </div>
@@ -102,7 +103,7 @@ export default function TVDisplay() {
           {readyOrders.map(order => (
             <div key={order.id} className="bg-green-500/10 border-2 border-green-400 rounded-3xl p-8 text-center animate-pulse flex flex-col items-center justify-center">
               <div className="text-8xl font-black mb-2">#{order.id}</div>
-              <div className="text-2xl text-green-300 font-bold uppercase tracking-widest">¡Listo!</div>
+              <div className="text-2xl text-green-300 font-bold uppercase tracking-widest">¡Terminado!</div>
               <div className="text-3xl mt-4 font-semibold">{order.customer_name}</div>
               {order.mesa && <div className="text-xl text-green-200/70 mt-2">📍 {order.mesa}</div>}
               {order.order_type === 'domicilio' && <div className="text-xl text-green-200/70 mt-2">🛵 Listo para reparto</div>}

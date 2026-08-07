@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { menu as menuApi, orders as ordersApi, mesas as mesasApi, employees as employeesApi, reservations as reservationsApi, reports as reportsApi, socios as sociosApi, expenses as expensesApi, supplies as suppliesApi, assets as assetsApi, users as usersApi, customizations as customizationsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { formatPrice } from '../lib/utils';
+import { formatPrice, TIMEZONE, typeLabels } from '../lib/utils';
 import { printFinanceOverview, downloadFinanceCSV } from '../lib/reportPrint';
 import StyledImage from '../components/StyledImage';
 import ImageEditorModal from '../components/ImageEditor';
@@ -59,8 +59,16 @@ const statusColors = {
   cancelado: 'bg-red-100 text-red-800'
 };
 
+const statusLabels = {
+  pendiente: 'Nuevo',
+  preparando: 'En preparación',
+  listo: 'Pedido terminado',
+  completado: 'Enviado / Entregado',
+  cancelado: 'Cancelado'
+};
+
 function todayStr() {
-  return new Date().toLocaleDateString('en-CA');
+  return new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 }
 
 function fmtHour(h) {
@@ -1310,36 +1318,122 @@ export function FinanzasTab() {
 
 // ---------- Órdenes / Historial ----------
 
-export function OrdenesTab() {
-  const [allOrders, setAllOrders] = useState([]);
+// Trae el universo completo de ordenes (activas + historial) una sola vez;
+// las pestañas por estado y "Todos los pedidos" filtran sobre esta misma
+// lista para no repetir llamadas al backend en cada pestaña.
+function useAllOrdersEverSeen() {
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const load = () => ordersApi.getAllActive().then(setAllOrders).catch(console.error).finally(() => setLoading(false));
+  const load = () => {
+    setLoading(true);
+    Promise.all([ordersApi.getAllActive(), ordersApi.getHistory()])
+      .then(([active, history]) => setOrders([...active, ...history]))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
   useEffect(() => { load(); }, []);
+
+  return { orders, loading, reload: load };
+}
+
+function OrderRow({ order }) {
+  return (
+    <div className="bg-white rounded-xl border border-ink-100 p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="font-black text-ink-900">#{order.id}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || ''}`}>{statusLabels[order.status] || order.status}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{typeLabels[order.order_type] || order.order_type}</span>
+          {order.mesa && <span className="text-xs text-ink-400">{order.mesa}</span>}
+        </div>
+        <span className="font-bold text-ink-900">{formatPrice(order.total)}</span>
+      </div>
+      <div className="text-sm text-ink-500">{order.customer_name}{order.customer_phone && ` · 📞 ${order.customer_phone}`}</div>
+    </div>
+  );
+}
+
+// `statuses` filtra a esos estados; sin `statuses` (undefined) muestra todo
+// -- es la pestaña "Todos los pedidos".
+export function PedidosTab({ statuses, emptyLabel = 'No hay pedidos en este estado' }) {
+  const { orders, loading, reload } = useAllOrdersEverSeen();
+  const filtered = statuses ? orders.filter(o => statuses.includes(o.status)) : orders;
+  const sorted = [...filtered].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   if (loading) return <div className="text-center py-12 text-ink-400">Cargando...</div>;
 
   return (
     <div>
       <div className="flex justify-end mb-3">
-        <button onClick={load} className="text-xs bg-cream-100 text-ink-600 px-3 py-2 rounded-lg font-bold hover:bg-cream-200">↻ Actualizar</button>
+        <button onClick={reload} className="text-xs bg-cream-100 text-ink-600 px-3 py-2 rounded-lg font-bold hover:bg-cream-200">↻ Actualizar</button>
       </div>
       <div className="space-y-2">
-        {allOrders.length === 0 ? (
-          <div className="text-center py-12 text-ink-400">No hay órdenes activas</div>
+        {sorted.length === 0 ? (
+          <div className="text-center py-12 text-ink-400">{emptyLabel}</div>
         ) : (
-          allOrders.map(order => (
-            <div key={order.id} className="bg-white rounded-xl border border-ink-100 p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="font-black text-ink-900">#{order.id}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || ''}`}>{order.status}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${order.order_type === 'domicilio' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{order.order_type}</span>
-                  {order.mesa && <span className="text-xs text-ink-400">{order.mesa}</span>}
-                </div>
-                <span className="font-bold text-ink-900">{formatPrice(order.total)}</span>
+          sorted.map(order => <OrderRow key={order.id} order={order} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Se mantiene por compatibilidad -- equivale a "Todos los pedidos".
+export function OrdenesTab() {
+  return <PedidosTab emptyLabel="No hay órdenes" />;
+}
+
+// ---------- Clientes ----------
+
+// No hay tabla de clientes aparte -- se arma la lista a partir de los
+// pedidos (activos + historial), agrupando por telefono. Sin telefono no
+// hay forma confiable de identificar al mismo cliente entre pedidos.
+export function ClientesTab() {
+  const { orders, loading, reload } = useAllOrdersEverSeen();
+
+  const clientes = (() => {
+    const byPhone = new Map();
+    for (const o of orders) {
+      if (!o.customer_phone) continue;
+      const existing = byPhone.get(o.customer_phone);
+      if (!existing || new Date(o.created_at) > new Date(existing.lastOrderAt)) {
+        byPhone.set(o.customer_phone, {
+          phone: o.customer_phone,
+          name: o.customer_name,
+          lastOrderAt: o.created_at,
+          orderCount: (existing?.orderCount || 0) + 1,
+          totalSpent: (existing?.totalSpent || 0) + Number(o.total || 0)
+        });
+      } else {
+        existing.orderCount += 1;
+        existing.totalSpent += Number(o.total || 0);
+      }
+    }
+    return [...byPhone.values()].sort((a, b) => new Date(b.lastOrderAt) - new Date(a.lastOrderAt));
+  })();
+
+  if (loading) return <div className="text-center py-12 text-ink-400">Cargando...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-end mb-3">
+        <button onClick={reload} className="text-xs bg-cream-100 text-ink-600 px-3 py-2 rounded-lg font-bold hover:bg-cream-200">↻ Actualizar</button>
+      </div>
+      <div className="space-y-2">
+        {clientes.length === 0 ? (
+          <div className="text-center py-12 text-ink-400">Todavía no hay clientes con pedidos</div>
+        ) : (
+          clientes.map(c => (
+            <div key={c.phone} className="bg-white rounded-xl border border-ink-100 p-4 shadow-sm flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-bold text-ink-900 truncate">{c.name || 'Sin nombre'}</div>
+                <a href={`tel:${c.phone}`} className="text-sm text-ink-500 hover:text-brand-600">📞 {c.phone}</a>
               </div>
-              <div className="text-sm text-ink-500">{order.customer_name}{order.customer_phone && ` · 📞 ${order.customer_phone}`}</div>
+              <div className="text-right shrink-0">
+                <div className="text-sm font-bold text-ink-900">{c.orderCount} {c.orderCount === 1 ? 'pedido' : 'pedidos'}</div>
+                <div className="text-xs text-ink-400">{formatPrice(c.totalSpent)} en total</div>
+              </div>
             </div>
           ))
         )}
@@ -1361,8 +1455,8 @@ export function HistorialTab() {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
                 <span className="font-black text-ink-900">#{order.id}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || ''}`}>{order.status}</span>
-                <span className="text-xs text-ink-400">{new Date(order.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || ''}`}>{statusLabels[order.status] || order.status}</span>
+                <span className="text-xs text-ink-400">{new Date(order.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: TIMEZONE })}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{order.payment_status}</span>

@@ -6,6 +6,15 @@ import { startReservationSchedule } from './reservations.js';
 import { startSalesReportSchedule } from './salesReports.js';
 import { startSupplySchedule } from './supplies.js';
 
+// Fija la zona horaria del proceso a la de la taqueria. Si el servidor corre
+// en UTC (como Render por defecto), "hoy" para el turno de cocina, las
+// recomendaciones y cualquier fecha calculada con `new Date()` quedaria
+// desfasado varias horas cada dia -- justo el sintoma de "hora rara" que
+// reporto el jefe. Se puede sobreescribir con la env var TZ si hiciera falta.
+if (!process.env.TZ) {
+  process.env.TZ = 'America/Mexico_City';
+}
+
 const { httpServer } = createApp();
 
 const PORT = process.env.PORT || 3001;

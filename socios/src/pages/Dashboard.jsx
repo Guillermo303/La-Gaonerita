@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { reports as reportsApi, promotions as promotionsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { formatPrice } from '../lib/utils';
+import { formatPrice, TIMEZONE } from '../lib/utils';
 import { printSalesReport, downloadSalesCSV } from '../lib/reportPrint';
 import GrowthLottie from '../components/GrowthLottie';
 import CountUp from '../components/CountUp';
@@ -9,7 +9,7 @@ import StyledImage from '../components/StyledImage';
 import ImageEditorModal from '../components/ImageEditor';
 import {
   FinanzasTab, MenuTab, PersonalizacionTab, MesasTab, ReservacionesTab,
-  GastosTab, InsumosTab, ActivosTab, OrdenesTab, HistorialTab,
+  GastosTab, InsumosTab, ActivosTab, PedidosTab, ClientesTab, HistorialTab,
   EmpleadosTab, SociosAccountsTab, DisponibilidadTab
 } from './AdminTools';
 
@@ -20,7 +20,7 @@ function fmtHour(h) {
 }
 
 function todayStr() {
-  return new Date().toLocaleDateString('en-CA');
+  return new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 }
 
 const periodLabels = { day: 'Día', week: 'Semana', month: 'Mes' };
@@ -63,7 +63,7 @@ function PromoCard({ promo, onSave, onDelete }) {
     setEditing(false);
   };
 
-  const isExpired = promo.schedule_type === 'date_range' && promo.end_date && promo.end_date < new Date().toLocaleDateString('en-CA');
+  const isExpired = promo.schedule_type === 'date_range' && promo.end_date && promo.end_date < todayStr();
 
   return (
     <div className={`card-glow bg-white rounded-xl border shadow-sm overflow-hidden ${!promo.active ? 'opacity-60' : ''} ${promo.active ? 'border-brand-200' : 'border-ink-100'}`}>
@@ -233,7 +233,7 @@ function SavedReports() {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [view, setView] = useState('actual');
+  const [view, setView] = useState('pedidos_nuevos');
   const [period, setPeriod] = useState('day');
   const [date, setDate] = useState(todayStr());
   const [health, setHealth] = useState(null);
@@ -264,17 +264,29 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex gap-1 bg-ink-100 rounded-lg p-1 mb-6 w-fit flex-wrap">
           {[
+            // Primero lo operativo del dia (lo que se pidio que aparezca al
+            // entrar): pedidos por estado, luego todos, clientes y platillos.
+            ['pedidos_nuevos', 'Pedidos Nuevos'], ['pedidos_preparacion', 'Pedidos en Preparación'],
+            ['pedidos_terminados', 'Pedidos Terminados'], ['pedidos_enviados', 'Pedidos Enviados/Entregados'],
+            ['ordenes', 'Todos los Pedidos'], ['clientes', 'Clientes'], ['menu', 'Platillos'],
+            // Despues, el resto de herramientas de administracion.
             ['actual', 'Salud del Negocio'], ['guardados', 'Reportes Guardados'], ['finanzas', 'Finanzas'],
-            ['promociones', 'Promociones'], ['menu', 'Menú'], ['personalizacion', 'Personalización'],
+            ['promociones', 'Promociones'], ['personalizacion', 'Personalización'],
             ['mesas', 'Mesas'], ['reservaciones', 'Reservaciones'], ['gastos', 'Gastos'],
-            ['insumos', 'Insumos'], ['activos', 'Activos'], ['ordenes', 'Órdenes'], ['historial', 'Historial'],
+            ['insumos', 'Insumos'], ['activos', 'Activos'], ['historial', 'Historial'],
             ['disponibilidad', 'Disponibilidad'], ['empleados', 'Empleados'], ['socios', 'Socios']
           ].map(([key, label]) => (
             <button key={key} onClick={() => setView(key)} className={`card-glow px-4 py-1.5 rounded-md text-xs font-bold transition ${view === key ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-700'}`}>{label}</button>
           ))}
         </div>
 
-        {view === 'guardados' ? <SavedReports />
+        {view === 'pedidos_nuevos' ? <PedidosTab statuses={['pendiente']} emptyLabel="No hay pedidos nuevos" />
+          : view === 'pedidos_preparacion' ? <PedidosTab statuses={['preparando']} emptyLabel="No hay pedidos en preparación" />
+          : view === 'pedidos_terminados' ? <PedidosTab statuses={['listo']} emptyLabel="No hay pedidos terminados" />
+          : view === 'pedidos_enviados' ? <PedidosTab statuses={['completado']} emptyLabel="No hay pedidos enviados/entregados" />
+          : view === 'ordenes' ? <PedidosTab emptyLabel="No hay pedidos" />
+          : view === 'clientes' ? <ClientesTab />
+          : view === 'guardados' ? <SavedReports />
           : view === 'promociones' ? <PromocionesAdmin />
           : view === 'finanzas' ? <FinanzasTab />
           : view === 'menu' ? <MenuTab />
@@ -284,7 +296,6 @@ export default function Dashboard() {
           : view === 'gastos' ? <GastosTab />
           : view === 'insumos' ? <InsumosTab />
           : view === 'activos' ? <ActivosTab />
-          : view === 'ordenes' ? <OrdenesTab />
           : view === 'historial' ? <HistorialTab />
           : view === 'disponibilidad' ? <DisponibilidadTab />
           : view === 'empleados' ? <EmpleadosTab />

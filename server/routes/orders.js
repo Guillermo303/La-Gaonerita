@@ -46,7 +46,7 @@ router.get('/', authenticate, async (req, res) => {
   res.json(ordersWithItems);
 });
 
-router.get('/all', authenticate, authorize('admin', 'cocina'), async (req, res) => {
+router.get('/all', authenticate, authorize('admin', 'cocina', 'socio'), async (req, res) => {
   const orders = await query("SELECT * FROM orders WHERE status != 'completado' AND status != 'cancelado' ORDER BY created_at DESC");
   const ordersWithItems = await Promise.all(orders.map(async order => ({ ...order, items: await query('SELECT * FROM order_items WHERE order_id = ?', [order.id]) })));
   res.json(ordersWithItems);
