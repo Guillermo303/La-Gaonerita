@@ -4,8 +4,9 @@ import { useCart } from '../context/CartContext';
 const OPEN_HOUR = 20; // 8:00 pm
 const CLOSE_HOUR = 23; // 11:00 pm
 const SLOT_MINUTES = 30;
-// La cocina necesita ~1h para preparar y despachar; los slots dentro de esa ventana se ocultan.
-const MIN_LEAD_MINUTES = 60;
+// La cocina necesita ~1.5h para preparar y despachar; los slots dentro de esa ventana se ocultan.
+// Ej.: si son las 8:00pm, la primera franja disponible es 9:30 - 10:00pm.
+const MIN_LEAD_MINUTES = 90;
 
 const formatHour = (date) => {
   const h = date.getHours() % 12 || 12;
