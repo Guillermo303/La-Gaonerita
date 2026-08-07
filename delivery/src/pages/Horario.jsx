@@ -1,17 +1,46 @@
+import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 
-const SLOTS = [
-  '8:00 – 8:30 pm',
-  '8:30 – 9:00 pm',
-  '9:00 – 9:30 pm',
-  '9:30 – 10:00 pm',
-  '10:00 – 10:30 pm',
-  '10:30 – 11:00 pm',
-];
+const OPEN_HOUR = 20; // 8:00 pm
+const CLOSE_HOUR = 23; // 11:00 pm
+const SLOT_MINUTES = 30;
+// La cocina necesita ~1h para preparar y despachar; los slots dentro de esa ventana se ocultan.
+const MIN_LEAD_MINUTES = 60;
+
+const formatHour = (date) => {
+  const h = date.getHours() % 12 || 12;
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+const buildSlots = (now) => {
+  const base = new Date(now);
+  base.setHours(OPEN_HOUR, 0, 0, 0);
+  const totalSlots = ((CLOSE_HOUR - OPEN_HOUR) * 60) / SLOT_MINUTES;
+  const threshold = now.getTime() + MIN_LEAD_MINUTES * 60000;
+
+  const slots = [];
+  for (let i = 0; i < totalSlots; i++) {
+    const start = new Date(base.getTime() + i * SLOT_MINUTES * 60000);
+    const end = new Date(start.getTime() + SLOT_MINUTES * 60000);
+    if (start.getTime() < threshold) continue;
+    const ampm = end.getHours() >= 12 ? 'pm' : 'am';
+    slots.push(`${formatHour(start)} – ${formatHour(end)} ${ampm}`);
+  }
+  return slots;
+};
 
 export default function Horario({ onPrev, onNext }) {
   const { orderType, orderTime, setOrderTime } = useCart();
   const esLocal = orderType === 'local';
+
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const slots = useMemo(() => buildSlots(now), [now]);
 
   const handleSelect = (time) => {
     setOrderTime(time);
@@ -40,21 +69,27 @@ export default function Horario({ onPrev, onNext }) {
           >
             ⚡ Lo antes posible
           </button>
-          <div className="flex flex-col gap-2">
-            {SLOTS.map(slot => (
-              <button
-                key={slot}
-                onClick={() => handleSelect(slot)}
-                className={`w-full py-3 rounded-xl font-semibold text-sm border transition ${
-                  orderTime === slot
-                    ? 'bg-brand-500 text-white border-brand-500'
-                    : 'bg-cream-50 text-ink-600 border-ink-200 hover:border-brand-300'
-                }`}
-              >
-                {slot}
-              </button>
-            ))}
-          </div>
+          {slots.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {slots.map(slot => (
+                <button
+                  key={slot}
+                  onClick={() => handleSelect(slot)}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm border transition ${
+                    orderTime === slot
+                      ? 'bg-brand-500 text-white border-brand-500'
+                      : 'bg-cream-50 text-ink-600 border-ink-200 hover:border-brand-300'
+                  }`}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-ink-400 text-sm py-2">
+              Ya no hay horarios programados disponibles por hoy. Elige "Lo antes posible".
+            </p>
+          )}
         </div>
 
         <div className="flex justify-between mt-8">
