@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'gaonerita_saved_customers';
 const MAX_CUSTOMERS = 20;
 
-const normalize = (name) => (name || '').toLowerCase().trim().replace(/\s+/g, ' ');
+const normalizePhone = (phone) => String(phone || '').replace(/\D/g, '');
 
 export function getSavedCustomers() {
   try {
@@ -11,23 +11,24 @@ export function getSavedCustomers() {
   }
 }
 
-export function findCustomerByName(name) {
-  const key = normalize(name);
+// Coincidencia exacta por teléfono — nunca por nombre, para no sugerirle a
+// alguien los datos de otra persona que se llame igual.
+export function findCustomerByPhone(phone) {
+  const key = normalizePhone(phone);
   if (!key) return null;
   const customers = getSavedCustomers()
     .slice()
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-  return customers.find(c => normalize(c.name) === key) || null;
+  return customers.find(c => normalizePhone(c.phone) === key) || null;
 }
 
 export function saveCustomer({ name, phone, address }) {
-  const cleanName = (name || '').trim();
-  if (!cleanName) return;
-  const key = normalize(cleanName);
+  const key = normalizePhone(phone);
+  if (!key) return;
   const customers = getSavedCustomers();
-  const existing = customers.find(c => normalize(c.name) === key);
+  const existing = customers.find(c => normalizePhone(c.phone) === key);
   const entry = {
-    name: cleanName,
+    name: (name || '').trim(),
     phone: (phone || '').trim(),
     address: (address || '').trim(),
     updatedAt: new Date().toISOString()

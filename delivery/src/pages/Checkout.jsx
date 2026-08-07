@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { orders as ordersApi, verification as verificationApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
-import { findCustomerByName, saveCustomer } from '../lib/customers';
+import { findCustomerByPhone, saveCustomer } from '../lib/customers';
 import { isVerified, saveVerification, getToken } from '../lib/phoneVerification';
 
 const DELIVERY_FEE = 15;
+const normalizePhoneDigits = (phone) => String(phone || '').replace(/\D/g, '');
 
 export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
   const { items, updateQty, clear, count, total, orderType, orderTime, customizations } = useCart();
@@ -28,6 +29,17 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
     setOtpCode('');
     setOtpError('');
   }, [form.phone]);
+
+  // Solo sugerimos datos guardados una vez que el teléfono quedó verificado
+  // (por OTP o por caché de una verificación previa), y siempre por match
+  // exacto de número — nunca por nombre, para no mostrarle a alguien los
+  // datos de otra persona.
+  useEffect(() => {
+    if (!otpVerified) { setSuggested(null); return; }
+    const match = findCustomerByPhone(form.phone);
+    const already = match && normalizePhoneDigits(form.phone) === appliedFor;
+    setSuggested(match && !already ? match : null);
+  }, [otpVerified, form.phone, appliedFor]);
 
   const handleSendOtp = async () => {
     setOtpError('');
@@ -63,26 +75,19 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
   const deliveryFee = orderType === 'domicilio' ? DELIVERY_FEE : 0;
   const finalTotal = total + deliveryFee;
 
-  const handleNameChange = (value) => {
-    setForm({ ...form, name: value });
-    const match = value.trim() ? findCustomerByName(value) : null;
-    const alreadyApplied = match && normalizeForCompare(match.name) === normalizeForCompare(appliedFor);
-    setSuggested(match && !alreadyApplied ? match : null);
-  };
-
   const applySuggestion = () => {
     if (!suggested) return;
     setForm(prev => ({
       ...prev,
-      phone: suggested.phone || prev.phone,
+      name: suggested.name || prev.name,
       address: suggested.address || prev.address,
     }));
-    setAppliedFor(suggested.name);
+    setAppliedFor(normalizePhoneDigits(form.phone));
     setSuggested(null);
   };
 
   const dismissSuggestion = () => {
-    setAppliedFor(form.name);
+    setAppliedFor(normalizePhoneDigits(form.phone));
     setSuggested(null);
   };
 
@@ -124,10 +129,6 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
       setPlacing(false);
     }
   };
-
-  function normalizeForCompare(name) {
-    return (name || '').toLowerCase().trim().replace(/\s+/g, ' ');
-  }
 
   if (count === 0) {
     return (
@@ -200,25 +201,9 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
           <div className="bg-white rounded-2xl shadow-md p-6 space-y-5">
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Tu nombre</label>
-              <input type="text" value={form.name} onChange={e => handleNameChange(e.target.value)}
+              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Nombre y apellido" />
             </div>
-
-            {suggested && orderType === 'domicilio' && (
-              <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
-                <p className="text-sm font-bold text-ink-900 mb-2">¿Este es tu número/dirección?</p>
-                {suggested.phone && <p className="text-sm text-ink-600">📞 {suggested.phone}</p>}
-                {suggested.address && <p className="text-sm text-ink-600 mt-0.5">📍 {suggested.address}</p>}
-                <div className="flex gap-2 mt-3">
-                  <button type="button" onClick={applySuggestion} className="flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition">
-                    Sí, usar
-                  </button>
-                  <button type="button" onClick={dismissSuggestion} className="flex-1 bg-white border border-ink-200 text-ink-600 py-2 rounded-lg font-bold text-sm hover:bg-cream-50 transition">
-                    No
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono</label>
@@ -256,6 +241,22 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
                 )
               )}
             </div>
+
+            {suggested && (
+              <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                <p className="text-sm font-bold text-ink-900 mb-2">Reconocimos tu número, ¿usamos tus datos guardados?</p>
+                {suggested.name && <p className="text-sm text-ink-600">🙋 {suggested.name}</p>}
+                {orderType === 'domicilio' && suggested.address && <p className="text-sm text-ink-600 mt-0.5">📍 {suggested.address}</p>}
+                <div className="flex gap-2 mt-3">
+                  <button type="button" onClick={applySuggestion} className="flex-1 bg-brand-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-brand-600 transition">
+                    Sí, usar
+                  </button>
+                  <button type="button" onClick={dismissSuggestion} className="flex-1 bg-white border border-ink-200 text-ink-600 py-2 rounded-lg font-bold text-sm hover:bg-cream-50 transition">
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
 
             {orderType === 'domicilio' && (
               <div>
