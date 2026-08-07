@@ -21,6 +21,7 @@ import customizationRoutes from './routes/customizations.js';
 import pushRoutes from './routes/push.js';
 import promotionRoutes from './routes/promotions.js';
 import mercadopagoRoutes from './routes/mercadopago.js';
+import verificationRoutes from './routes/verification.js';
 
 const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'];
 
@@ -42,9 +43,11 @@ export function createApp() {
 
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.API_RATE_LIMIT_MAX) || 300, standardHeaders: true, legacyHeaders: false, message: { error: 'Demasiadas peticiones, intenta de nuevo en unos minutos' } });
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Demasiados intentos, intenta de nuevo más tarde' } });
+  const otpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.OTP_RATE_LIMIT_MAX) || 8, standardHeaders: true, legacyHeaders: false, message: { error: 'Demasiados intentos, intenta de nuevo más tarde' } });
   app.use('/api', apiLimiter);
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
+  app.use('/api/verification', otpLimiter);
 
   io.on('connection', (socket) => {
     socket.on('join:kitchen', () => socket.join('kitchen'));
@@ -67,6 +70,7 @@ export function createApp() {
   app.use('/api/push', pushRoutes);
   app.use('/api/promotions', promotionRoutes);
   app.use('/api/mercadopago', mercadopagoRoutes);
+  app.use('/api/verification', verificationRoutes);
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
   // Red de seguridad: captura cualquier error no manejado explícitamente por

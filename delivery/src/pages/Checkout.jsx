@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { orders as ordersApi } from '../api';
+import { useState, useEffect } from 'react';
+import { orders as ordersApi, verification as verificationApi } from '../api';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { findCustomerByName, saveCustomer } from '../lib/customers';
+import { isVerified, saveVerification, getToken } from '../lib/phoneVerification';
 
 const DELIVERY_FEE = 15;
 
@@ -15,6 +16,49 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
   const [error, setError] = useState('');
   const [suggested, setSuggested] = useState(null);
   const [appliedFor, setAppliedFor] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpStep, setOtpStep] = useState('idle'); // idle | sent
+  const [otpCode, setOtpCode] = useState('');
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpError, setOtpError] = useState('');
+
+  useEffect(() => {
+    setOtpVerified(isVerified(form.phone));
+    setOtpStep('idle');
+    setOtpCode('');
+    setOtpError('');
+  }, [form.phone]);
+
+  const handleSendOtp = async () => {
+    setOtpError('');
+    if (!form.phone.trim()) { setOtpError('Escribe tu teléfono primero'); return; }
+    setOtpBusy(true);
+    try {
+      await verificationApi.send(form.phone.trim());
+      setOtpStep('sent');
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpBusy(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setOtpError('');
+    if (!otpCode.trim()) { setOtpError('Escribe el código que te enviamos'); return; }
+    setOtpBusy(true);
+    try {
+      const res = await verificationApi.check(form.phone.trim(), otpCode.trim());
+      saveVerification(form.phone.trim(), res.token);
+      setOtpVerified(true);
+      setOtpStep('idle');
+      setOtpCode('');
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpBusy(false);
+    }
+  };
 
   const deliveryFee = orderType === 'domicilio' ? DELIVERY_FEE : 0;
   const finalTotal = total + deliveryFee;
@@ -47,6 +91,7 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
     setError('');
     if (!form.name.trim()) { setError('Escribe tu nombre'); return; }
     if (!form.phone.trim()) { setError('Escribe un teléfono para contactarte'); return; }
+    if (!otpVerified) { setError('Verifica tu número de teléfono antes de continuar'); return; }
     if (orderType === 'domicilio' && !form.address.trim()) { setError('Escribe la dirección de entrega'); return; }
     setPlacing(true);
     try {
@@ -64,6 +109,7 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
         notes,
         payment_method: form.payment,
         items: orderItems,
+        phone_verification_token: getToken(),
       });
       saveCustomer({
         name: form.name.trim(),
@@ -178,6 +224,37 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
               <label className="block text-xs font-bold uppercase tracking-widest text-ink-500 mb-2">Teléfono</label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 className="w-full p-2.5 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="55 1234 5678" />
+              {form.phone.trim() && (
+                otpVerified ? (
+                  <p className="text-xs font-semibold text-green-600 mt-2">✓ Número verificado</p>
+                ) : (
+                  <div className="bg-cream-50 border border-ink-200 rounded-xl p-3 mt-2">
+                    {otpStep === 'idle' ? (
+                      <button type="button" onClick={handleSendOtp} disabled={otpBusy}
+                        className="text-sm font-bold text-brand-600 hover:underline disabled:opacity-50">
+                        {otpBusy ? 'Enviando…' : '📲 Verificar este número'}
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs text-ink-500">Te enviamos un código por SMS a {form.phone}</p>
+                        <div className="flex gap-2">
+                          <input type="text" inputMode="numeric" value={otpCode} onChange={e => setOtpCode(e.target.value)}
+                            placeholder="Código de 6 dígitos" maxLength={6}
+                            className="flex-1 p-2 border border-ink-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" />
+                          <button type="button" onClick={handleVerifyOtp} disabled={otpBusy}
+                            className="px-4 py-2 bg-brand-500 text-white rounded-lg font-bold text-sm hover:bg-brand-600 disabled:opacity-50">
+                            {otpBusy ? '…' : 'Confirmar'}
+                          </button>
+                        </div>
+                        <button type="button" onClick={handleSendOtp} disabled={otpBusy} className="text-xs text-ink-400 hover:underline">
+                          Reenviar código
+                        </button>
+                      </div>
+                    )}
+                    {otpError && <p className="text-xs text-brand-600 mt-1">{otpError}</p>}
+                  </div>
+                )
+              )}
             </div>
 
             {orderType === 'domicilio' && (

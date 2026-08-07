@@ -47,3 +47,8 @@ export const orders = {
 export const customizations = {
   getAll: () => request('/customizations')
 };
+
+export const verification = {
+  send: (phone) => request('/verification/send', { method: 'POST', body: JSON.stringify({ phone }) }),
+  check: (phone, code) => request('/verification/check', { method: 'POST', body: JSON.stringify({ phone, code }) })
+};

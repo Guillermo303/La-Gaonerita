@@ -6,6 +6,7 @@ import { decrementStock } from '../inventory.js';
 import { decrementSuppliesForOrder } from '../supplies.js';
 import { sendPushToRoles, sendPushToUser } from '../push.js';
 import { createPaymentLink, isConfigured as mercadoPagoConfigured } from '../mercadopago.js';
+import { isPhoneVerified } from '../lib/phone.js';
 
 const router = Router();
 
@@ -134,6 +135,9 @@ router.post('/', optionalAuth, async (req, res) => {
     if (!['domicilio', 'local'].includes(order_type)) return res.status(401).json({ error: 'Token requerido' });
     if (mesa) return res.status(401).json({ error: 'Token requerido' });
     if (!customer_phone) return res.status(400).json({ error: 'Teléfono requerido' });
+    if (!isPhoneVerified(req.body.phone_verification_token, customer_phone)) {
+      return res.status(403).json({ error: 'Verifica tu número de teléfono antes de continuar' });
+    }
     if (order_type === 'domicilio' && !customer_address) return res.status(400).json({ error: 'Dirección requerida para pedidos a domicilio' });
   }
 

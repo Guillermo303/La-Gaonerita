@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { freshApp } from './helpers.js';
 import { run } from '../db.js';
+import { normalizePhone } from '../lib/phone.js';
+
+function verifiedPhoneToken(phone) {
+  return jwt.sign({ phone: normalizePhone(phone) }, process.env.JWT_SECRET, { expiresIn: '90d' });
+}
 
 async function registerAndLogin(app, overrides = {}) {
   const email = overrides.email || `user${Math.random()}@test.com`;
@@ -66,7 +72,8 @@ describe('POST /api/orders', () => {
 
   it('permite un pedido de recoger en el local sin cuenta (app de delivery)', async () => {
     const res = await request(app).post('/api/orders').send({
-      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }],
+      phone_verification_token: verifiedPhoneToken('5511112222')
     });
     expect(res.status).toBe(201);
     expect(res.body.order_type).toBe('local');
@@ -79,9 +86,25 @@ describe('POST /api/orders', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rechaza un pedido sin cuenta si el teléfono no está verificado', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('rechaza un pedido sin cuenta si el código de verificación es de otro teléfono', async () => {
+    const res = await request(app).post('/api/orders').send({
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'local', items: [{ menu_item_id: menuItemId, quantity: 1 }],
+      phone_verification_token: verifiedPhoneToken('5599998888')
+    });
+    expect(res.status).toBe(403);
+  });
+
   it('permite un pedido a domicilio sin cuenta con teléfono y dirección', async () => {
     const res = await request(app).post('/api/orders').send({
-      customer_name: 'Ana', customer_phone: '5511112222', customer_address: 'Calle Falsa 123', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+      customer_name: 'Ana', customer_phone: '5511112222', customer_address: 'Calle Falsa 123', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }],
+      phone_verification_token: verifiedPhoneToken('5511112222')
     });
     expect(res.status).toBe(201);
     expect(res.body.order_type).toBe('domicilio');
@@ -89,7 +112,8 @@ describe('POST /api/orders', () => {
 
   it('rechaza un pedido a domicilio sin cuenta si falta la dirección', async () => {
     const res = await request(app).post('/api/orders').send({
-      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }]
+      customer_name: 'Ana', customer_phone: '5511112222', order_type: 'domicilio', items: [{ menu_item_id: menuItemId, quantity: 1 }],
+      phone_verification_token: verifiedPhoneToken('5511112222')
     });
     expect(res.status).toBe(400);
   });
