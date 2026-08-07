@@ -319,6 +319,12 @@ const SCHEMA_SQL = `
   ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_x REAL NOT NULL DEFAULT 50;
   ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS image_pos_y REAL NOT NULL DEFAULT 50;
 
+  -- Agrupa opciones equivalentes para cocina (ej. varias tortillas de maíz a
+  -- futuro deben ordenarse juntas). Por defecto cada opción es su propio
+  -- grupo; el admin puede fusionar varias bajo el mismo nombre de grupo.
+  ALTER TABLE customization_options ADD COLUMN IF NOT EXISTS grupo TEXT;
+  UPDATE customization_options SET grupo = name WHERE grupo IS NULL;
+
   -- Link de pago de Mercado Pago generado para la orden (reemplaza el pago
   -- manual por "transferencia" con un link real que se puede regenerar sin
   -- perder el id de preferencia ya creado).

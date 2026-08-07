@@ -88,8 +88,10 @@ export default function CobroModal({ order, onClose, onPaid }) {
               <span className="font-black text-ink-900">#{order.id}</span>
               {order.mesa && <span className="text-sm text-ink-500 font-medium">{order.mesa}</span>}
             </div>
-            <div className="text-sm text-ink-700 font-medium mb-3">{order.customer_name}</div>
-            <div className="space-y-1 text-sm">
+            <div className="text-sm text-ink-700 font-medium">{order.customer_name}</div>
+            {order.customer_phone && <div className="text-xs text-ink-500 mt-0.5">📞 <span className="font-semibold text-ink-700">{order.customer_phone}</span></div>}
+            {order.order_type === 'domicilio' && order.customer_address && <div className="text-xs text-ink-500 mt-0.5">📍 {order.customer_address}</div>}
+            <div className="space-y-1 text-sm mt-3">
               {order.items?.map(item => (
                 <div key={item.id} className="flex justify-between">
                   <span className="text-ink-600">{item.quantity}x {item.name}</span>

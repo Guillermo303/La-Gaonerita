@@ -341,6 +341,7 @@ export function PersonalizacionTab() {
   const [newOption, setNewOption] = useState({ groupId: '', name: '' });
   const [editingGroup, setEditingGroup] = useState(null);
   const [imgOptionId, setImgOptionId] = useState(null);
+  const [editingGrupoId, setEditingGrupoId] = useState(null);
   const [error, setError] = useState('');
 
   const reload = () => customizationsApi.getAll().then(setGroups).catch(e => setError(e.message));
@@ -426,7 +427,26 @@ export function PersonalizacionTab() {
                     </button>
                     <span className="font-medium text-sm text-ink-900 truncate">{option.name}</span>
                   </div>
-                  <button onClick={() => { if (confirm(`¿Eliminar "${option.name}"?`)) delOption(option.id); }} className="text-sm text-red-400 hover:text-red-600 shrink-0 px-2 py-2">✕</button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {editingGrupoId === option.id ? (
+                      <input
+                        defaultValue={option.grupo || option.name}
+                        onBlur={e => { saveOption(option.id, { grupo: e.target.value.trim() || option.name }); setEditingGrupoId(null); }}
+                        onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                        autoFocus
+                        className="border border-brand-400 rounded px-1.5 py-0.5 text-xs w-24"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setEditingGrupoId(option.id)}
+                        title="Grupo para cocina: opciones con el mismo grupo se muestran juntas en la pantalla de cocina"
+                        className={`text-xs px-1.5 py-0.5 rounded ${option.grupo && option.grupo !== option.name ? 'bg-brand-100 text-brand-700 font-semibold' : 'text-ink-300 hover:text-ink-500'}`}
+                      >
+                        {option.grupo && option.grupo !== option.name ? option.grupo : '+ grupo'}
+                      </button>
+                    )}
+                    <button onClick={() => { if (confirm(`¿Eliminar "${option.name}"?`)) delOption(option.id); }} className="text-sm text-red-400 hover:text-red-600 px-2 py-2">✕</button>
+                  </div>
                   {imgOptionId === option.id && <ImageEditorModal initial={option} onSave={(data) => saveOption(option.id, data)} onClose={() => setImgOptionId(null)} />}
                 </div>
               ))}

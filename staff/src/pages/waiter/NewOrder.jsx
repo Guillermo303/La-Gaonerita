@@ -4,7 +4,7 @@ import { orders as ordersApi, menu as menuApi, customizations as customizationsA
 import { formatPrice } from '../../lib/utils';
 import MesaSelector from '../../components/MesaSelector';
 
-const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina Chiltepin'];
+const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina-Chiltepín'];
 const FOOD_CATS = ['Gaonerita', 'Asadita', 'Prensadita'];
 
 const STEPS = [

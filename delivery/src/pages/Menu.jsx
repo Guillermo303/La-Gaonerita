@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatPrice } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 
-const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina Chiltepin'];
+const DEFAULT_COLUMNS = ['Maíz', 'Harina', 'Harina-Chiltepín'];
 
 const FOOD_CATS = ['Gaonerita', 'Asadita', 'Prensadita'];
 

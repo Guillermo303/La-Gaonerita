@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { orders as ordersApi, menu as menuApi } from '../../api';
+import { orders as ordersApi, menu as menuApi, customizations as customizationsApi } from '../../api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatPrice, statusLabels, typeLabels } from '../../lib/utils';
@@ -114,6 +114,167 @@ function IngredientBreakdown({ item, recipesByItem }) {
   );
 }
 
+const chipStatusColor = {
+  pendiente: 'bg-yellow-400',
+  preparando: 'bg-blue-500',
+  listo: 'bg-green-500'
+};
+
+// Agrupa todos los productos de las órdenes activas por tipo (categoría del
+// menú) y acumula cantidades, ingresos e ingredientes para la pantalla del
+// chef: deja de ser una lista plana por pedido y se vuelve "qué hay que
+// preparar en total". Cada producto conserva el detalle por orden (chip) para
+// saber a qué pedido va cada pieza.
+function buildChefGroups(orders, recipesByItem, menuAll, variantGroupMap) {
+  const meta = new Map();
+  for (const cat of menuAll || []) {
+    for (const item of cat.items || []) {
+      meta.set(item.id, { name: cat.name, catSort: cat.sort_order ?? 0, itemSort: item.sort_order ?? 0 });
+    }
+  }
+
+  const byKey = new Map();
+  for (const order of orders) {
+    if (!['pendiente', 'preparando', 'listo'].includes(order.status)) continue;
+    for (const it of order.items || []) {
+      const key = it.menu_item_id ? `m${it.menu_item_id}` : `x${it.name}`;
+      let p = byKey.get(key);
+      if (!p) {
+        const m = it.menu_item_id ? meta.get(it.menu_item_id) : null;
+        p = {
+          key,
+          name: it.name,
+          price: it.price,
+          categoryName: m?.name || (it.menu_item_id ? 'Sin categoría' : 'Otros'),
+          categorySort: m?.catSort ?? 999,
+          itemSort: m?.itemSort ?? 999,
+          total: 0,
+          recipe: it.menu_item_id ? recipesByItem[it.menu_item_id] : null,
+          orders: []
+        };
+        byKey.set(key, p);
+      }
+      p.total += it.quantity;
+      p.orders.push({
+        orderId: order.id,
+        qty: it.quantity,
+        status: order.status,
+        orderType: order.order_type,
+        variant: it.notes,
+        variantGroup: it.notes ? (variantGroupMap?.get(it.notes) || it.notes) : null
+      });
+    }
+  }
+
+  const groups = new Map();
+  for (const p of byKey.values()) {
+    p.orders.sort((a, b) => a.orderId - b.orderId);
+    const vTotals = new Map();
+    for (const o of p.orders) {
+      if (!o.variantGroup) continue;
+      vTotals.set(o.variantGroup, (vTotals.get(o.variantGroup) || 0) + o.qty);
+    }
+    p.variantTotals = [...vTotals.entries()].map(([name, qty]) => ({ name, qty }));
+    let g = groups.get(p.categoryName);
+    if (!g) { g = { name: p.categoryName, sort: p.categorySort, items: [] }; groups.set(p.categoryName, g); }
+    g.items.push(p);
+  }
+
+  return [...groups.values()]
+    .map(g => {
+      g.items.sort((a, b) => a.itemSort - b.itemSort || a.name.localeCompare(b.name));
+      g.total = g.items.reduce((s, p) => s + p.total, 0);
+      return g;
+    })
+    .sort((a, b) => a.sort - b.sort);
+}
+
+function ChefBoard({ orders, recipesByItem, menuAll, variantGroupMap }) {
+  const groups = useMemo(() => buildChefGroups(orders, recipesByItem, menuAll, variantGroupMap), [orders, recipesByItem, menuAll, variantGroupMap]);
+
+  const active = orders.filter(o => ['pendiente', 'preparando', 'listo'].includes(o.status));
+  const totalUnits = groups.reduce((s, g) => s + g.total, 0);
+  const totalRevenue = active.reduce((s, o) => s + (o.total || 0), 0);
+
+  if (groups.length === 0) {
+    return (
+      <div className="text-center py-20 text-gray-400">
+        <div className="text-6xl mb-4">🌮</div>
+        <p className="text-lg font-semibold">No hay órdenes activas que preparar</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 text-center">
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Órdenes activas</div>
+          <div className="text-4xl font-black text-ink-900">{active.length}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 text-center">
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Piezas a preparar</div>
+          <div className="text-4xl font-black text-ink-900">{totalUnits}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 text-center">
+          <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Total por cobrar</div>
+          <div className="text-4xl font-black text-ink-900">{formatPrice(totalRevenue)}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+        {groups.map(g => (
+          <div key={g.name} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="flex items-center justify-between bg-ink-900 text-white px-4 py-3">
+              <h3 className="text-lg font-black uppercase tracking-wide">{g.name}</h3>
+              <span className="text-2xl font-black">{g.total}</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {g.items.map(p => (
+                <div key={p.key} className="px-4 py-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-xl font-black text-ink-900">{p.total}×</span>
+                    <span className="flex-1 text-lg font-bold text-ink-900">{p.name}</span>
+                    <span className="text-sm font-semibold text-gray-400">{formatPrice(p.price * p.total)}</span>
+                  </div>
+                  {p.variantTotals.length > 1 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {p.variantTotals.map(v => (
+                        <span key={v.name} className="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">{v.name} ×{v.qty}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {p.orders.map((o, i) => (
+                      <span key={i}
+                        title={`#${o.orderId} · ${typeLabels[o.orderType]}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+                        <span className={`w-2 h-2 rounded-full ${chipStatusColor[o.status]}`}></span>
+                        #{o.orderId} ×{o.qty}
+                        {o.variant && <span className="font-medium text-gray-400">· {o.variant}</span>}
+                      </span>
+                    ))}
+                  </div>
+                  {p.recipe?.ingredients?.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200 space-y-0.5">
+                      {p.recipe.ingredients.map((ing, i) => (
+                        <div key={i} className="flex justify-between text-sm text-gray-500">
+                          <span>{ing.name}</span>
+                          <span className="font-bold text-gray-700">{fmtIngredient(ing.quantity_per_unit * p.total, ing.unit)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HistorialActivas({ orders, onDeliver }) {
   const [delivering, setDelivering] = useState(null);
   const [entregadosHoy, setEntregadosHoy] = useState([]);
@@ -195,8 +356,10 @@ function HistorialActivas({ orders, onDeliver }) {
 export default function KitchenDisplay() {
   const [orders, setOrders] = useState([]);
   const [recipesByItem, setRecipesByItem] = useState({});
+  const [menuAll, setMenuAll] = useState([]);
+  const [customizationGroups, setCustomizationGroups] = useState([]);
   const [bigMode, setBigMode] = useState(false);
-  const [view, setView] = useState('tablero');
+  const [view, setView] = useState('chef');
   const socket = useSocket();
   const audioRef = useRef(null);
   const { user, logout } = useAuth();
@@ -216,6 +379,8 @@ export default function KitchenDisplay() {
   useEffect(() => {
     ordersApi.getKitchen().then(setOrders).catch(console.error);
     menuApi.getRecipes().then(setRecipesByItem).catch(console.error);
+    menuApi.getAllAdmin().then(setMenuAll).catch(console.error);
+    customizationsApi.getAll().then(setCustomizationGroups).catch(console.error);
     if (socket) {
       socket.emit('join:kitchen');
       socket.on('order:update', (order) => {
@@ -239,6 +404,16 @@ export default function KitchenDisplay() {
   }, [socket]);
 
   const updateStatus = (id, status) => ordersApi.updateStatus(id, status).catch(console.error);
+
+  const variantGroupMap = useMemo(() => {
+    const map = new Map();
+    for (const group of customizationGroups) {
+      for (const option of group.options || []) {
+        map.set(option.name, option.grupo || option.name);
+      }
+    }
+    return map;
+  }, [customizationGroups]);
 
   const preparingOrders = orders.filter(o => o.status === 'preparando');
 
@@ -304,6 +479,7 @@ export default function KitchenDisplay() {
         <h1 className="text-xl sm:text-3xl font-bold text-gray-800">👨‍🍳 Cocina - La Gaonerita</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex bg-white rounded-xl shadow-sm border border-gray-200 p-1">
+            <button onClick={() => setView('chef')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'chef' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Chef</button>
             <button onClick={() => setView('tablero')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'tablero' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Tablero</button>
             <button onClick={() => setView('historial')} className={`px-4 py-2 rounded-lg text-sm font-bold transition ${view === 'historial' ? 'bg-ink-900 text-white' : 'text-gray-500 hover:text-gray-800'}`}>Historial</button>
           </div>
@@ -322,6 +498,8 @@ export default function KitchenDisplay() {
       </div>
       {view === 'historial' ? (
         <HistorialActivas orders={orders} onDeliver={handleDeliver} />
+      ) : view === 'chef' ? (
+        <ChefBoard orders={orders} recipesByItem={recipesByItem} menuAll={menuAll} variantGroupMap={variantGroupMap} />
       ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-1">

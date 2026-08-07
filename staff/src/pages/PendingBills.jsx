@@ -61,19 +61,19 @@ export default function PendingBills() {
                     </button>
                   </div>
                 </div>
-                <div className="text-sm text-ink-500 space-y-0.5 mb-2">
+                <div className="bg-cream-50 border border-ink-100 rounded-lg px-3 py-2 mb-3 flex flex-wrap gap-x-4 gap-y-1 items-center text-sm">
+                  <span className="font-bold text-ink-900">{order.customer_name}</span>
+                  {order.customer_phone && <span className="text-ink-600">📞 <span className="font-semibold text-ink-800">{order.customer_phone}</span></span>}
+                  {order.order_type === 'domicilio' && order.customer_address && <span className="text-ink-500">📍 {order.customer_address}</span>}
+                  {order.notes && <span className="text-yellow-600">📝 {order.notes}</span>}
+                </div>
+                <div className="text-sm text-ink-500 space-y-0.5">
                   {order.items?.map(item => (
                     <div key={item.id} className="flex justify-between">
                       <span>{item.quantity}x {item.name}</span>
                       <span>{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   ))}
-                </div>
-                <div className="flex flex-wrap gap-3 text-xs text-ink-400">
-                  <span className="font-semibold text-ink-600">{order.customer_name}</span>
-                  {order.customer_phone && <span>📞 {order.customer_phone}</span>}
-                  {order.order_type === 'domicilio' && order.customer_address && <span>📍 {order.customer_address}</span>}
-                  {order.notes && <span className="text-yellow-600">📝 {order.notes}</span>}
                 </div>
               </div>
             </div>
