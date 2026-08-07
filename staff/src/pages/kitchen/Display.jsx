@@ -189,8 +189,88 @@ function buildChefGroups(orders, recipesByItem, menuAll, variantGroupMap) {
     .sort((a, b) => a.sort - b.sort);
 }
 
-function ChefBoard({ orders, recipesByItem, menuAll, variantGroupMap }) {
+// Agrupa las piezas de las ordenes activas por tipo de tortilla (Harina,
+// Maíz, Harina-Chiltepín), sin importar a que producto pertenezcan --
+// "2x Volcán, 3x Gaonerita, 1x Taco" todos hechos con harina cuentan juntos.
+// Dos fuentes posibles por pieza, en este orden de prioridad:
+//   1. El producto trae su propio tipo (pedidos de mesero: columna por
+//      producto, guardada en item.notes).
+//   2. Si el producto no trae uno propio, se usa el tipo de tortilla de
+//      todo el pedido (pedidos de domicilio/recoger: una sola eleccion
+//      para todo el carrito, guardada en order.tortilla_type).
+// Se excluyen productos "listos para servir" (bebidas, etc.) y renglones
+// sin producto de menu (ej. costo de envio), que no llevan tortilla.
+function buildTortillaGroups(orders, customizationGroups, menuAll) {
+  const tortillaGroup = (customizationGroups || []).find(g => g.name === 'Tortilla');
+  const optionToGrupo = new Map();
+  for (const opt of tortillaGroup?.options || []) {
+    optionToGrupo.set(opt.name, opt.grupo || opt.name);
+  }
+
+  const readyToServe = new Map();
+  for (const cat of menuAll || []) {
+    for (const item of cat.items || []) readyToServe.set(item.id, !!item.ready_to_serve);
+  }
+
+  const groups = new Map();
+  for (const order of orders) {
+    if (!['pendiente', 'preparando', 'listo'].includes(order.status)) continue;
+    for (const it of order.items || []) {
+      if (!it.menu_item_id || readyToServe.get(it.menu_item_id)) continue;
+      const perItemGrupo = it.notes ? optionToGrupo.get(it.notes) : null;
+      const orderGrupo = order.tortilla_type ? (optionToGrupo.get(order.tortilla_type) || order.tortilla_type) : null;
+      const grupo = perItemGrupo || orderGrupo;
+      if (!grupo) continue;
+      let g = groups.get(grupo);
+      if (!g) { g = { name: grupo, total: 0, products: new Map() }; groups.set(grupo, g); }
+      g.total += it.quantity;
+      g.products.set(it.name, (g.products.get(it.name) || 0) + it.quantity);
+    }
+  }
+
+  return [...groups.values()]
+    .map(g => ({
+      name: g.name,
+      total: g.total,
+      products: [...g.products.entries()].map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty),
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+function TortillaGroupsBoard({ groups }) {
+  if (groups.length === 0) return null;
+  return (
+    <div className="mb-6">
+      <h2 className="text-lg font-black uppercase tracking-wide text-ink-900 mb-3">Por tipo de tortilla</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {groups.map(g => (
+          <div key={g.name} className="bg-white rounded-xl shadow-lg border-2 border-brand-300 overflow-hidden">
+            <div className="bg-brand-500 text-white px-4 py-2.5">
+              <h3 className="text-lg font-black uppercase tracking-wide">{g.name}</h3>
+            </div>
+            <div className="px-4 py-3">
+              <div className="space-y-1 mb-3">
+                {g.products.map(p => (
+                  <div key={p.name} className="flex justify-between text-base font-bold text-ink-900">
+                    <span>{p.qty}x {p.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-baseline pt-2 border-t-2 border-gray-200">
+                <span className="text-sm font-bold uppercase tracking-wide text-gray-500">Productos en {g.name}</span>
+                <span className="text-3xl font-black text-ink-900">{g.total}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChefBoard({ orders, recipesByItem, menuAll, variantGroupMap, customizationGroups }) {
   const groups = useMemo(() => buildChefGroups(orders, recipesByItem, menuAll, variantGroupMap), [orders, recipesByItem, menuAll, variantGroupMap]);
+  const tortillaGroups = useMemo(() => buildTortillaGroups(orders, customizationGroups, menuAll), [orders, customizationGroups, menuAll]);
 
   const active = orders.filter(o => ['pendiente', 'preparando', 'listo'].includes(o.status));
   const totalUnits = groups.reduce((s, g) => s + g.total, 0);
@@ -221,6 +301,8 @@ function ChefBoard({ orders, recipesByItem, menuAll, variantGroupMap }) {
           <div className="text-4xl font-black text-ink-900">{formatPrice(totalRevenue)}</div>
         </div>
       </div>
+
+      <TortillaGroupsBoard groups={tortillaGroups} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         {groups.map(g => (
@@ -499,7 +581,7 @@ export default function KitchenDisplay() {
       {view === 'historial' ? (
         <HistorialActivas orders={orders} onDeliver={handleDeliver} />
       ) : view === 'chef' ? (
-        <ChefBoard orders={orders} recipesByItem={recipesByItem} menuAll={menuAll} variantGroupMap={variantGroupMap} />
+        <ChefBoard orders={orders} recipesByItem={recipesByItem} menuAll={menuAll} variantGroupMap={variantGroupMap} customizationGroups={customizationGroups} />
       ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-1">

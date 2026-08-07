@@ -126,7 +126,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 router.post('/', optionalAuth, async (req, res) => {
-  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, quick_sale, payment_status } = req.body;
+  const { customer_name, customer_phone, customer_address, mesa, order_type, items, notes, payment_method, quick_sale, payment_status, tortilla_type } = req.body;
   if (!customer_name || !order_type || !items || !items.length) return res.status(400).json({ error: 'Nombre, tipo de orden y al menos un producto requeridos' });
   if (!req.user) {
     // Los pedidos sin cuenta son de la app de delivery (domicilio o recoger
@@ -169,8 +169,8 @@ router.post('/', optionalAuth, async (req, res) => {
       const initialStatus = quick_sale ? 'completado' : 'pendiente';
       const initialPaymentStatus = ['pendiente', 'pagado', 'reembolsado'].includes(payment_status) ? payment_status : 'pendiente';
 
-      const result = await db.run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method, status, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [req.user?.id || null, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo', initialStatus, initialPaymentStatus]);
+      const result = await db.run('INSERT INTO orders (user_id, customer_name, customer_phone, customer_address, mesa, order_type, total, notes, payment_method, status, payment_status, tortilla_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.user?.id || null, customer_name, customer_phone || null, customer_address || null, mesa || null, order_type, total, notes || null, payment_method || 'efectivo', initialStatus, initialPaymentStatus, tortilla_type || null]);
       const orderId = result.lastInsertRowid;
 
       for (const item of orderItems) {

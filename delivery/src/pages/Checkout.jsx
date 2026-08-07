@@ -114,6 +114,7 @@ export default function Checkout({ onPrev, onGoToMenu, onPlaced }) {
         notes,
         payment_method: form.payment,
         items: orderItems,
+        tortilla_type: tortillaType,
         phone_verification_token: getToken(),
       });
       saveCustomer({

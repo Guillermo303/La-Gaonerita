@@ -331,6 +331,13 @@ const SCHEMA_SQL = `
   ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_link TEXT;
   ALTER TABLE orders ADD COLUMN IF NOT EXISTS mercadopago_preference_id TEXT;
 
+  -- Tipo de tortilla elegido (Harina/Maíz/Harina-Chiltepín): es una sola
+  -- eleccion por pedido (ver customizations "Tortilla"), no por producto.
+  -- Antes se calculaba en el checkout solo para mostrarselo al cliente en su
+  -- confirmacion y se perdia -- nunca llegaba a cocina. Ahora se guarda en el
+  -- pedido para poder agrupar por tipo de tortilla en la pantalla del chef.
+  ALTER TABLE orders ADD COLUMN IF NOT EXISTS tortilla_type TEXT;
+
   -- Una misma persona puede tener varias cuentas con distinto rol usando el
   -- mismo correo (ej. cliente y mesero) — el email deja de ser único por sí
   -- solo y ahora se valida junto con el rol.
